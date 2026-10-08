@@ -1,17 +1,21 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { useFeature } from '../../lib/data';
-import { CalendarDays, Home, MoreHorizontal, Plus, ShoppingBasket } from 'lucide-react';
+import { useFeatures } from '../../lib/data';
+import { CalendarDays, Home, MoreHorizontal, Plus } from 'lucide-react';
+import { pickTabShortcut } from './tabShortcut';
 
 const MORE_PATHS = ['/altro', '/rubrica', '/spese', '/impostazioni', '/spazio'];
 
-/** «Altro» resta evidenziato anche nelle pagine che contiene (Rubrica, Spese, Impostazioni…): si capisce dove si è. */
-export const isInMore = (pathname: string): boolean =>
-  MORE_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
+/**
+ * «Altro» resta evidenziato anche nelle pagine che contiene (Rubrica, Spese, Impostazioni…): si capisce dove si è.
+ * Una pagina che in quel momento ha già la sua scheda nella barra (`shortcutPath`) non evidenzia anche «Altro».
+ */
+export const isInMore = (pathname: string, shortcutPath?: string): boolean =>
+  MORE_PATHS.filter((p) => p !== shortcutPath).some((p) => pathname === p || pathname.startsWith(p + '/'));
 
-/** Barra inferiore mobile: Oggi · Calendario · [+] · Spesa · Altro. */
+/** Barra inferiore mobile: Oggi · Calendario · [+] · Spesa (o la prima funzione accesa) · Altro. */
 export function TabBar({ onCreate }: { onCreate: () => void }) {
   const { pathname } = useLocation();
-  const hasShopping = useFeature('spesa');
+  const shortcut = pickTabShortcut(useFeatures());
   return (
     <nav className="tabbar" aria-label="Navigazione principale">
       <NavLink className="tab" to="/oggi">
@@ -25,13 +29,11 @@ export function TabBar({ onCreate }: { onCreate: () => void }) {
       <button className="tab-plus" aria-label="Crea nuovo" aria-haspopup="dialog" onClick={onCreate}>
         <Plus size={28} strokeWidth={2} />
       </button>
-      {hasShopping && (
-        <NavLink className="tab" to="/spesa">
-          <ShoppingBasket size={22} strokeWidth={1.75} />
-          Spesa
-        </NavLink>
-      )}
-      <Link className="tab" to="/altro" aria-current={isInMore(pathname) ? 'page' : undefined}>
+      <NavLink className="tab" to={shortcut.to}>
+        <shortcut.Icon size={22} strokeWidth={1.75} />
+        {shortcut.label}
+      </NavLink>
+      <Link className="tab" to="/altro" aria-current={isInMore(pathname, shortcut.to) ? 'page' : undefined}>
         <MoreHorizontal size={22} strokeWidth={1.75} />
         Altro
       </Link>
