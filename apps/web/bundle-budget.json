@@ -1,0 +1,5 @@
+{
+  "v1InitialGzipBytes": 178777,
+  "maxGrowthBytes": 30720,
+  "note": "v1: bundle JS iniziale (un solo chunk) prima delle nuove funzioni. Il budget è v1 + 30 KB gzip."
+}

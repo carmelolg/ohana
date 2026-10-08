@@ -1,0 +1,9 @@
+**/dist/
+**/node_modules/
+**/.wrangler/
+apps/web/public/
+apps/web/test-results/
+apps/web/playwright-report/
+supabase/
+pnpm-lock.yaml
+*.md

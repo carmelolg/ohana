@@ -1,0 +1,18 @@
+# Copia in .dev.vars per `wrangler dev` (mai nel repository).
+SUPABASE_URL=http://127.0.0.1:54321
+SUPABASE_SERVICE_ROLE_KEY=
+MAIL_PROVIDER=gmail
+MAIL_FROM=Ohana <tuonome@gmail.com>
+GMAIL_CLIENT_ID=
+GMAIL_CLIENT_SECRET=
+GMAIL_REFRESH_TOKEN=
+# con MAIL_PROVIDER=resend:
+RESEND_API_KEY=
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=mailto:tu@tuodominio.it
+ACTION_SECRET=cambia-questa-stringa-lunga-e-casuale
+APP_URL=http://localhost:5173
+WORKER_URL=http://127.0.0.1:8787
+# Facoltativa: fallback AI della scansione documenti (invia solo il testo dell'OCR)
+GEMINI_API_KEY=

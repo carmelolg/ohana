@@ -1,0 +1,13 @@
+node_modules
+dist
+.env*
+!.env.example
+.wrangler
+.DS_Store
+apps/web/public/ocr
+
+test-results
+playwright-report
+
+# file temporanei e segreti generati dalla CLI di Supabase
+supabase/.temp

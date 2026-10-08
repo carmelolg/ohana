@@ -1,0 +1,27 @@
+{
+  "name": "ohana",
+  "private": true,
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "dev": "pnpm --filter @ohana/web dev",
+    "build": "pnpm --filter @ohana/web build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter @ohana/shared test && pnpm --filter @ohana/worker test && pnpm --filter @ohana/web test && pnpm --filter @ohana/web check:realtime",
+    "test:rls": "bash supabase/tests/run.sh",
+    "test:e2e": "pnpm --filter @ohana/web test:e2e",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.14.0",
+    "eslint": "^9.14.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "globals": "^15.12.0",
+    "prettier": "^3.3.3",
+    "typescript-eslint": "^8.13.0"
+  },
+  "type": "module"
+}

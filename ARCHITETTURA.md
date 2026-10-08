@@ -1,0 +1,114 @@
+# Ohana — Architettura e stack
+
+## Obiettivo
+PWA familiare per impegni, visite mediche, appuntamenti con professionisti, scadenze ricorrenti, lista spesa condivisa, rubrica e spese tra familiari. Organizzata in **spazi** personalizzabili (Casa mia, Mamma e papà, Lavoro, …); ogni persona vede solo gli spazi di cui è membro.
+
+## Stack (costo: 0 €/mese)
+
+| Livello | Scelta | Piano gratuito | Perché |
+|---|---|---|---|
+| Frontend | React + Vite + TypeScript, `vite-plugin-pwa` | — | PWA installabile, offline, veloce |
+| Hosting FE | **Cloudflare Pages** | banda illimitata | nessun cold start, deploy da GitHub |
+| DB + Auth + Storage + Realtime | **Supabase** | 500 MB DB, 1 GB storage, 50k utenti attivi | Postgres con Row Level Security: l'isolamento tra spazi è nel database |
+| Job notifiche + feed calendario | **Cloudflare Workers** (Cron Trigger ogni 5 min) | 100k richieste/giorno | sempre attivo, nessuna sospensione |
+| Email | **Resend** | 3.000/mese, 100/giorno | API semplice; alternativa Brevo (300/giorno) |
+| Push | Web Push (VAPID) inviato dal Worker | gratis | funziona su Android, desktop, iOS 16.4+ (app installata) |
+| Dominio (opzionale) | qualsiasi registrar | ~10 €/anno | serve a Resend per inviare da un tuo indirizzo |
+
+**Sospensione Supabase:** i progetti gratuiti vengono messi in pausa dopo 7 giorni senza attività. Il Worker che ogni 5 minuti interroga il DB per i promemoria lo tiene attivo. Nessuna VPS necessaria.
+
+**Backup:** GitHub Action settimanale con `pg_dump` verso un repository privato o Cloudflare R2 (10 GB gratis).
+
+## Diagramma
+```
+[PWA su Cloudflare Pages] ──supabase-js──▶ [Supabase: Auth · Postgres+RLS · Realtime · Storage]
+                                                     ▲
+[Cloudflare Worker] ── cron 5' ──────────────────────┘
+   ├─ calcola promemoria in scadenza → Resend (email) + Web Push
+   ├─ GET /ics/:token.ics  → feed calendario per Google/Apple
+   └─ GET /azione/:token   → "segna fatto" / "rimanda" dai link email
+```
+
+## Struttura del codice
+
+Tre pacchetti, dipendenze sempre verso il basso (regole di dettaglio in [`CLAUDE.md`](CLAUDE.md)):
+
+| Pacchetto | Responsabilità | Organizzazione |
+|---|---|---|
+| `packages/shared` | **Dominio puro**, senza I/O: parser dell'aggiunta rapida, ricorrenze, date Europe/Rome, saldi, faccende, categorie (Naive Bayes), lettura documenti | `parser.ts` (pipeline) + `parser/` (uno stadio per file), `recurrence.ts`, `balances.ts`, `dates.ts`, `text.ts`, `people.ts`… |
+| `apps/worker` | Cron ogni 5' e HTTP pubblico (feed ICS, link «Segna fatto/Rimanda», fallback AI della scansione) | `index.ts` (entrata) → `scheduled.ts` → `jobs/*` (casi d'uso) · `http/*` (router + handler) · `db.ts`, `notify.ts`, `email.ts`, `push.ts`, `sign.ts` (infrastruttura) · `reminders.ts`, `digest.ts` (decisioni pure) |
+| `apps/web` | PWA React: mostra, raccoglie input, scrive tramite la coda offline | `pages/` e `components/` (UI) → `pages/<schermata>/` (hook di schermata, comandi di scrittura, sezioni) → `lib/data/` (letture, scritture, realtime) e `lib/api/` (operazioni su Supabase) → `lib/supabase`, `lib/outbox`, `lib/storage` |
+
+Flussi chiave:
+- **Scrittura**: schermata → `useMutate` → aggiornamento ottimistico della cache + `outbox` (IndexedDB, idempotente, riprovata al ritorno della rete) → Supabase → evento realtime → invalidazione delle query (`TABLE_KEYS`).
+- **Promemoria**: `enqueue` espande eventi × promemoria × destinatari in `reminder_queue` → `dispatch` prenota ogni riga con un update condizionale, invia email/push, ritenta fino a 5 volte.
+- **Qualità**: `pnpm typecheck` (TypeScript rigoroso condiviso), `pnpm lint` (anche i confini tra livelli e le soglie di dimensione/complessità), `pnpm format:check` (Prettier), `pnpm test` (shared, worker con Supabase finto, web), `pnpm test:rls`, `pnpm test:e2e`; CI in `.github/workflows/ci.yml`.
+
+## Modello dati (Postgres)
+- `profiles` (id = auth.users.id, first_name, last_name, email, avatar_url, theme: light|dark|auto, accent, default_reminder_minutes = 1440, timezone = 'Europe/Rome')
+- `spaces` (id, name, color, disabled_features, icon, created_by)
+- `space_members` (space_id, user_id, role: owner|admin|member|viewer)
+- `invites` (id, space_id, email, role, token, expires_at, accepted_at)
+- `events` (id, space_id, title, `category_id` → `categories`, starts_at, ends_at, all_day, location, notes, assignee_id, contact_id, rrule, amount, status: open|done, created_by)
+- `event_reminders` (event_id, offset_minutes, channels: email|push)
+- `reminder_queue` (id, event_id, occurrence_at, send_at, user_id, channel, sent_at) — generata dal Worker per i prossimi 60 giorni, include le ricorrenze espanse
+- `events.kind`: `appuntamento` | `faccenda`. Le faccende hanno `assignee_id` obbligatorio, nessun orario, promemoria predefinito solo push alle 8:00 (niente email), e se non completate passano al giorno dopo con l'etichetta "rinviata"
+- `visit_notes` (event_id, author_id, text, created_at) + `follow_ups` (event_id, title, due_hint, created_event_id) — diario visite e prossimi passi
+- `emergency_info` (space_id, contacts ordinati, address, intercom, allergies, notes) — cache offline sempre aggiornata
+- `maintenances` (id, space_id, title, rrule, last_done_at, last_cost, contact_id, template_key) — genera eventi `scadenza`
+- `board_notes` (id, space_id, author_id, text, pinned, expires_at)
+- `procedures` (id, space_id, title, owner_id, due_date, status) · `procedure_steps` (procedure_id, position, title, done_at, event_id) · `procedure_docs` (procedure_id, name, attachment_id)
+- `documents` (id, space_id, folder, attachment_id, doc_type, extracted_json, expires_at)
+- `attachments` (event_id, path su Storage, name) — referti, ricevute
+- `shopping_lists` (id, space_id, name) · `shopping_items` (list_id, text, qty, category, checked, checked_by, checked_at, added_by)
+- `contacts` (id, space_id, name, role, phone, email, address, notes)
+- `expenses` (id, space_id, payer_id, amount, description, date, event_id) · `expense_shares` (expense_id, user_id, amount) · `settlements` (space_id, from_id, to_id, amount, date)
+- `push_subscriptions` (user_id, endpoint, keys, user_agent)
+- `calendar_feeds` (user_id, space_id nullable, token)
+
+**RLS:** ogni tabella con `space_id` è leggibile/scrivibile solo se `exists (select 1 from space_members where space_id = … and user_id = auth.uid())`; `viewer` solo lettura. Così un fratello invitato in «Mamma e papà» non vede mai «Casa mia».
+
+## Funzioni chiave
+- **Aggiunta rapida in italiano**: parser locale (oggi, domani, dopodomani, lunedì…, "il 12 novembre", "alle 15", "tra 3 giorni", "ogni mese", "ricordamelo 2 giorni prima", `@nome` per assegnare, `#spazio`). Mostra subito i campi riconosciuti, modificabili.
+- **Voce**: Web Speech API (`it-IT`) con fallback alla dettatura della tastiera.
+- **Ricorrenze**: RRULE (`rrule` npm) — bollette, bollo, revisione, terapie.
+- **Calendario**: feed ICS in sola lettura per utente/spazio (Google aggiorna ogni 8-24 h, Apple configurabile). Sync bidirezionale fuori dallo scope v1.
+- **Realtime**: lista spesa e Oggi si aggiornano live via Supabase Realtime; presenza ("Giulia è al supermercato").
+- **Offline**: cache della shell + ultime 4 settimane di dati in IndexedDB; modifiche in coda e sincronizzate al ritorno online.
+
+## Nuove funzioni (schermate 3a–3h)
+- **Regola di leggerezza**: in Oggi compaiono solo la bacheca (1 nota visibile, le altre comprimibili), gli impegni e le faccende dell'utente. Pratiche, Manutenzioni, Documenti, Rubrica, Spese ed Emergenza vivono in **Altro**, ciascuna con lo stato riassunto sulla sua card. Tutto si crea dal "+" centrale.
+- **Faccende**: impegni ricorrenti a bassa priorità, assegnati a una persona; in Oggi sono una lista compatta con casella, separata dagli appuntamenti; filtro "solo le mie / tutte".
+- **Diario visite**: alla chiusura di una visita, nota libera, allegato referto, ticket → Spese, e "prossimi passi" trasformabili in impegni con un tap. Storico per medico.
+- **Emergenza**: numeri e info chiave per spazio, precaricati nel service worker, raggiungibili da shortcut dell'icona app.
+- **Manutenzioni**: modelli pronti (caldaia, gomme, filtri, revisione auto…), ultima esecuzione e prossima scadenza.
+- **Pratiche**: passaggi ordinati, documenti richiesti, responsabile, barra avanzamento; un passaggio può essere un impegno in calendario.
+- **Scansione**: foto → OCR con **Tesseract.js** nel browser (0 €) + parser di regole per importo, date, fornitore; opzionale fallback a un LLM con piano gratuito (es. Gemini Flash) tramite il Worker. L'utente conferma sempre i campi prima di salvare.
+
+## Feature aggiuntive proposte
+1. **Brief del mattino**: una sola email/push alle 7:30 con gli impegni del giorno, al posto di tante notifiche separate (opzionale).
+2. **Checklist per impegno**: "portare tessera sanitaria, ECG precedente, a digiuno".
+3. **Turni di accompagnamento**: per le visite dei genitori, chi è disponibile risponde "ci vado io" dalla notifica.
+4. **Scheda salute genitori** (nello spazio): medici, farmaci, allergie, esenzioni, codice fiscale. Si consulta al volo in ospedale.
+5. **Archivio documenti** con scadenza: carta d'identità, patente, tessera sanitaria, garanzie elettrodomestici; promemoria 60 giorni prima.
+6. **Collegare spese a impegni**: il ticket della visita diventa una spesa da dividere con un tap.
+7. **Storico interventi** per professionista: quando è venuto l'idraulico l'ultima volta e quanto è costato.
+8. **Condivisione verso Ohana**: dal menu Condividi del telefono (SMS di conferma dell'ASL, email) si crea un impegno precompilato.
+
+
+## Note di implementazione (v2)
+
+Scelte e differenze rispetto al modello descritto sopra, emerse costruendo le nuove funzioni:
+
+- **Categorie** — `events.category` (enum) è diventato `events.category_id` → `categories` (per spazio). Le 6 predefinite (`slug`: visita, professionista, burocrazia, commissione, scadenza, altro) sono create dal database con lo spazio e non si eliminano; ogni spazio può aggiungerne di sue, con parole chiave per l'aggiunta rapida. Le manutenzioni generano eventi della categoria con slug `scadenza`.
+- **Faccende** — `events.kind` + vincolo `events_chore_shape` (assegnatario obbligatorio, `all_day`, `rrule`). Una faccenda tiene in `starts_at` l'occorrenza ancora da fare; «fatto» la sposta alla successiva e valorizza `events.last_done_at`. «Rinviata» e il conteggio «X di Y» si calcolano a video (`choresForToday` in `packages/shared`): nessun job notturno e nessun avviso in più. Il Worker non crea promemoria né email per le faccende; invia un solo push alle 8:00 a chi ha `profiles.notify_chores_push` (deduplicato in `digest_log`).
+- **Allegati** — `attachments.event_id` è ora facoltativo e c'è `attachments.space_id` (riempito dal database con lo spazio dell'impegno): servono a Documenti e a Pratiche, che non hanno un impegno. Il percorso nello storage resta `<space_id>/…`.
+- **Manutenzioni** — `events.maintenance_id` collega la scadenza alla manutenzione; «Segna fatta» chiude l'evento, aggiorna `last_done_at`/`last_cost` e crea la successiva con `nextMaintenanceDate` (regole come «ogni anno a novembre» valgono dal 1° del mese).
+- **Bacheca** — `board_notes.notify_push` (scelta dell'autore) e `notified_at` (il Worker invia una sola volta, con un «claim» atomico).
+- **Emergenza** — `emergency_info.contacts` è un array JSON ordinato; il 112 è sempre mostrato per primo dall'app. La pagina funziona offline con tre livelli: copia nel service worker (messaggio `emergency-cache` + NetworkFirst sulle richieste REST), istantanea in IndexedDB, cache delle query. Tutto viene cancellato all'uscita.
+- **Scansione** — OCR con Tesseract.js, worker e lingua italiana serviti da `public/ocr` (copiati da `scripts/copy-ocr-assets.mjs`): nessuna CDN esterna e nessun documento lascia il dispositivo. I PDF vengono resi in immagine (prima pagina) con pdf.js caricato solo se serve. Il fallback AI (`POST /scan/parse` sul Worker, Gemini) è disattivato per default, richiede il consenso dell'utente in Impostazioni, riceve **solo il testo** letto dall'OCR e il suo output viene sanificato.
+- **Leggerezza** — il bundle iniziale ha un budget (v1 + 30 KB gzip, `bundle-budget.json`, controllato da `pnpm build`); Tesseract, pdf.js, Leaflet e tutte le pagine secondarie sono lazy.
+- **Apprendimento delle categorie** — `category_feedback (space_id, user_id, text, label, corrected)` raccoglie le correzioni/conferme; `label` è lo slug per le categorie predefinite e `id:<uuid>` per quelle personalizzate. Il modello (Naive Bayes multinomiale su parole e n-grammi di caratteri, `packages/shared/src/nb.ts`) si costruisce nel client dalle ultime 1000 righe dello spazio; le regole del parser restano la prima linea (`chooseCategory`).
+
+## Funzioni opzionali per spazio
+`spaces.disabled_features` elenca le funzioni spente (`spesa`, `spese`, `manutenzioni`, `pratiche`, `documenti`; vuoto = tutte attive, quindi gli spazi esistenti non cambiano). Le chiavi sono in `packages/shared/src/features.ts` (`SPACE_FEATURES`, `featureOn`). Nella vista di un solo spazio contano le sue impostazioni; in «Tutti gli spazi» una funzione resta visibile se serve ad almeno uno. Il web la applica a barra laterale, tab bar, card di Altro, colonna destra, voci del «+» e rotte (`FeatureGate` riporta a Oggi). Si cambia in Spazio › Funzioni (proprietari e amministratori). I dati non si cancellano: riaccesa la funzione tornano.

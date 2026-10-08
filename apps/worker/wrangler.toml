@@ -1,0 +1,29 @@
+name = "ohana-worker"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+# L'email di promemoria è importata come testo
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
+[vars]
+APP_URL = "https://ohana.pages.dev"          # dominio di Cloudflare Pages
+WORKER_URL = "https://ohana-worker.carmelolagamba-cs.workers.dev"
+MAIL_PROVIDER = "gmail"                       # "gmail" oppure "resend"
+MAIL_FROM = "carmelolagamba90@gmail.com"       # con Gmail deve essere il tuo indirizzo Gmail
+VAPID_SUBJECT = "mailto:tu@tuodominio.it"
+VAPID_PUBLIC_KEY = "BCE1-bjf5Abc85ocvM3kwVQ1_ZiUQDbR5cuOEssTHWmPj7uUJdYa4tuBami66kZ8QP7rvjPfD8bbosN-ZK2mSc8"
+
+# Segreti (wrangler secret put <NOME>):
+#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+#   GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN   (se MAIL_PROVIDER = gmail)
+#   RESEND_API_KEY                                               (se MAIL_PROVIDER = resend)
+#
+#   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, ACTION_SECRET
+#   GEMINI_API_KEY   (facoltativa: fallback AI della scansione, solo testo; ogni utente deve attivarlo)
