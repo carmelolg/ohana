@@ -13,11 +13,11 @@ globs = ["**/*.html"]
 fallthrough = true
 
 [vars]
-APP_URL = "https://ohana.pages.dev"          # dominio di Cloudflare Pages
+APP_URL = "https://ohana-1ia.pages.dev"      # dominio di Cloudflare Pages
 WORKER_URL = "https://ohana-worker.carmelolagamba-cs.workers.dev"
 MAIL_PROVIDER = "gmail"                       # "gmail" oppure "resend"
 MAIL_FROM = "carmelolagamba90@gmail.com"       # con Gmail deve essere il tuo indirizzo Gmail
-VAPID_SUBJECT = "mailto:tu@tuodominio.it"
+VAPID_SUBJECT = "mailto:carmelolagamba90@gmail.com"
 VAPID_PUBLIC_KEY = "BCE1-bjf5Abc85ocvM3kwVQ1_ZiUQDbR5cuOEssTHWmPj7uUJdYa4tuBami66kZ8QP7rvjPfD8bbosN-ZK2mSc8"
 
 # Segreti (wrangler secret put <NOME>):

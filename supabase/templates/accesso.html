@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Accedi a Ohana</title>
+    <style>
+      a {
+        color: #a3532f;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body style="margin: 0; padding: 0; background: #f6f2eb">
+    <!-- Template Supabase per «Magic Link» e «Confirm signup». Variabili: {{ .ConfirmationURL }} {{ .Token }} {{ .Email }} -->
+    <div style="display: none; max-height: 0; overflow: hidden">
+      Il tuo codice di accesso a Ohana: {{ .Token }}
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f6f2eb">
+      <tr>
+        <td align="center" style="padding: 32px 16px">
+          <table
+            role="presentation"
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            style="
+              max-width: 520px;
+              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+              color: #26211c;
+            "
+          >
+            <tr>
+              <td style="padding: 0 8px 20px">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td>
+                      <img
+                        src="https://ohana-1ia.pages.dev/icons/icon-192.png"
+                        width="40"
+                        height="40"
+                        alt="Ohana"
+                        style="display: block; border: 0; border-radius: 10px"
+                      />
+                    </td>
+                    <td
+                      style="padding-left: 12px; font-size: 20px; font-weight: 700; letter-spacing: -0.01em"
+                    >
+                      Ohana
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="background: #fffdf9; border-radius: 16px; padding: 32px">
+                <h1 style="margin: 0 0 8px; font-size: 24px; line-height: 1.25; letter-spacing: -0.01em">
+                  Bentornato in famiglia
+                </h1>
+                <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.55; color: #6f665c">
+                  Hai chiesto di accedere a Ohana con <strong style="color: #26211c">{{ .Email }}</strong
+                  >. Tocca il pulsante qui sotto per entrare.
+                </p>
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 0 28px">
+                  <tr>
+                    <td align="center" style="background: #b8613f; border-radius: 12px">
+                      <a
+                        href="{{ .ConfirmationURL }}"
+                        style="
+                          display: inline-block;
+                          padding: 14px 28px;
+                          font-size: 16px;
+                          font-weight: 700;
+                          color: #ffffff;
+                          text-decoration: none;
+                        "
+                        >Entra in Ohana</a
+                      >
+                    </td>
+                  </tr>
+                </table>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="border-top: 1px solid #e8dfd2; padding-top: 24px">
+                      <p style="margin: 0 0 10px; font-size: 14px; line-height: 1.5; color: #6f665c">
+                        Se hai installato l’app sul telefono, inserisci questo codice direttamente lì:
+                      </p>
+                      <p
+                        style="
+                          margin: 0;
+                          padding: 14px 16px;
+                          background: #f6f2eb;
+                          border-radius: 10px;
+                          font-family: Menlo, Consolas, monospace;
+                          font-size: 28px;
+                          font-weight: 700;
+                          letter-spacing: 0.3em;
+                          text-align: center;
+                          color: #26211c;
+                        "
+                      >
+                        {{ .Token }}
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin: 24px 0 0; font-size: 12px; line-height: 1.5; color: #6f665c">
+                  Il link e il codice funzionano una volta sola e scadono tra poco. Se il pulsante non si apre,
+                  copia questo indirizzo nel browser:<br />
+                  <a href="{{ .ConfirmationURL }}" style="word-break: break-all">{{ .ConfirmationURL }}</a>
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 20px 8px 0; font-size: 12px; line-height: 1.5; color: #6f665c">
+                Non hai chiesto tu questo accesso? Ignora questa email: nessuno può entrare senza il link o il
+                codice.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

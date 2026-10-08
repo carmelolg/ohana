@@ -11,6 +11,9 @@
     "test:e2e": "pnpm --filter @ohana/web test:e2e",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "release": "bash scripts/deploy.sh all",
+    "release:web": "bash scripts/deploy.sh web",
+    "release:worker": "bash scripts/deploy.sh worker",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

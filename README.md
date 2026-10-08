@@ -91,18 +91,48 @@ cd apps/worker
 npx wrangler login
 for s in SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY VAPID_PUBLIC_KEY VAPID_PRIVATE_KEY ACTION_SECRET; do npx wrangler secret put $s; done
 # + i segreti email del passo 3 (GMAIL_* oppure RESEND_API_KEY)
-pnpm deploy
+npx wrangler deploy   # non `pnpm deploy`: è un comando interno di pnpm e non esegue lo script
 ```
 `ACTION_SECRET` è una stringa lunga e casuale che firma i link «Segna fatto / Rimanda» (`openssl rand -hex 32`). Il cron `*/5 * * * *` è già in `wrangler.toml` (promemoria, brief del mattino, riepilogo faccende alle 8:00, avvisi push delle note in bacheca). Verifica con `curl https://<worker>/health`.
 
 ### 5. Cloudflare Pages
-1. *Workers & Pages → Create → Pages → Connect to Git*, scegli il repository.
-2. Build command: `pnpm install && pnpm --filter @ohana/web build` · Output directory: `apps/web/dist` · Root: `/`.
-3. Variabili d'ambiente (Production): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_VAPID_PUBLIC_KEY`, `VITE_WORKER_URL`, `NODE_VERSION=20`.
-4. `apps/web/public/_redirects` gestisce il routing della SPA.
+Il collegamento Git del monorepo richiede più impostazioni in dashboard; è più semplice pubblicare da terminale.
+1. Crea `apps/web/.env.production` (ignorato da git) con valori **pubblici**, letti in fase di build:
+   ```
+   VITE_SUPABASE_URL=https://<ref>.supabase.co
+   VITE_SUPABASE_ANON_KEY=<chiave anon>
+   VITE_VAPID_PUBLIC_KEY=<chiave pubblica VAPID>
+   VITE_WORKER_URL=https://<worker>.workers.dev
+   ```
+2. Crea il progetto una volta sola: `npx wrangler pages project create ohana --production-branch main`.
+3. Pubblica con lo script del passo 7. `apps/web/public/_redirects` gestisce il routing della SPA.
+4. Se preferisci il collegamento Git: *Workers & Pages → Create → Pages → Connect to Git*, build `pnpm install && pnpm --filter @ohana/web build`, output `apps/web/dist`, le stesse variabili `VITE_*` e `NODE_VERSION=20`.
 
 ### 6. Backup settimanale
 La GitHub Action `.github/workflows/backup.yml` esegue `pg_dump` ogni domenica. Secrets del repository: `SUPABASE_DB_URL` (stringa «Session pooler» da *Project Settings → Database*) e, per Cloudflare R2, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`, `R2_BUCKET`. Il dump viene anche conservato 30 giorni come artifact. Se non usi R2, rimuovi lo step «Carica su Cloudflare R2».
+
+### 7. Rilasci successivi: script di deploy
+`scripts/deploy.sh` pubblica Worker e frontend con un comando, dopo le stesse verifiche richieste prima di dire «fatto».
+
+```bash
+pnpm run release           # Worker + frontend
+pnpm run release:web       # solo frontend
+pnpm run release:worker    # solo Worker
+bash scripts/deploy.sh all --skip-checks   # salta le verifiche
+```
+Usa `pnpm run release`: `pnpm deploy` è un comando interno di pnpm.
+
+Cosa fa, in ordine:
+1. **Verifiche**: `typecheck`, `lint`, `format:check`, `test`. Se una fallisce, non pubblica nulla.
+2. **Worker**: `wrangler deploy`, poi controlla `WORKER_URL/health` (letto da `wrangler.toml`) e fallisce se non risponde.
+3. **Frontend**: controlla che `apps/web/.env.production` abbia le quattro variabili `VITE_*` valorizzate (niente segnaposto), costruisce con `pnpm build` e pubblica con `wrangler pages deploy` sul progetto `ohana`, ramo `main`.
+
+Requisiti: `npx wrangler login` già fatto e segreti del Worker già salvati (passo 4). I segreti restano in Cloudflare e non vengono toccati dallo script; nel repo non finisce nulla di sensibile.
+
+Se la PWA installata mostra ancora la versione vecchia dopo un rilascio, chiudila e riaprila: il service worker si aggiorna al riavvio.
+
+### 8. Accesso: link ed email di Supabase
+Il login manda un link e un codice numerico (6–10 cifre, a seconda di `otp_length`). Il codice serve nella PWA installata, dove il link si aprirebbe nel browser. Perché arrivi nell'email, il template in *Authentication → Email Templates* (**Magic Link** e **Confirm signup**) deve contenere `{{ .Token }}`. Un template pronto, con logo, è in `supabase/templates/accesso.html`: copialo nei due template. In *URL Configuration* imposta *Site URL* e *Redirect URLs* sul dominio di Pages.
 
 ## Funzioni v2
 

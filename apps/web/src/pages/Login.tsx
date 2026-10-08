@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { sendMagicLink, signInWithGoogle } from '../lib/api/auth';
+import { LoginCodeForm } from './login/LoginCodeForm';
 
 export function LoginForm({ redirectTo, defaultEmail = '' }: { redirectTo?: string; defaultEmail?: string }) {
   const [email, setEmail] = useState(defaultEmail);
@@ -31,8 +32,11 @@ export function LoginForm({ redirectTo, defaultEmail = '' }: { redirectTo?: stri
 
   if (sent) {
     return (
-      <div className="banner" role="status">
-        Link inviato a <strong>{email}</strong>. Aprilo da questo dispositivo per entrare.
+      <div className="stack">
+        <div className="banner" role="status">
+          Link inviato a <strong>{email}</strong>. Aprilo da questo dispositivo per entrare.
+        </div>
+        <LoginCodeForm email={email} />
       </div>
     );
   }
@@ -78,7 +82,7 @@ export function LoginPage() {
       <div className="actions">
         <LoginForm />
         <p className="muted" style={{ fontSize: 13, textAlign: 'center' }}>
-          Niente password: ti mandiamo un link via email.
+          Niente password: ti mandiamo un link e un codice via email.
         </p>
       </div>
     </div>
