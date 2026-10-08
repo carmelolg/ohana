@@ -11,6 +11,7 @@ import { FeaturesSection } from './space-settings/FeaturesSection';
 import { InvitesSection } from './space-settings/InvitesSection';
 import { LookSection } from './space-settings/LookSection';
 import { MembersSection } from './space-settings/MembersSection';
+import { useFollowSelectedSpace } from './space-settings/useFollowSelectedSpace';
 import { useSpaceAction } from './space-settings/useSpaceAction';
 
 /** Gestione di uno spazio: aspetto, persone, bacheca, categorie, inviti, eliminazione. */
@@ -20,6 +21,7 @@ export function SpaceSettingsPage() {
   const dialog = useDialog();
   const nav = useNavigate();
   const { run, refresh } = useSpaceAction();
+  useFollowSelectedSpace(id);
   const space = spaceById(id);
   const role = myRole(id);
   if (!space) {
@@ -43,7 +45,8 @@ export function SpaceSettingsPage() {
   }
 
   return (
-    <div style={{ ['--space' as string]: spaceColor(space.color_hue) }}>
+    // key = id: cambiando spazio le sezioni si rimontano, così nomi e interruttori non restano quelli del precedente
+    <div key={id} style={{ ['--space' as string]: spaceColor(space.color_hue) }}>
       <BackLink to="/oggi" label="Indietro" history />
       <h2 className="page-title">{space.name}</h2>
       <p className="muted">Il tuo ruolo: {role ? ROLE_LABEL[role] : '—'}</p>
