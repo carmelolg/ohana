@@ -11,7 +11,7 @@ Tutto gira su piani gratuiti: Supabase (database, login), Cloudflare Pages (sito
    npx supabase db push
    ```
    Ogni migrazione nuova (`supabase/migrations/`) va applicata con lo stesso `db push`. La sezione Cura aggiunge `0015`–`0017`: vanno applicate **prima** di pubblicare l'app, altrimenti le schermate di Cura danno errori di colonna o tabella mancante.
-3. **Authentication → URL Configuration**: *Site URL* = dominio di Pages (es. `https://ohana-1ia.pages.dev`); in *Redirect URLs* aggiungi `https://<dominio>/**`.
+3. **Authentication → URL Configuration**: *Site URL* = dominio dell'app (`https://ohanapp.org`); in *Redirect URLs* aggiungi `https://ohanapp.org/**` (e, finché serve, `https://ohana-1ia.pages.dev/**`).
 4. **Email SMTP** (passo 3a).
 5. Copia da **Project Settings → API**: *Project URL*, chiave `anon` (frontend) e `service_role` (solo Worker, mai nel frontend).
 
@@ -98,6 +98,15 @@ Il routing della SPA è gestito da `apps/web/public/_redirects`.
 Se preferisci il collegamento Git: *Workers & Pages → Create → Pages → Connect to Git*, build `pnpm install && pnpm --filter @ohana/web build`, output `apps/web/dist`, le stesse variabili `VITE_*` e `NODE_VERSION=20`.
 
 Il progetto Pages è quello di nome `ohana` (sottodominio `ohana-1ia.pages.dev`, se `ohana.pages.dev` era già preso).
+
+### Dominio personalizzato (`ohanapp.org`)
+1. **Cloudflare → Workers & Pages → `ohana` → Custom domains → Set up a custom domain** → `ohanapp.org`. Se il dominio è registrato altrove, prima *Add a site* in Cloudflare e sposta i nameserver da quelli che indica. Certificato HTTPS e record DNS li crea Cloudflare.
+2. Facoltativo, `www`: aggiungi anche `www.ohanapp.org` come dominio personalizzato e, sulla zona, una *Redirect Rule* da `www.ohanapp.org/*` a `https://ohanapp.org/${1}` (301).
+3. Quando il dominio risulta *Active*: Supabase (passo 1.3: *Site URL* e *Redirect URLs*) e `APP_URL` in `apps/worker/wrangler.toml`, poi `pnpm run release:worker`. `APP_URL` costruisce i link nelle email e nelle notifiche, ed è l'unica origine ammessa dal Worker per le richieste dal browser (CORS).
+4. Incolla di nuovo `supabase/templates/accesso.html` nei template Supabase (Magic Link e Confirm signup): il logo punta al nuovo dominio.
+5. Le app già installate da `ohana-1ia.pages.dev` non si spostano: un dominio diverso è un'origine diversa. Vanno reinstallate dal nuovo indirizzo, con nuovo login e nuovo consenso alle notifiche.
+
+Se il progetto Pages è collegato a GitHub, ogni `git push` crea una build automatica che non trova le variabili `VITE_*` e pubblica una pagina vuota, che copre il rilascio fatto con lo script. Disattivala: *Settings → Builds & deployments → Automatic deployments → Disabled*.
 
 ## 6. Backup settimanale (facoltativo)
 

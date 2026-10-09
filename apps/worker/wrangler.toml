@@ -13,7 +13,7 @@ globs = ["**/*.html"]
 fallthrough = true
 
 [vars]
-APP_URL = "https://ohana-1ia.pages.dev"      # dominio di Cloudflare Pages
+APP_URL = "https://ohanapp.org"               # dominio dell'app (Cloudflare Pages): link nelle email e CORS
 WORKER_URL = "https://ohana-worker.carmelolagamba-cs.workers.dev"
 MAIL_PROVIDER = "gmail"                       # "gmail" oppure "resend"
 MAIL_FROM = "carmelolagamba90@gmail.com"       # con Gmail deve essere il tuo indirizzo Gmail
