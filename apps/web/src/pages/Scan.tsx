@@ -3,6 +3,7 @@ import { useSpace } from '../lib/data';
 import { useToast } from '../lib/toast';
 import { ReadFields, SaveOptions } from './scan/ConfirmStep';
 import { PickStep, ReadingStep } from './scan/PickStep';
+import { CareReportOption } from './scan/CareReportOption';
 import { Preview, TextDump } from './scan/Preview';
 import { useScanActions } from './scan/useScanActions';
 import { useScanForm } from './scan/useScanForm';
@@ -82,6 +83,7 @@ export default function ScanPage() {
           )}
 
           <SaveOptions form={form} memberCount={memberIds.length} />
+          <CareReportOption form={form} text={reader.text} />
           <button className="btn" style={{ width: '100%', marginTop: 22 }} onClick={save} disabled={!canSave}>
             {busy ? 'Salvo…' : 'Salva'}
           </button>

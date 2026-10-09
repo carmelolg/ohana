@@ -132,7 +132,9 @@ class Query implements PromiseLike<{ data: unknown; error: { message: string } |
             ? ['user_id', 'day']
             : this.table === 'digest_log'
               ? ['user_id', 'day', 'kind']
-              : null;
+              : this.table === 'care_dose_log'
+                ? ['medication_id', 'day', 'slot']
+                : null;
         if (key && incoming.some((n) => rows.some((r) => key.every((k) => r[k] === n[k])))) {
           return { data: null, error: { message: 'duplicate key' } };
         }

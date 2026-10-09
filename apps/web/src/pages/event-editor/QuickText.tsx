@@ -1,4 +1,3 @@
-import { Mic } from 'lucide-react';
 import type { Token } from '@ohana/shared';
 
 /** Il testo con i frammenti riconosciuti (data, ora, @nome…) evidenziati sotto la textarea. */
@@ -33,11 +32,13 @@ interface QuickTextProps {
   isNew: boolean;
   isChore: boolean;
   readOnly: boolean;
+  /** Il titolo manca: il campo si evidenzia in rosso. */
+  invalid?: boolean;
   onChange: (text: string) => void;
 }
 
 /** Campo di testo libero con evidenziazione di ciò che l'app ha capito. */
-export function QuickText({ text, tokens, isNew, isChore, readOnly, onChange }: QuickTextProps) {
+export function QuickText({ text, tokens, isNew, isChore, readOnly, invalid, onChange }: QuickTextProps) {
   const placeholder = !isNew
     ? 'Titolo'
     : isChore
@@ -54,41 +55,9 @@ export function QuickText({ text, tokens, isNew, isChore, readOnly, onChange }: 
         rows={Math.max(3, Math.ceil(text.length / 28))}
         value={text}
         readOnly={readOnly}
+        aria-invalid={invalid || undefined}
         onChange={(e) => onChange(e.target.value)}
       />
-    </div>
-  );
-}
-
-interface DictationProps {
-  listening: boolean;
-  onToggle: () => void;
-}
-
-/** Pulsante microfono per dettare l'impegno. */
-export function DictationButton({ listening, onToggle }: DictationProps) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 14,
-        padding: '26px 0 10px',
-      }}
-    >
-      <button
-        type="button"
-        className={'mic' + (listening ? ' on' : '')}
-        onClick={onToggle}
-        aria-label={listening ? 'Ferma dettatura' : 'Detta l’impegno'}
-        aria-pressed={listening}
-      >
-        <Mic size={26} strokeWidth={1.75} />
-      </button>
-      <span className="muted" style={{ fontSize: 13 }}>
-        {listening ? 'Sto ascoltando…' : 'Tocca per dettare'}
-      </span>
     </div>
   );
 }

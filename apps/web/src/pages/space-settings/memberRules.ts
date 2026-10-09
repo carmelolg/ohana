@@ -1,9 +1,9 @@
 import type { SpaceRole } from '@ohana/shared';
 
-export const ALL_ROLES: SpaceRole[] = ['owner', 'admin', 'member', 'viewer'];
-const ASSIGNABLE_BY_ADMIN: SpaceRole[] = ['member', 'viewer'];
+export const ALL_ROLES: SpaceRole[] = ['owner', 'admin', 'member', 'viewer', 'care_viewer'];
+const ASSIGNABLE_BY_ADMIN: SpaceRole[] = ['member', 'viewer', 'care_viewer'];
 
-/** Il proprietario può cambiare chiunque; un amministratore solo membri e osservatori. */
+/** Il proprietario può cambiare chiunque; un amministratore solo membri, osservatori e chi consulta solo la Cura. */
 export function canEditMember(myRole: SpaceRole | undefined, memberRole: SpaceRole): boolean {
   return myRole === 'owner' || (myRole === 'admin' && ASSIGNABLE_BY_ADMIN.includes(memberRole));
 }

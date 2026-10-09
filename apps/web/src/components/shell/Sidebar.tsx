@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   CalendarDays,
+  HeartPulse,
   Home,
   Plus,
   Settings as Cog,
@@ -11,12 +12,14 @@ import {
 } from 'lucide-react';
 import type { SpaceFeature } from '@ohana/shared';
 import { spaceColor } from '../../lib/color';
-import { useFeatures, useSpace } from '../../lib/data';
+import { useFeatures, useScopedRecipients, useSpace } from '../../lib/data';
+import { careName } from '@ohana/shared';
 
 const LINKS: { to: string; label: string; Icon: LucideIcon; feature?: SpaceFeature }[] = [
   { to: '/oggi', label: 'Oggi', Icon: Home },
   { to: '/calendario', label: 'Calendario', Icon: CalendarDays },
   { to: '/spesa', label: 'Spesa', Icon: ShoppingBasket, feature: 'spesa' },
+  { to: '/cura', label: 'Cura', Icon: HeartPulse, feature: 'cura' },
   { to: '/rubrica', label: 'Rubrica', Icon: Users },
   { to: '/spese', label: 'Spese', Icon: Wallet, feature: 'spese' },
   { to: '/impostazioni', label: 'Impostazioni', Icon: Cog },
@@ -28,6 +31,7 @@ const ACTIVE = { background: 'var(--surface)', fontWeight: 600 };
 export function Sidebar({ onSpaces }: { onSpaces: () => void }) {
   const { spaces, selected, setSelected } = useSpace();
   const isOn = useFeatures();
+  const people = useScopedRecipients();
   return (
     <aside className="sidebar" aria-label="Navigazione">
       {LINKS.filter((l) => !l.feature || isOn(l.feature)).map(({ to, label, Icon }) => (
@@ -36,6 +40,17 @@ export function Sidebar({ onSpaces }: { onSpaces: () => void }) {
           {label}
         </NavLink>
       ))}
+      {people.length > 0 && (
+        <>
+          <div className="label side-sep">Persone assistite</div>
+          {people.map((p) => (
+            <NavLink key={p.id} className="side-link" to={`/cura/${p.id}`}>
+              <HeartPulse size={20} strokeWidth={1.75} />
+              {careName(p)}
+            </NavLink>
+          ))}
+        </>
+      )}
       <div className="label side-sep">Spazi</div>
       <button
         className="side-link"

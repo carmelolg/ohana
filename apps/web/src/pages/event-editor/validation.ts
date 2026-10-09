@@ -6,10 +6,12 @@ interface Checked {
   spaceId: string;
 }
 
+export const TITLE_REQUIRED = 'Scrivi un titolo';
+
 /** Messaggio per l'utente se manca qualcosa di indispensabile, altrimenti `null`. */
 export function validateEvent({ title, isChore, assigneeId, startsAt, spaceId }: Checked): string | null {
   if (!title) {
-    return 'Scrivi un titolo';
+    return TITLE_REQUIRED;
   }
   if (isChore && !assigneeId) {
     return 'Una faccenda deve essere assegnata a una persona';

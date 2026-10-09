@@ -15,6 +15,7 @@ import {
   useSpace,
 } from '../lib/data';
 import type { DocumentRow, Maintenance, Procedure } from '../lib/types';
+import { CareCard } from '../components/care/CareCard';
 
 const DAY_MONTH = new Intl.DateTimeFormat('it-IT', {
   timeZone: 'Europe/Rome',
@@ -132,6 +133,7 @@ export function MorePage() {
             state={maintenanceState(soon.length, dues[0])}
           />
         )}
+        {isOn('cura') && <CareCard />}
         <Card to="/rubrica" title="Rubrica" sub="Medici, idraulico, amministratore" />
         {isOn('spese') && (
           <Card

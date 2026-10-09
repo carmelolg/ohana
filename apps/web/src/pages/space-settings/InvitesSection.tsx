@@ -13,7 +13,7 @@ import { useToast } from '../../lib/toast';
 import type { Space } from '../../lib/types';
 import { useSpaceAction } from './useSpaceAction';
 
-const INVITABLE_ROLES: SpaceRole[] = ['admin', 'member', 'viewer'];
+const INVITABLE_ROLES: SpaceRole[] = ['admin', 'member', 'viewer', 'care_viewer'];
 
 interface RowProps {
   invite: SpaceInvite;

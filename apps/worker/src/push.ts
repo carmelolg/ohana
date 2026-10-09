@@ -7,6 +7,11 @@ export interface PushMessage {
   url: string;
   tag?: string;
   data?: { doneUrl?: string; snoozeUrl?: string };
+  /**
+   * Pulsanti della notifica. Senza, il service worker mostra «Fatto» e «Rimanda 1 h», che hanno senso solo per i promemoria
+   * di un impegno: per riepiloghi, bacheca e terapie si passa `[]`, altrimenti i pulsanti non farebbero nulla.
+   */
+  actions?: { action: string; title: string }[];
 }
 
 export class GoneError extends Error {}

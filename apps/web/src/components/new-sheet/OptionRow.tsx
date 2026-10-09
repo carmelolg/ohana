@@ -1,8 +1,11 @@
 import { findMaintenanceTemplate, findProcedureTemplate, type ParsedEvent } from '@ohana/shared';
 import type { Option } from './options';
 
+/** Una voce del «+»: quelle di sistema hanno un `kind` del parser, quelle di Cura ne hanno uno proprio. */
+export type RowOption = Pick<Option, 'badge' | 'title' | 'sub'> & { kind: string };
+
 /** Nome del modello capito dal testo, per le voci che ne hanno (manutenzione, pratica). */
-function templateTitle(option: Option, parsed: ParsedEvent | null): string | null {
+function templateTitle(option: RowOption, parsed: ParsedEvent | null): string | null {
   if (option.kind === 'manutenzione') {
     return findMaintenanceTemplate(parsed?.templateKey)?.title ?? null;
   }
@@ -13,7 +16,7 @@ function templateTitle(option: Option, parsed: ParsedEvent | null): string | nul
 }
 
 interface Props {
-  option: Option;
+  option: RowOption;
   /** È la voce che il testo libero suggerisce. */
   recommended: boolean;
   parsed: ParsedEvent | null;

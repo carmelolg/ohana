@@ -18,7 +18,11 @@ async function spaceIdsOfFeed(db: Db, feed: { user_id: string; space_id: string 
   if (feed.space_id) {
     return [feed.space_id];
   }
-  const { data } = await db.from('space_members').select('space_id').eq('user_id', feed.user_id);
+  const { data } = await db
+    .from('space_members')
+    .select('space_id')
+    .eq('user_id', feed.user_id)
+    .neq('role', 'care_viewer'); // chi consulta solo la Cura non vede gli impegni dello spazio
   return (data ?? []).map((m) => m.space_id as string);
 }
 

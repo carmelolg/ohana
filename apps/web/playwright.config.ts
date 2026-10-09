@@ -18,7 +18,9 @@ export default defineConfig({
   webServer: [
     { command: 'pnpm dev', url: 'http://localhost:5173', reuseExistingServer: true, timeout: 60_000 },
     {
-      command: 'pnpm build && pnpm preview --port 4173 --strictPort',
+      // `--mode e2e`: non legge `.env.production` (che punta al progetto online) ma `.env.local`, cioè il Supabase locale
+      command:
+        'node scripts/copy-ocr-assets.mjs && vite build --mode e2e && vite preview --mode e2e --port 4173 --strictPort',
       url: 'http://localhost:4173',
       reuseExistingServer: true,
       timeout: 180_000,

@@ -5,6 +5,7 @@ export const SPACE_FEATURES = [
   { key: 'manutenzioni', label: 'Manutenzioni', hint: 'Caldaia, gomme, revisioni' },
   { key: 'pratiche', label: 'Pratiche', hint: 'ISEE, 730, rinnovi con passaggi' },
   { key: 'documenti', label: 'Documenti', hint: 'Archivio e scansione di bollette e referti' },
+  { key: 'cura', label: 'Cura', hint: 'Persone assistite, terapie, visite e parametri' },
 ] as const;
 
 export type SpaceFeature = (typeof SPACE_FEATURES)[number]['key'];
@@ -30,4 +31,17 @@ export const featureOn = (spaces: WithDisabled[], feature: SpaceFeature): boolea
 export function toggleFeature(disabled: string[], feature: SpaceFeature, on: boolean): string[] {
   const rest = disabled.filter((f) => f !== feature);
   return on ? rest : [...rest, feature];
+}
+
+/**
+ * Come `featureOn`, ma tiene conto del ruolo: chi in uno spazio è `care_viewer` ci vede solo la Cura, quindi quello
+ * spazio non conta per le altre funzioni. Se tutti gli spazi della vista sono così, la funzione è spenta.
+ */
+export function featureOnForRoles<S extends WithDisabled & { id: string }>(
+  spaces: S[],
+  feature: SpaceFeature,
+  roleOf: (spaceId: string) => string | undefined,
+): boolean {
+  const usable = feature === 'cura' ? spaces : spaces.filter((s) => roleOf(s.id) !== 'care_viewer');
+  return spaces.length > 0 && usable.length === 0 ? false : featureOn(usable, feature);
 }

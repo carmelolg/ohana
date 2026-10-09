@@ -27,7 +27,7 @@ async function claimNote(db: Db, id: string, now: Date): Promise<boolean> {
 
 async function notifyMembers(env: Env, db: Db, note: BoardNote): Promise<number> {
   const [{ data: members }, { data: author }] = await Promise.all([
-    db.from('space_members').select('user_id').eq('space_id', note.space_id),
+    db.from('space_members').select('user_id').eq('space_id', note.space_id).neq('role', 'care_viewer'), // chi consulta solo la Cura non vede la bacheca
     db.from('profiles').select('first_name, nickname').eq('id', note.author_id).maybeSingle(),
   ]);
   const who = (author && shortName(author)) || 'Qualcuno';
@@ -36,6 +36,7 @@ async function notifyMembers(env: Env, db: Db, note: BoardNote): Promise<number>
     body: `${who}: ${note.text}`.slice(0, MAX_BODY_LENGTH),
     url: '/oggi',
     tag: `board-${note.id}`,
+    actions: [],
     data: {},
   };
   let sent = 0;

@@ -144,6 +144,22 @@ describe('enqueue', () => {
     expect(rows.map((r) => r.event_id)).toEqual(['e1']); // quello di un impegno scomparso è stato tolto
     expect(rows[0]).toMatchObject({ user_id: 'u1', channel: 'email', send_at: '2026-10-08T08:00:00.000Z' });
   });
+  it('chi consulta solo la Cura (care_viewer) non riceve i promemoria degli impegni', async () => {
+    current = new FakeDb({
+      events: [event()],
+      space_members: [
+        { ...member, role: 'member' },
+        {
+          space_id: 's1',
+          role: 'care_viewer',
+          profiles: { id: 'u2', notify_email: true, morning_brief: false },
+        },
+      ],
+      push_subscriptions: [],
+    });
+    expect(await enqueue(env, now)).toBe(1);
+    expect(current.rows('reminder_queue').map((r) => r.user_id)).toEqual(['u1']);
+  });
   it('legge oltre 1000 righe (paginazione)', async () => {
     const many = Array.from({ length: 1200 }, (_, i) =>
       event({ id: `e${i}`, starts_at: '2026-10-20T10:00:00Z' }),

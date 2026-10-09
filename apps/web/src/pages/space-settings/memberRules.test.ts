@@ -6,12 +6,14 @@ describe('regole sulle persone di uno spazio', () => {
     expect(canEditMember('owner', 'owner')).toBe(true);
     expect(canEditMember('admin', 'member')).toBe(true);
     expect(canEditMember('admin', 'admin')).toBe(false);
+    expect(canEditMember('admin', 'care_viewer')).toBe(true);
     expect(canEditMember('member', 'viewer')).toBe(false);
     expect(canEditMember(undefined, 'viewer')).toBe(false);
   });
   it('ruoli assegnabili', () => {
     expect(assignableRoles('owner')).toContain('owner');
-    expect(assignableRoles('admin')).toEqual(['member', 'viewer']);
+    expect(assignableRoles('admin')).toEqual(['member', 'viewer', 'care_viewer']);
+    expect(assignableRoles('owner')).toContain('care_viewer');
   });
   it('testi della conferma', () => {
     expect(leaveDialog(true).confirmLabel).toBe('Esci');

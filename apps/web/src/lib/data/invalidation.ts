@@ -3,7 +3,7 @@
  * È usata sia dopo una scrittura locale (`useMutate`) sia dagli eventi realtime (`useRealtimeSync`).
  */
 export const TABLE_KEYS: Record<string, string[]> = {
-  events: ['events', 'event', 'maintenances'], // le manutenzioni incorporano i loro eventi (prossima scadenza)
+  events: ['events', 'event', 'maintenances', 'care'], // le manutenzioni incorporano i loro eventi (prossima scadenza)
   event_reminders: ['events', 'event'],
   event_checklist_items: ['events', 'event'],
   shopping_items: ['shopping'],
@@ -24,12 +24,22 @@ export const TABLE_KEYS: Record<string, string[]> = {
   documents: ['documents'],
   attachments: ['events', 'event', 'documents', 'procedures'],
   category_feedback: ['feedback'],
+  care_recipients: ['care'],
+  care_threads: ['care'],
+  care_entries: ['care'],
+  care_files: ['care'],
+  medications: ['care'],
+  medication_doses: ['care'],
+  measurements: ['care'],
+  visit_prep: ['care'],
+  visit_questions: ['care'],
+  care_audit: ['care'],
   space_members: ['spaces'],
   profiles: ['spaces'],
 };
 
 /** Tabelle che invalidano le query dopo una scrittura ma non sono nella pubblicazione realtime (nessun bisogno di aggiornamenti live). */
-export const NOT_REALTIME = new Set(['category_feedback']);
+export const NOT_REALTIME = new Set(['category_feedback', 'care_audit']);
 
 /** Tabelle da ascoltare in realtime: DEVONO stare nella pubblicazione `supabase_realtime`, altrimenti l'intera sottoscrizione fallisce in silenzio. */
 export const REALTIME_TABLES = Object.keys(TABLE_KEYS).filter((t) => !NOT_REALTIME.has(t));

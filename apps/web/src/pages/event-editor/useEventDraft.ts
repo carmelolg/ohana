@@ -30,7 +30,7 @@ export function draftFromEvent(e: EventRow) {
  * Bozza dell'impegno in modifica: tutti i campi che l'utente può toccare, più le aperture opzionali (luogo, checklist).
  * Non conosce regole né salvataggio: quelle stanno in `useEventForm`.
  */
-export function useEventDraft(existing: EventRow | null, initialText: string) {
+export function useEventDraft(existing: EventRow | null, initialText: string, initialCareThread = '') {
   const [text, setText] = useState(initialText);
   const [overrides, setOverrides] = useState<Overrides>({});
   const [location, setLocation] = useState<LocationValue>(NO_LOCATION);
@@ -41,6 +41,8 @@ export function useEventDraft(existing: EventRow | null, initialText: string) {
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
   const [showChecklist, setShowChecklist] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
+  /** Filone di cura (vuoto = nessuno): può arrivare già scelto dall'indirizzo, aprendo «+ Impegno» da un filone. */
+  const [careThreadId, setCareThreadId] = useState(initialCareThread);
 
   // carica l'impegno esistente nello stato di modifica
   useEffect(() => {
@@ -57,6 +59,7 @@ export function useEventDraft(existing: EventRow | null, initialText: string) {
     setEditedReminders(d.reminders);
     setChecklist(d.checklist);
     setShowChecklist(d.checklist.length > 0);
+    setCareThreadId(existing.care_thread_id ?? '');
   }, [existing]);
 
   return {
@@ -79,6 +82,8 @@ export function useEventDraft(existing: EventRow | null, initialText: string) {
     setChecklist,
     showChecklist,
     openChecklist: () => setShowChecklist(true),
+    careThreadId,
+    setCareThreadId,
     files,
     addFiles: (added: File[]) => setFiles((l) => [...l, ...added]),
     removeFile: (index: number) => setFiles((l) => l.filter((_, j) => j !== index)),

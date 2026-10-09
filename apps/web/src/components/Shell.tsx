@@ -29,6 +29,8 @@ export function Shell() {
     [current],
   );
   const fullScreen = isFullScreenFlow(pathname);
+  // la sezione Cura usa tutta la larghezza (filoni affiancati e colonna laterale propria)
+  const wide = pathname.startsWith('/cura');
 
   return (
     <div className="app" style={spaceStyle}>
@@ -42,7 +44,7 @@ export function Shell() {
       <div className="app-body">
         <Sidebar onSpaces={() => setOverlay('spaces')} />
         <div className="center">
-          <main className="main">
+          <main className={'main' + (wide ? ' wide' : '')}>
             <Suspense
               fallback={
                 <div className="empty" role="status">
@@ -54,7 +56,7 @@ export function Shell() {
             </Suspense>
           </main>
         </div>
-        <RightColumn />
+        {!wide && <RightColumn />}
       </div>
       {!fullScreen && <TabBar onCreate={() => setOverlay('new')} />}
       {overlay === 'new' && <NewSheet onClose={close} />}

@@ -1,5 +1,6 @@
 import type { Env } from './env';
 import { sendBoardPushes } from './jobs/board-push';
+import { sendDoseReminders } from './jobs/care-doses';
 import { sendChoreDigests } from './jobs/chore-digest';
 import { dispatch } from './jobs/dispatch';
 import { enqueue } from './jobs/enqueue';
@@ -14,6 +15,7 @@ const JOBS: Job[] = [
   ['brief', sendBriefs],
   ['chores', sendChoreDigests],
   ['board', sendBoardPushes],
+  ['dosi', sendDoseReminders],
 ];
 
 /** Un giro di cron (ogni 5 minuti): accoda, invia e prepara i riepiloghi. */

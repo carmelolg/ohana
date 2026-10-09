@@ -93,6 +93,8 @@ export interface EventRow {
   kind: 'appuntamento' | 'faccenda';
   last_done_at: string | null;
   maintenance_id: string | null;
+  care_thread_id: string | null;
+  medication_id: string | null;
   created_by: string;
   event_reminders: Reminder[];
   event_checklist_items: ChecklistItem[];
@@ -229,3 +231,5 @@ export interface DocumentRow {
   created_at: string;
   attachments: { path: string; name: string } | null;
 }
+
+export * from './types-care';

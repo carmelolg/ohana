@@ -101,6 +101,7 @@ export function useMapPicker({ initial, onCancel, onUserMove }: Args) {
   const [picked, setPicked] = useState<LocationValue>(initial);
   const start = useMemo(() => startView(initial), []); // eslint-disable-line react-hooks/exhaustive-deps
   const reverse = useReverseAddress(setPicked);
+  const [tilesBroken, setTilesBroken] = useState(false);
 
   const flyTo = (p: LatLng, zoom = DETAIL_ZOOM) => {
     programmaticMoves.current++;
@@ -138,6 +139,7 @@ export function useMapPicker({ initial, onCancel, onUserMove }: Args) {
         el.current,
         { zoomControl: false, attributionControl: true },
         { ...start.center, zoom: start.zoom },
+        setTilesBroken,
       );
       if (disposed) {
         map.remove();
@@ -177,6 +179,7 @@ export function useMapPicker({ initial, onCancel, onUserMove }: Args) {
     setPicked,
     here: user.here,
     note: user.note,
+    tilesBroken,
     flyTo,
     locate: user.locate,
     /** Cosa guarda la mappa adesso (prima che esista: la vista di partenza). */

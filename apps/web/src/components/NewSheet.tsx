@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { parseQuick, type ParsedKind } from '@ohana/shared';
 import { fullName } from '../lib/color';
-import { useFeatures, useSpace } from '../lib/data';
+import { useCareThreads, useFeatures, useSpace } from '../lib/data';
+import type { CareRecipient } from '../lib/types';
+import { RecordSheet } from './care/RecordSheet';
+import { CareRecordOptions } from './new-sheet/CareRecordOptions';
 import { useToast } from '../lib/toast';
 import { useVoice } from '../lib/voice';
 import { NoteComposer } from './NoteComposer';
@@ -38,6 +41,8 @@ export function NewSheet({ onClose }: { onClose: () => void }) {
   const isOn = useFeatures();
   const [text, setText] = useState('');
   const [noteText, setNoteText] = useState<string | null>(null);
+  const [recordFor, setRecordFor] = useState<CareRecipient | null>(null);
+  const { data: careThreads = [] } = useCareThreads();
   const voice = useVoice((spoken) => setText((t) => (t ? t.trimEnd() + ' ' : '') + spoken));
 
   const parsed = useMemo(() => (text.trim() ? parseQuick(text, new Date(), ctx) : null), [text, ctx]);
@@ -61,6 +66,15 @@ export function NewSheet({ onClose }: { onClose: () => void }) {
   if (noteText !== null) {
     return <NoteComposer initialText={noteText} onClose={onClose} />;
   }
+  if (recordFor) {
+    return (
+      <RecordSheet
+        recipient={recordFor}
+        threads={careThreads.filter((t) => t.recipient_id === recordFor.id)}
+        onClose={onClose}
+      />
+    );
+  }
   return (
     <Sheet onClose={onClose} label="Cosa vuoi creare?">
       <PromptBar
@@ -80,6 +94,7 @@ export function NewSheet({ onClose }: { onClose: () => void }) {
             onPick={() => go(option.kind)}
           />
         ))}
+        <CareRecordOptions onPick={setRecordFor} />
       </div>
       <p className="muted" style={{ fontSize: 12, textAlign: 'center', paddingTop: 14 }}>
         Il testo libero capisce da solo cosa stai creando.

@@ -2,8 +2,14 @@ import { ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useBack } from '../lib/nav';
 
-/** Freccia «‹ Altro» per le sottopagine su mobile (su desktop c'è la barra laterale). */
-export function BackLink({ to, label, history = false }: { to: string; label: string; history?: boolean }) {
+interface BackLinkProps {
+  to: string;
+  label: string;
+  history?: boolean;
+}
+
+/** Freccia «‹ Altro» per tornare dalla sottopagina alla funzione principale, su mobile e su desktop. */
+export function BackLink({ to, label, history = false }: BackLinkProps) {
   const back = useBack(to);
   const content = (
     <>

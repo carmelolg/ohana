@@ -2,16 +2,19 @@ import { useRef } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
 import { formatDay, formatTime } from '@ohana/shared';
+import { FormError } from '../components/FormError';
 import { LocationField } from '../components/LocationField';
 import { VisitDiary } from '../components/VisitDiary';
+import { VisitCareLink, VisitCareOutcome } from '../components/care/VisitCarePanel';
 import { spaceColor } from '../lib/color';
-import { useMutate, useSpace } from '../lib/data';
+import { useMutate, useSpace, useSpaceRecipients } from '../lib/data';
 import { useDialog } from '../lib/dialog';
 import { useEventActions } from '../lib/eventActions';
 import { AttachmentList } from './event-editor/AttachmentList';
 import { ChecklistField } from './event-editor/ChecklistField';
 import { EventFields } from './event-editor/EventFields';
-import { DictationButton, QuickText } from './event-editor/QuickText';
+import { QuickText } from './event-editor/QuickText';
+import { TITLE_REQUIRED } from './event-editor/validation';
 import { AmountField, EditorHeader, KindSwitch, NotesField } from './event-editor/sections';
 import { useEventForm, type EventForm } from './event-editor/useEventForm';
 
@@ -41,18 +44,14 @@ function EventEditorScreen() {
   return (
     <div style={{ ['--space' as string]: spaceColor(space?.color_hue) }}>
       <EditorHeader form={form} />
+      <FormError message={form.error} />
       {existing?.categories?.slug === 'visita' && existing.status === 'done' && (
         <CompletedVisit form={form} />
       )}
+      {existing?.categories?.slug === 'visita' && <VisitCareLink ev={existing} />}
       {!writable && <p className="banner warn">Hai accesso in sola lettura a questo spazio.</p>}
       <EditorBody form={form} />
-      {form.error && (
-        <p className="error" role="alert" style={{ marginTop: 12 }}>
-          {form.error}
-        </p>
-      )}
       {existing && writable && <StatusActions form={form} />}
-      <DictationButton listening={form.listening} onToggle={form.toggleDictation} />
     </div>
   );
 }
@@ -69,6 +68,7 @@ function EditorBody({ form }: { form: EventForm }) {
         isNew={isNew}
         isChore={isChore}
         readOnly={!form.writable}
+        invalid={form.error === TITLE_REQUIRED}
         onChange={form.setText}
       />
       {isNew && (
@@ -110,6 +110,7 @@ function OptionalSections({ form }: { form: EventForm }) {
 function CompletedVisit({ form }: { form: EventForm }) {
   const { memberName } = useSpace();
   const { existing, space, writable } = form;
+  const hasCare = useSpaceRecipients(existing?.space_id).length > 0;
   if (!existing) {
     return null;
   }
@@ -134,7 +135,11 @@ function CompletedVisit({ form }: { form: EventForm }) {
             .join(' · ')}
         </span>
       </div>
-      <VisitDiary ev={existing} writable={writable} />
+      {hasCare ? (
+        <VisitCareOutcome ev={existing} writable={writable} />
+      ) : (
+        <VisitDiary ev={existing} writable={writable} />
+      )}
       <div className="label" style={{ margin: '28px 0 4px' }}>
         Dettagli dell’impegno
       </div>

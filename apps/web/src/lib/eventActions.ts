@@ -1,7 +1,7 @@
 import { doneActionPatch, snoozeActionPatch, startOfDayRome, type EventPatch } from '@ohana/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useMutate } from './data';
+import { useCareRecipients, useMutate } from './data';
 import { useToast } from './toast';
 import type { EventRow } from './types';
 
@@ -11,6 +11,7 @@ export function useEventActions() {
   const toast = useToast();
   const qc = useQueryClient();
   const nav = useNavigate();
+  const { data: recipients = [] } = useCareRecipients();
 
   const apply = async (ev: EventRow, patch: EventPatch) => {
     const optimistic = [
@@ -40,9 +41,14 @@ export function useEventActions() {
       await apply(ev, doneActionPatch(ev, new Date()));
       // visita conclusa → invito a scrivere «com'è andata»
       if (ev.categories?.slug === 'visita' && !ev.rrule) {
+        // in uno spazio con persone assistite l'esito diventa un tassello del filone (4c), altrimenti è il diario
+        const withCare = recipients.some((r) => r.space_id === ev.space_id);
         toast({
           msg: 'Visita conclusa',
-          action: { label: 'Com’è andata', run: () => nav(`/evento/${ev.id}`) },
+          action: {
+            label: 'Com’è andata',
+            run: () => nav(withCare ? `/cura/visita/${ev.id}` : `/evento/${ev.id}`),
+          },
         });
         return;
       }

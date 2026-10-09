@@ -1,0 +1,47 @@
+{
+  "_note": "Dati di esempio per sviluppo e test della sezione Cura. Nomi e valori fittizi.",
+  "care_recipients": [
+    {
+      "id": "cr_papa", "space": "Mamma e papà", "first_name": "Giorgio", "last_name": "Moretti", "label": "Papà",
+      "birth_date": "1945-02-14", "allergies": ["Penicillina"], "caregivers": ["luca", "francesca"],
+      "exemptions": [{ "code": "009", "label": "Morbo di Crohn", "expires_at": null }]
+    },
+    {
+      "id": "cr_mamma", "space": "Mamma e papà", "first_name": "Anna", "last_name": "Moretti", "label": "Mamma",
+      "birth_date": "1948-07-03", "allergies": [], "caregivers": ["chiara", "francesca"], "exemptions": []
+    }
+  ],
+  "care_threads": [
+    { "id": "th_cardio", "recipient": "cr_papa", "title": "Tachicardia", "specialty": "Cardiologia", "doctor": "Dott. Paolo Rossi", "color_hue": 20, "started_at": "2023-04-01", "status": "attivo",
+      "tracked_params": ["heart_rate", "blood_pressure"] },
+    { "id": "th_crohn", "recipient": "cr_papa", "title": "Morbo di Crohn", "specialty": "Gastroenterologia", "doctor": "Dott.ssa Marta Leoni", "color_hue": 195, "started_at": "2019-09-01", "status": "attivo",
+      "tracked_params": ["stools_per_day", "weight"] }
+  ],
+  "care_entries": [
+    { "thread": "th_cardio", "type": "esame", "date": "2026-03-12", "title": "ECG", "text": "Ritmo sinusale, FC 94.", "attachments": ["ECG.pdf"] },
+    { "thread": "th_cardio", "type": "terapia", "date": "2026-03-12", "title": "Bisoprololo da 1,25 a 2,5 mg", "text": "Deciso dal Dott. Rossi dopo ECG.", "medication_change": { "med": "med_biso", "from": "1,25 mg", "to": "2,5 mg" } },
+    { "thread": "th_cardio", "type": "episodio", "date": "2026-09-21", "title": "Palpitazioni dopo cena", "text": "Circa 20 minuti.", "values": { "heart_rate": 112 }, "author": "mamma" },
+    { "thread": "th_cardio", "type": "visita", "date": "2026-10-07", "title": "Controllo cardiologico", "text": "Pressione nella norma. Ridurre il sale. Holter entro dicembre.", "values": { "blood_pressure": "132/80" }, "author": "luca", "event_id": "ev_cardio_0710",
+      "follow_ups": [{ "title": "Holter 24 h", "due_date": "2026-12-31" }, { "title": "Controllo Dott. Rossi", "due_hint": "6 mesi" }] },
+    { "thread": "th_crohn", "type": "visita", "date": "2026-06-10", "title": "Controllo", "text": "Azatioprina confermata, controllo a 3-4 mesi." },
+    { "thread": "th_crohn", "type": "esame", "date": "2026-09-02", "title": "Esami del sangue e feci", "values": { "calprotectin_ugg": 320, "crp_mgdl": 0.9 } },
+    { "thread": "th_crohn", "type": "episodio", "date": "2026-09-03", "title": "Crisi intestinale", "text": "2 giorni.", "values": { "stools_per_day": 5 }, "author": "luca" }
+  ],
+  "medications": [
+    { "id": "med_biso", "recipient": "cr_papa", "thread": "th_cardio", "name": "Bisoprololo", "strength": "2,5 mg", "dose": "1 cpr", "schedule": ["08:00"], "stock_units": 21, "package_units": 28, "prescriber": "Dott. Rossi" },
+    { "id": "med_mesa", "recipient": "cr_papa", "thread": "th_crohn", "name": "Mesalazina", "strength": "800 mg", "dose": "2 cpr", "schedule": ["08:00", "20:00"], "stock_units": 24, "package_units": 100, "prescriber": "Dott.ssa Leoni", "refill_by": "Dott.ssa Neri (MMG)" },
+    { "id": "med_aza", "recipient": "cr_papa", "thread": "th_crohn", "name": "Azatioprina", "strength": "50 mg", "dose": "1 cpr", "schedule": ["13:00"], "stock_units": 28, "package_units": 50, "prescriber": "Dott.ssa Leoni",
+      "therapeutic_plan": { "expires_at": "2026-11-30", "issuer": "Gastroenterologia Osp. S. Maria" } },
+    { "id": "med_panto", "recipient": "cr_papa", "thread": null, "name": "Pantoprazolo", "strength": "20 mg", "dose": "1 cpr", "schedule": ["07:30"], "notes": "a digiuno", "stock_units": 12, "package_units": 28, "prescriber": "Dott.ssa Neri (MMG)" }
+  ],
+  "measurements": [
+    { "recipient": "cr_papa", "type": "heart_rate", "values": [[ "2026-08-10", 72 ], [ "2026-08-17", 70 ], [ "2026-08-31", 74 ], [ "2026-09-07", 69 ], [ "2026-09-21", 88 ], [ "2026-09-28", 71 ], [ "2026-10-05", 67 ], [ "2026-10-08", 68 ]] }
+  ],
+  "visit_prep": [
+    { "event_id": "ev_gastro_2810", "thread": "th_crohn", "date": "2026-10-28T11:00", "questions": [
+      { "text": "L'azatioprina va bene col bisoprololo?", "author": "francesca" },
+      { "text": "Si può ridurre il pantoprazolo?", "author": "chiara" },
+      { "text": "Serve ripetere la colonscopia?", "author": "luca" } ],
+      "bring": ["Tessera sanitaria", "Esami 2 set", "Elenco terapie", "Piano terapeutico"] }
+  ]
+}

@@ -1,0 +1,58 @@
+# Funzioni e comportamento
+
+Riferimento visivo: `ohana-v2-nuove-funzioni/Ohana Nuove Funzioni.dc.html` (schermate 3a–3h).
+
+## Schermate principali
+
+| Funzione | Dove | Note |
+|---|---|---|
+| Menu «+» | tab centrale · pulsante *Nuovo* · tasto `N` | un solo punto d'ingresso: Impegno, Faccenda, Scansiona documento, Pratica, Nota in bacheca. Il testo libero (anche a voce) riconosce il tipo: «caldaia ogni anno a novembre» → manutenzione, «plastica ogni giovedì @Francesca» → faccenda, «nota: …» → bacheca, «ISEE mamma» → pratica |
+| Faccende e bacheca | Oggi | una sola nota fissata in cima (le altre con «+N note»); blocco *Faccende* con filtro «solo le tue / tutte»; le non fatte passano a oggi come «rinviata» |
+| Altro | tab Altro | griglia di card con lo stato: Pratiche, Manutenzioni, Rubrica, Spese, Documenti, Emergenza; sotto Profilo, impostazioni, spazi e inviti |
+| Pratiche | Altro → Pratiche | modelli ISEE, 730, carta d'identità, patente, invalidità, residenza; passaggi, documenti richiesti, avanzamento, passaggio collegabile a un impegno |
+| Manutenzioni | Altro → Manutenzioni | modelli caldaia, gomme, filtri, revisione auto, estintore, grondaie, decalcificazione, canna fumaria; ultima volta e prossima scadenza |
+| Diario visite | impegno di categoria *Visita* segnato fatto | «Com'è andata», referto, ticket → Spese, prossimi passi → impegno o promemoria, storico con il medico |
+| Emergenza | Altro → Emergenza · shortcut `/emergenza` dell'icona app | 112 sempre primo; funziona senza rete |
+| Cura | Altro → Cura · «Registra per …» nel «+» · riga in Oggi · sezione nella barra laterale | persone assistite con più filoni di cura, linea del tempo, terapie con scorte e ricette, parametri ed episodi, preparazione delle visite e PDF per il medico: vedi sotto |
+| Documenti e scansione | «+» → Scansiona documento · Altro → Documenti | foto o PDF → OCR sul dispositivo → campi da confermare → scadenza, allegato, spesa divisa |
+
+Per l'OCR la prima scansione scarica il motore (circa 6 MB, servito da `/ocr`), poi resta sul dispositivo. Il fallback AI è opzionale: imposta `GEMINI_API_KEY` nel Worker (`wrangler secret put GEMINI_API_KEY`) e ogni utente lo attiva in *Impostazioni → Scansione documenti*. Viene inviato solo il testo letto, mai la foto.
+
+## Come funziona
+
+- **Funzioni per spazio**: *Impostazioni spazio → Funzioni* spegne ciò che in quello spazio non serve (Spesa, Spese, Manutenzioni, Pratiche, Documenti). Sparisce da menu, Altro, «+» e indirizzi; i dati restano. Esempio: nello spazio dei genitori da assistere la lista della spesa non serve. In «Tutti gli spazi» una funzione si vede se serve ad almeno uno spazio.
+- **Categorie**: ogni spazio ha le 6 predefinite più quelle che crei (*Impostazioni spazio → Categorie degli impegni*, oppure «＋ Nuova categoria…» nell'editor). Ogni categoria ha parole chiave che l'aggiunta rapida usa per riconoscerla («veterinario» → *Animali*). Eliminando una categoria, i suoi impegni passano ad *Altro*. Le sei predefinite si possono solo rinominare.
+- **Luogo e mappa**: «Scegli luogo sulla mappa» apre una mappa a tutto schermo con il segnaposto al centro. Trascinando la mappa l'indirizzo si aggiorna (geocodifica inversa). Puoi anche cercare: i suggerimenti sono vicini al punto che guardi, o alla tua posizione se consenti la geolocalizzazione. Si salvano testo e coordinate. Servizi: [Photon](https://photon.komoot.io) (dati OSM; non accetta `lang=it`) e tile di openstreetmap.org. Per molti utenti serve un servizio proprio o con chiave, vedi le [Tile Usage Policy](https://operations.osmfoundation.org/policies/tiles/). Offline resta il testo. Il controllo contro il servizio reale è opt-in: `PHOTON_LIVE=1 pnpm test:e2e photon-live`.
+- **Soprannome**: in *Impostazioni* puoi impostarlo; gli altri membri, le email e i promemoria mostrano quello invece di «Nome Cognome». Il nome completo resta nel tuo profilo.
+- **Isolamento**: ogni tabella ha RLS; chi è invitato in uno spazio vede solo quello. Policy e test in `supabase/`.
+- **Aggiunta rapida**: `parseQuick` (in `packages/shared`) riconosce `#spazio`, `@nome`, «domani alle 15», «il 12 novembre», «tra 3 giorni», «ogni mese», «ricordamelo 2 giorni prima».
+- **Promemoria**: il Worker espande le ricorrenze (RRULE, ora di Roma) per 60 giorni in `reminder_queue`, invia quelli scaduti con un «claim» atomico (`sent_at`) senza doppi invii, e ritira quelli non più validi.
+- **Ricorrenti**: «Fatto» su un impegno ricorrente sposta l'impegno alla prossima occorrenza; «Rimanda» vale solo per gli impegni singoli.
+- **Offline**: shell in precache, cache delle query in IndexedDB (ultime 4 settimane di impegni, più 62 giorni avanti), modifiche in coda (`apps/web/src/lib/outbox.ts`) inviate al ritorno online. Gli upload di allegati richiedono la rete.
+- **iOS**: le push funzionano solo con l'app aggiunta alla Home (iOS 16.4+); l'app lo spiega in *Impostazioni*.
+- **Feed ICS** (Google/Apple Calendar): gli aggiornamenti arrivano ogni 8–24 ore. La sincronizzazione bidirezionale non è inclusa.
+
+## Apprendimento delle categorie (Naive Bayes)
+
+Quando scrivi un impegno, la categoria si propone in due passi: prima le **regole** del parser (parole chiave, precise nei casi chiari), poi un **Naive Bayes** per spazio che impara dalle tue scelte. Gira nel browser, senza AI esterne e senza inviare il testo a nessuno.
+
+- **Come impara**: ogni salvataggio registra in `category_feedback` (con RLS, visibile ai membri dello spazio) il titolo e la categoria finale, se l'hai corretta o confermata. Il modello si ricostruisce da lì in pochi millisecondi: esempi di partenza, correzioni (peso 4) e conferme (peso 2). Cambiare la categoria di un impegno esistente conta come correzione.
+- **Quando interviene**: le parole chiave delle tue categorie vincono sempre. Se le regole non riconoscono nulla e il modello è abbastanza sicuro, riempie lui. Se l'uso ti ha insegnato altro rispetto alle regole (probabilità ≥ 80%, almeno 3 esempi), scavalca le regole. L'editor lo dice («Suggerita da ciò che hai scelto in passato · 82%») e la tua scelta manuale prevale sempre.
+- **Dove sta il codice**: `packages/shared/src/nb.ts` (modello: parole e n-grammi di caratteri, addestramento incrementale), `categorize.ts` (esempi di partenza e scelta regole/modello), `apps/web/src/lib/categoryModel.ts` (lettura delle correzioni).
+- **Azzerare**: *Impostazioni spazio → Categorie degli impegni → Azzera apprendimento* (owner e admin).
+- **Misura**: `pnpm --filter @ohana/shared eval:category` stampa la curva di apprendimento su un dataset **sintetico** (157 esempi di una famiglia immaginaria: dati indicativi, non reali). Categoria corretta su esempi mai visti: solo regole 44,9%; regole + NB 55,3% senza correzioni; 62,2% con 20 correzioni; 72,3% con 80. Soglie e pesi sono stati scelti con una ricerca a griglia su suddivisioni diverse da quelle usate per la verifica.
+- **Limiti**: serve qualche correzione per vedere un effetto; nomi propri molto ambigui («Giorgio») restano difficili. Con pochi dati le regole restano più affidabili, per questo il modello le affianca e non le sostituisce.
+
+## Cura
+
+Per chi segue un familiare (genitori, parenti anziani). Dettagli tecnici in [`ARCHITETTURA.md`](../ARCHITETTURA.md#cura-v3-schermate-4a4i).
+
+- **Persona assistita** (Altro → Cura): scheda con nome, nascita, allergie, esenzioni e caregiver (membri dello spazio). Il caregiver di turno riceve i promemoria delle terapie: di default il primo, si cambia dalla scheda.
+- **Filone di cura**: un percorso («Tachicardia · Cardiologia · Dott. Rossi») con colore proprio. Visite, esami, cambi di terapia, episodi e note sono **tasselli** in ordine di tempo, con gli allegati (bucket privato, link che scade in un minuto).
+- **Chiudere una visita**: «Segna fatto» sulla visita propone «Com’è andata» (4c): filone, cosa ha detto il medico (anche a voce), valori (si possono leggere dal referto), cambio di terapia, prossimo controllo e prossimi passi. Il prossimo controllo e i passi con data diventano impegni normali, con promemoria.
+- **Terapie**: posologia, orari, scorta e confezione. Spuntare una dose scala la scorta; senza spunte si stima dalla posologia. Sotto 7 giorni compare «Chiedi ricetta» (una commissione assegnata a una persona). Il piano terapeutico crea un promemoria 30 giorni prima della scadenza.
+- **Parametri ed episodi**: pressione, frequenza, peso, scariche; grafico delle medie settimanali con le settimane degli episodi in rosso. Registrare un valore o un episodio richiede due tocchi dal «+» («Registra per Papà»).
+- **Prepara la visita**: domande (le può aggiungere chiunque nello spazio), «da quando l’ha visto» con anche gli altri filoni, cose da portare. Il **PDF per il medico** (Altro → Cura → Esporta PDF, oppure «Condividi» in un filone) include le terapie di tutti i filoni.
+- **Ruolo «Solo Cura»**: per chi deve solo consultare (una badante). Vede la Cura e nient’altro: niente impegni, spese, spesa né rubrica.
+- **Promemoria delle dosi**: una notifica push all’orario, solo al caregiver di turno, mai email.
+- **Privacy**: i dati sanitari sono solo dello spazio; c’è un registro di chi li ha consultati o esportati (lo legge chi amministra). Ohana non dà indicazioni mediche e non controlla le interazioni tra farmaci.

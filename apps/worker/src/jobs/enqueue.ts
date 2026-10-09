@@ -40,6 +40,7 @@ async function loadRecipientsBySpace(db: Db): Promise<Map<string, QRecipient[]>>
       db
         .from('space_members')
         .select('space_id, profiles(id, notify_email, morning_brief)')
+        .neq('role', 'care_viewer') // consulta solo la Cura: niente promemoria degli impegni
         .order('space_id')
         .order('user_id')
         .range(a, b),

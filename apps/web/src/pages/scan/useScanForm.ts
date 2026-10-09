@@ -20,6 +20,8 @@ export function useScanForm(initialSpaceId: string) {
   const [daysBefore, setDaysBefore] = useState(3);
   const [attach, setAttach] = useState(true);
   const [split, setSplit] = useState(false);
+  /** Filone di cura a cui aggiungere il referto (vuoto = non aggiungere). */
+  const [careThreadId, setCareThreadId] = useState('');
 
   /** Riempie i campi con ciò che l'OCR ha riconosciuto. */
   function applyParsed(p: ParsedDocument) {
@@ -86,6 +88,8 @@ export function useScanForm(initialSpaceId: string) {
     setAttach,
     split,
     setSplit,
+    careThreadId,
+    setCareThreadId,
     applyParsed,
     applyLlm,
     chooseType,

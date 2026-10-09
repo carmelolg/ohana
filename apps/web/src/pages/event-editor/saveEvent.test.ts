@@ -30,6 +30,7 @@ const base: EventToSave = {
   ],
   files: [],
   followUpId: null,
+  careThreadId: null,
 };
 
 beforeEach(() => upload.mockReset());

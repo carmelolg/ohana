@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../../lib/auth';
-import { useCategories, useMutate, useSpace } from '../../lib/data';
+import { saveReportToCare } from '../../lib/api/careReport';
+import { uploadCareFile } from '../../lib/api/careFiles';
+import { useCareThreads, useCategories, useMutate, useSpace } from '../../lib/data';
 import { useBack } from '../../lib/nav';
 import { useToast } from '../../lib/toast';
 import { llmParse } from '../../lib/workerApi';
@@ -14,6 +16,7 @@ export function useScanActions(form: ScanForm, reader: ReturnType<typeof useScan
   const { spaces, canWrite } = useSpace();
   const { data: categories = [] } = useCategories();
   const mutate = useMutate();
+  const { data: careThreads = [] } = useCareThreads();
   const toast = useToast();
   const back = useBack('/oggi');
   const [busy, setBusy] = useState(false);
@@ -61,6 +64,18 @@ export function useScanActions(form: ScanForm, reader: ReturnType<typeof useScan
         attach: form.attach,
         split: form.split,
       });
+      const thread = careThreads.find((t) => t.id === form.careThreadId);
+      if (thread) {
+        await saveReportToCare(mutate, {
+          thread,
+          title: form.title,
+          text: reader.text,
+          date: new Date(),
+          file: reader.file,
+          upload: (entryId, file) =>
+            uploadCareFile({ spaceId: thread.space_id, recipientId: thread.recipient_id, entryId, file }),
+        });
+      }
       toast(createdDeadline ? 'Salvato: scadenza creata' : 'Documento salvato');
       back();
     } catch (e) {

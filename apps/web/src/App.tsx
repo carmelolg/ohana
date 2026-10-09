@@ -29,6 +29,8 @@ const ProceduresPage = lazy(() => import('./pages/Procedures'));
 const ProcedureDetailPage = lazy(() => import('./pages/ProcedureDetail'));
 const DocumentsPage = lazy(() => import('./pages/Documents'));
 const ScanPage = lazy(() => import('./pages/Scan'));
+const CareRoutes = named(() => import('./pages/care/CareRoutes'), 'CareRoutes');
+const VisitPrepPage = named(() => import('./pages/care/VisitPrepPage'), 'VisitPrepPage');
 
 function Gate() {
   const { session, loading } = useAuth();
@@ -141,6 +143,15 @@ function AppRoutes() {
             </FeatureGate>
           }
         />
+        <Route
+          path="/cura/*"
+          element={
+            <FeatureGate feature="cura">
+              <CareRoutes />
+            </FeatureGate>
+          }
+        />
+        <Route path="/evento/:id/prepara" element={<VisitPrepPage />} />
         <Route path="*" element={<Navigate to="/oggi" replace />} />
       </Route>
     </Routes>

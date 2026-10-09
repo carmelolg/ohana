@@ -423,4 +423,177 @@ delete from category_feedback;
 select t.as_su();
 select t.expect_count($$select 1 from category_feedback$$, 0, 'owner azzera l''apprendimento');
 
+-- ---------------------------------------------------------------- 13. Cura
+-- Spazio «Mamma e papà»: bruno owner, carla membro (caregiver), elena care_viewer (sola consultazione), dario estraneo, ana di un altro spazio.
+select t.as_su();
+insert into spaces (id, name, created_by) values ('ffffffff-0000-0000-0000-000000000001', 'Mamma e papà cura', '00000000-0000-0000-0000-00000000000b');
+insert into space_members values
+ ('ffffffff-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000c', 'member'),
+ ('ffffffff-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000e', 'care_viewer');
+insert into events (id, space_id, title, starts_at, created_by) values ('ffffffff-0000-0000-0000-0000000000e1', 'ffffffff-0000-0000-0000-000000000001', 'Gastroenterologa', now() + interval '3 days', '00000000-0000-0000-0000-00000000000b');
+insert into expenses (space_id, payer_id, amount, description) values ('ffffffff-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000b', 10, 'Ticket');
+
+-- ---- persone assistite e caregiver
+select t.as_user('00000000-0000-0000-0000-00000000000b');
+insert into care_recipients (id, space_id, first_name, last_name, label, caregiver_ids, duty_user_id)
+ values ('ffffffff-0000-0000-0000-0000000000a1', 'ffffffff-0000-0000-0000-000000000001', 'Giorgio', 'Moretti', 'Papà',
+         array['00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000c']::uuid[], '00000000-0000-0000-0000-00000000000c');
+select t.expect_error($$insert into care_recipients (space_id, first_name, caregiver_ids) values ('ffffffff-0000-0000-0000-000000000001', 'X', array['00000000-0000-0000-0000-00000000000d']::uuid[])$$, 'caregiver estraneo allo spazio');
+select t.expect_error($$insert into care_recipients (space_id, first_name, caregiver_ids) values ('ffffffff-0000-0000-0000-000000000001', 'X', array['00000000-0000-0000-0000-00000000000e']::uuid[])$$, 'care_viewer non può essere caregiver');
+select t.expect_error($$insert into care_recipients (space_id, first_name, caregiver_ids, duty_user_id) values ('ffffffff-0000-0000-0000-000000000001', 'X', array['00000000-0000-0000-0000-00000000000b']::uuid[], '00000000-0000-0000-0000-00000000000c')$$, 'caregiver di turno fuori dall''elenco');
+select t.expect_error($$insert into care_recipients (space_id, first_name, created_by) values ('ffffffff-0000-0000-0000-000000000001', 'X', '00000000-0000-0000-0000-00000000000c')$$, 'autore falsificato');
+select t.expect_error($$insert into care_recipients (space_id, first_name, user_id) values ('ffffffff-0000-0000-0000-000000000001', 'X', '00000000-0000-0000-0000-00000000000d')$$, 'persona collegata estranea allo spazio');
+insert into care_recipients (id, space_id, first_name, user_id) values ('ffffffff-0000-0000-0000-0000000000a3', 'ffffffff-0000-0000-0000-000000000001', 'Elena', '00000000-0000-0000-0000-00000000000c');
+select t.expect_error($$insert into care_recipients (space_id, first_name, user_id) values ('ffffffff-0000-0000-0000-000000000001', 'Elena bis', '00000000-0000-0000-0000-00000000000c')$$, 'stesso membro due volte nello spazio');
+delete from care_recipients where id = 'ffffffff-0000-0000-0000-0000000000a3';
+
+-- ---- filoni, tasselli, terapie, parametri, preparazione visita
+insert into care_threads (id, space_id, recipient_id, title, specialty, color_hue) values
+ ('ffffffff-0000-0000-0000-0000000000b1', 'ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'Tachicardia', 'Cardiologia', 20),
+ ('ffffffff-0000-0000-0000-0000000000b2', 'ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'Morbo di Crohn', 'Gastroenterologia', 195);
+insert into care_entries (id, space_id, recipient_id, thread_id, type, entry_date, title, readings)
+ values ('ffffffff-0000-0000-0000-0000000000c1', 'ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'ffffffff-0000-0000-0000-0000000000b1', 'visita', current_date, 'Controllo', '{"blood_pressure":"132/80"}');
+insert into medications (id, space_id, recipient_id, thread_id, name, dose_units, schedule, stock_units)
+ values ('ffffffff-0000-0000-0000-0000000000d1', 'ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'ffffffff-0000-0000-0000-0000000000b1', 'Bisoprololo', 2, array['08:00'], 10);
+insert into measurements (space_id, recipient_id, thread_id, type, value, value2) values
+ ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'ffffffff-0000-0000-0000-0000000000b1', 'blood_pressure', 132, 80);
+insert into visit_prep (id, space_id, event_id, thread_id, bring) values
+ ('ffffffff-0000-0000-0000-0000000000f1', 'ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000e1', 'ffffffff-0000-0000-0000-0000000000b2', '[{"text":"Tessera sanitaria","done":false}]');
+insert into care_files (space_id, recipient_id, entry_id, name, path) values
+ ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'ffffffff-0000-0000-0000-0000000000c1', 'Referto.pdf', 'ffffffff-0000-0000-0000-000000000001/ffffffff-0000-0000-0000-0000000000a1/referto.pdf');
+insert into care_audit (space_id, recipient_id, thread_id, action) values
+ ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'ffffffff-0000-0000-0000-0000000000b1', 'view');
+
+-- integrità: tutto resta dentro lo stesso spazio e la stessa persona
+select t.as_su();
+insert into care_recipients (id, space_id, first_name, created_by) values ('ffffffff-0000-0000-0000-0000000000a2', 'ffffffff-0000-0000-0000-000000000001', 'Anna', '00000000-0000-0000-0000-00000000000b');
+select t.as_user('00000000-0000-0000-0000-00000000000b');
+select t.expect_error($$insert into care_entries (space_id, recipient_id, thread_id, type, entry_date, title) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a2', 'ffffffff-0000-0000-0000-0000000000b1', 'nota', current_date, 'filone di un''altra persona')$$, 'tassello su un filone di un''altra persona');
+select t.expect_error($$insert into medications (space_id, recipient_id, thread_id, name) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a2', 'ffffffff-0000-0000-0000-0000000000b1', 'Farmaco')$$, 'farmaco su un filone di un''altra persona');
+select t.expect_error($$insert into care_threads (space_id, recipient_id, title) values ('bbbbbbbb-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'altro spazio')$$, 'filone in uno spazio diverso dalla persona');
+select t.expect_error($$insert into care_entries (space_id, recipient_id, thread_id, type, entry_date, title, event_id) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'ffffffff-0000-0000-0000-0000000000b1', 'visita', current_date, 'x', 'bbbbbbbb-0000-0000-0000-0000000000e1')$$, 'tassello collegato a un impegno di un altro spazio');
+select t.expect_error($$insert into care_entries (space_id, recipient_id, thread_id, type, entry_date, title) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'ffffffff-0000-0000-0000-0000000000b1', 'diagnosi', current_date, 'tipo non valido')$$, 'tipo di tassello non valido');
+select t.expect_error($$insert into medications (space_id, recipient_id, name, schedule) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'Orario', array['25:99'])$$, 'orario non valido');
+select t.as_su();
+insert into events (id, space_id, title, starts_at, created_by) values ('eeeeeeee-0000-0000-0000-0000000000e1', 'eeeeeeee-0000-0000-0000-000000000001', 'Altro spazio', now(), '00000000-0000-0000-0000-00000000000a');
+select t.expect_error($$update events set care_thread_id = 'ffffffff-0000-0000-0000-0000000000b1' where id = 'eeeeeeee-0000-0000-0000-0000000000e1'$$, 'impegno collegato a un filone di un altro spazio');
+select t.as_user('00000000-0000-0000-0000-00000000000b');
+update events set care_thread_id = 'ffffffff-0000-0000-0000-0000000000b2' where id = 'ffffffff-0000-0000-0000-0000000000e1';
+
+-- scorta: scende a ogni dose segnata e risale se la dose viene tolta
+insert into medication_doses (id, space_id, medication_id, day, slot) values ('ffffffff-0000-0000-0000-0000000000e9', 'ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000d1', current_date, '08:00');
+select t.expect_count($$select 1 from medications where id = 'ffffffff-0000-0000-0000-0000000000d1' and stock_units = 8$$, 1, 'la dose segnata scala la scorta');
+select t.expect_error($$insert into medication_doses (space_id, medication_id, day, slot) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000d1', current_date, '08:00')$$, 'stessa dose segnata due volte');
+delete from medication_doses where id = 'ffffffff-0000-0000-0000-0000000000e9';
+select t.expect_count($$select 1 from medications where id = 'ffffffff-0000-0000-0000-0000000000d1' and stock_units = 10$$, 1, 'togliendo la dose la scorta risale');
+
+-- ---- caregiver (membro): scrive come se stesso
+select t.as_user('00000000-0000-0000-0000-00000000000c');
+select t.expect_count('select 1 from care_recipients', 2, 'il membro vede le persone assistite');
+insert into care_entries (id, space_id, recipient_id, thread_id, type, entry_date, title)
+ values ('ffffffff-0000-0000-0000-0000000000c2', 'ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'ffffffff-0000-0000-0000-0000000000b1', 'episodio', current_date, 'Palpitazioni');
+select t.expect_error($$insert into care_entries (space_id, recipient_id, thread_id, type, entry_date, title, author_id) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'ffffffff-0000-0000-0000-0000000000b1', 'nota', current_date, 'x', '00000000-0000-0000-0000-00000000000b')$$, 'tassello firmato da un altro');
+insert into visit_questions (space_id, prep_id, text) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000f1', 'Serve ripetere la colonscopia?');
+insert into medication_doses (space_id, medication_id, day, slot) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000d1', current_date, '08:00');
+select t.expect_count('select 1 from care_audit', 0, 'il membro non legge il registro degli accessi');
+insert into care_audit (space_id, recipient_id, action) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'export');
+select t.expect_error($$insert into care_audit (space_id, recipient_id, action, user_id) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'view', '00000000-0000-0000-0000-00000000000b')$$, 'accesso registrato a nome di un altro');
+delete from care_recipients where id = 'ffffffff-0000-0000-0000-0000000000a2';
+delete from care_entries where id = 'ffffffff-0000-0000-0000-0000000000c1';
+select t.as_su();
+select t.expect_count($$select 1 from care_recipients where id = 'ffffffff-0000-0000-0000-0000000000a2'$$, 1, 'il membro non elimina una persona');
+select t.expect_count($$select 1 from care_entries where id = 'ffffffff-0000-0000-0000-0000000000c1'$$, 1, 'il membro non elimina il tassello di un altro');
+
+-- ---- care_viewer: legge la Cura e nient'altro
+select t.as_user('00000000-0000-0000-0000-00000000000e');
+select t.expect_count('select 1 from spaces where id = ''ffffffff-0000-0000-0000-000000000001''', 1, 'care_viewer vede lo spazio');
+select t.expect_count('select 1 from space_members where space_id = ''ffffffff-0000-0000-0000-000000000001''', 3, 'care_viewer vede i membri');
+select t.expect_count('select 1 from care_recipients', 2, 'care_viewer legge le persone');
+select t.expect_count('select 1 from care_threads', 2, 'care_viewer legge i filoni');
+select t.expect_count('select 1 from care_entries', 2, 'care_viewer legge i tasselli');
+select t.expect_count('select 1 from medications', 1, 'care_viewer legge le terapie');
+select t.expect_count('select 1 from measurements', 1, 'care_viewer legge i parametri');
+select t.expect_count('select 1 from visit_prep', 1, 'care_viewer legge la preparazione visita');
+select t.expect_count('select 1 from visit_questions', 1, 'care_viewer legge le domande');
+select t.expect_count('select 1 from care_files', 1, 'care_viewer legge gli allegati');
+select t.expect_count('select 1 from events where space_id = ''ffffffff-0000-0000-0000-000000000001''', 0, 'care_viewer non vede gli impegni');
+select t.expect_count('select 1 from expenses where space_id = ''ffffffff-0000-0000-0000-000000000001''', 0, 'care_viewer non vede le spese');
+select t.expect_count('select 1 from contacts where space_id = ''ffffffff-0000-0000-0000-000000000001''', 0, 'care_viewer non vede la rubrica');
+select t.expect_count('select 1 from shopping_lists where space_id = ''ffffffff-0000-0000-0000-000000000001''', 0, 'care_viewer non vede la spesa');
+select t.expect_count('select 1 from board_notes where space_id = ''ffffffff-0000-0000-0000-000000000001''', 0, 'care_viewer non vede la bacheca');
+select t.expect_count('select 1 from categories where space_id = ''ffffffff-0000-0000-0000-000000000001''', 0, 'care_viewer non vede le categorie');
+select t.expect_error($$insert into care_entries (space_id, recipient_id, thread_id, type, entry_date, title) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'ffffffff-0000-0000-0000-0000000000b1', 'nota', current_date, 'x')$$, 'care_viewer non scrive tasselli');
+select t.expect_error($$insert into medication_doses (space_id, medication_id, day, slot) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000d1', current_date, '20:00')$$, 'care_viewer non segna dosi');
+select t.expect_error($$insert into measurements (space_id, recipient_id, type, value) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'weight', 70)$$, 'care_viewer non registra parametri');
+select t.expect_error($$insert into visit_questions (space_id, prep_id, text) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000f1', 'x')$$, 'care_viewer non aggiunge domande');
+select t.expect_error($$insert into events (space_id, title, starts_at) values ('ffffffff-0000-0000-0000-000000000001', 'x', now())$$, 'care_viewer non crea impegni');
+select t.expect_error($$insert into expenses (space_id, payer_id, amount, description) values ('ffffffff-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000e', 5, 'x')$$, 'care_viewer non crea spese');
+insert into care_audit (space_id, recipient_id, thread_id, action) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'ffffffff-0000-0000-0000-0000000000b1', 'view');
+select t.expect_count('select 1 from care_audit', 0, 'care_viewer non legge il registro');
+update space_members set role = 'owner' where user_id = '00000000-0000-0000-0000-00000000000e' and space_id = 'ffffffff-0000-0000-0000-000000000001';
+update care_recipients set first_name = 'Hack';
+select t.as_su();
+select t.expect_count($$select 1 from space_members where user_id = '00000000-0000-0000-0000-00000000000e' and space_id = 'ffffffff-0000-0000-0000-000000000001' and role = 'care_viewer'$$, 1, 'care_viewer non si promuove');
+select t.expect_count($$select 1 from care_recipients where first_name = 'Hack'$$, 0, 'care_viewer non modifica le persone');
+
+-- ---- estranei e altri spazi: nessuna visibilità
+select t.as_user('00000000-0000-0000-0000-00000000000d');
+select t.expect_count('select 1 from care_recipients', 0, 'estraneo non vede le persone assistite');
+select t.expect_count('select 1 from care_entries', 0, 'estraneo non vede i tasselli');
+select t.expect_count('select 1 from medications', 0, 'estraneo non vede le terapie');
+select t.expect_count('select 1 from visit_questions', 0, 'estraneo non vede le domande');
+select t.expect_count('select 1 from care_files', 0, 'estraneo non vede gli allegati sanitari');
+select t.expect_error($$insert into care_recipients (space_id, first_name) values ('ffffffff-0000-0000-0000-000000000001', 'Intruso')$$, 'estraneo non crea persone assistite');
+select t.expect_error($$insert into care_audit (space_id, recipient_id, action) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'view')$$, 'estraneo non scrive nel registro');
+select t.as_user('00000000-0000-0000-0000-00000000000a');
+select t.expect_count('select 1 from care_recipients', 0, 'altro spazio non vede le persone assistite');
+select t.expect_count('select 1 from medication_doses', 0, 'altro spazio non vede le dosi');
+select t.expect_error($$insert into care_threads (space_id, recipient_id, title) values ('eeeeeeee-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'x')$$, 'filone su persona di un altro spazio');
+
+-- ---- registro degli accessi: lo legge solo chi amministra
+select t.as_user('00000000-0000-0000-0000-00000000000b');
+select t.expect_count('select 1 from care_audit', 3, 'owner legge il registro degli accessi');
+select t.expect_error($$update care_audit set action = 'view'$$, 'il registro non si modifica');
+select t.expect_error($$delete from care_audit$$, 'il registro non si cancella');
+delete from care_entries where id = 'ffffffff-0000-0000-0000-0000000000c2';
+select t.as_su();
+select t.expect_count($$select 1 from care_entries where id = 'ffffffff-0000-0000-0000-0000000000c2'$$, 0, 'owner elimina un tassello altrui');
+
+-- ---- registro dei promemoria delle dosi: lo usa solo il Worker
+select t.as_user('00000000-0000-0000-0000-00000000000b');
+select t.expect_error($$select 1 from care_dose_log$$, 'nessun utente legge il registro dei promemoria');
+select t.expect_error($$insert into care_dose_log (medication_id, day, slot) values ('ffffffff-0000-0000-0000-0000000000d1', current_date, '08:00')$$, 'nessun utente scrive nel registro dei promemoria');
+select t.as_su();
+insert into care_dose_log (medication_id, day, slot) values ('ffffffff-0000-0000-0000-0000000000d1', current_date, '08:00');
+select t.expect_error($$insert into care_dose_log (medication_id, day, slot) values ('ffffffff-0000-0000-0000-0000000000d1', current_date, '08:00')$$, 'una dose si avvisa una volta sola');
+
+-- ---- storage: bucket privato `care`
+insert into storage.objects (bucket_id, name) values ('care', 'ffffffff-0000-0000-0000-000000000001/ffffffff-0000-0000-0000-0000000000a1/referto.pdf');
+select t.as_user('00000000-0000-0000-0000-00000000000e');
+select t.expect_count($$select 1 from storage.objects where bucket_id = 'care'$$, 1, 'care_viewer legge gli allegati sanitari');
+select t.expect_count($$select 1 from storage.objects where bucket_id = 'attachments'$$, 0, 'care_viewer non legge gli allegati degli impegni');
+select t.expect_error($$insert into storage.objects (bucket_id, name) values ('care', 'ffffffff-0000-0000-0000-000000000001/ffffffff-0000-0000-0000-0000000000a1/x.pdf')$$, 'care_viewer non carica allegati sanitari');
+select t.as_user('00000000-0000-0000-0000-00000000000d');
+select t.expect_count($$select 1 from storage.objects where bucket_id = 'care'$$, 0, 'estraneo non legge gli allegati sanitari');
+select t.as_user('00000000-0000-0000-0000-00000000000c');
+insert into storage.objects (bucket_id, name) values ('care', 'ffffffff-0000-0000-0000-000000000001/ffffffff-0000-0000-0000-0000000000a1/esame.pdf');
+
+-- ---- uscire dallo spazio toglie il caregiver
+select t.as_su();
+delete from space_members where space_id = 'ffffffff-0000-0000-0000-000000000001' and user_id = '00000000-0000-0000-0000-00000000000c';
+select t.expect_count($$select 1 from care_recipients where id = 'ffffffff-0000-0000-0000-0000000000a1' and caregiver_ids = array['00000000-0000-0000-0000-00000000000b']::uuid[] and duty_user_id is null$$, 1, 'chi esce non è più caregiver né di turno');
+
+-- ---- Cura come funzione di spazio
+select t.as_user('00000000-0000-0000-0000-00000000000b');
+update spaces set disabled_features = array['cura'] where id = 'ffffffff-0000-0000-0000-000000000001';
+select t.expect_error($$update spaces set disabled_features = array['inesistente'] where id = 'ffffffff-0000-0000-0000-000000000001'$$, 'funzione di spazio non valida');
+
+-- ---- cascata: eliminare lo spazio elimina la Cura
+delete from spaces where id = 'ffffffff-0000-0000-0000-000000000001';
+select t.as_su();
+select t.expect_count($$select 1 from care_recipients where space_id = 'ffffffff-0000-0000-0000-000000000001'$$, 0, 'cascade persone assistite');
+select t.expect_count($$select 1 from care_entries where space_id = 'ffffffff-0000-0000-0000-000000000001'$$, 0, 'cascade tasselli');
+select t.expect_count($$select 1 from medication_doses where space_id = 'ffffffff-0000-0000-0000-000000000001'$$, 0, 'cascade dosi');
+select t.expect_count($$select 1 from visit_questions where space_id = 'ffffffff-0000-0000-0000-000000000001'$$, 0, 'cascade domande');
+
 select 'OK: tutti i test di isolamento RLS superati' as risultato;

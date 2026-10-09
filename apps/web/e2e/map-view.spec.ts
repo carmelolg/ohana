@@ -19,3 +19,18 @@ for (const bad of [
     await expect(page.locator('.leaflet-control-zoom')).toBeVisible();
   });
 }
+
+test('mappa: se i tasselli non si caricano compare un avviso chiaro e si può ancora cercare', async ({
+  page,
+}) => {
+  await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
+  await onboard(page, uniqueEmail('q'), 'Luca', 'Casa mia');
+  await openNew(page);
+  await page.getByLabel('Descrivi l’impegno').fill('Cardiologo domani alle 9');
+  await page.getByRole('button', { name: 'Luogo', exact: true }).click();
+  await page.getByRole('button', { name: 'Scegli luogo sulla mappa' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'Non riesco a caricare la mappa' })).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(page.getByRole('combobox', { name: 'Cerca un indirizzo o un posto' })).toBeVisible();
+});

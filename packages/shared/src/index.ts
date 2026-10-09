@@ -14,3 +14,4 @@ export * from './documents';
 export * from './nb';
 export * from './categorize';
 export * from './features';
+export * from './care';

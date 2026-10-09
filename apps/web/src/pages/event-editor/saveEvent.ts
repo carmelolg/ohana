@@ -26,6 +26,8 @@ export interface EventToSave {
   files: File[];
   /** Prossimo passo del diario visite da collegare al nuovo impegno. */
   followUpId: string | null;
+  /** Filone di cura a cui appartiene l'impegno (vuoto = nessuno). */
+  careThreadId: string | null;
 }
 
 export interface SaveResult {
@@ -50,6 +52,7 @@ function eventRow(e: EventToSave, id: string) {
     notes: e.notes.trim() || null,
     assignee_id: e.assigneeId,
     contact_id: e.isChore ? null : e.contactId,
+    care_thread_id: e.isChore ? null : e.careThreadId,
     rrule: e.rrule || null,
     amount: parseMoneyInput(e.amount),
     ...(e.existing ? {} : { created_by: e.userId }),

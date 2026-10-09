@@ -1,30 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
-import { useCategories, useContacts, useEvent, useSpace } from '../../lib/data';
+import { useCareThreads, useCategories, useContacts, useEvent, useSpace } from '../../lib/data';
+import { showFormError } from '../../lib/formError';
 import { useBack } from '../../lib/nav';
-import { useToast } from '../../lib/toast';
-import { useVoice } from '../../lib/voice';
 import { resolveEventValues } from './eventValues';
 import { initialReminders, type ReminderDraft } from './reminders';
 import { useEventCategory } from './useEventCategory';
 import { useEventDraft, type EventDraft } from './useEventDraft';
 import { useQuickParse } from './useQuickParse';
 import { useSaveEvent } from './useSaveEvent';
-
-/** Dettatura che aggiunge al testo ciò che si dice; avvisa se il browser non la supporta. */
-function useDictation(appendToText: (update: (text: string) => string) => void) {
-  const toast = useToast();
-  const voice = useVoice((spoken) => appendToText((t) => (t ? t.trimEnd() + ' ' : '') + spoken));
-  return {
-    listening: voice.listening,
-    toggleDictation: () => {
-      if (!voice.toggle()) {
-        toast('Dettatura non supportata qui: usa il microfono della tastiera');
-      }
-    },
-  };
-}
 
 const initialTextFrom = (search: URLSearchParams) =>
   [search.get('title'), search.get('text')].filter(Boolean).join(' ');
@@ -60,6 +45,7 @@ function buildEventToSave({ src, draft, values, title, reminders }: ToSaveArgs) 
     checklist: draft.checklist,
     files: draft.files,
     followUpId: src.search.get('followup'),
+    careThreadId: draft.careThreadId || null,
   };
 }
 
@@ -113,6 +99,19 @@ function useResolvedEvent(src: Sources, draft: EventDraft, isNew: boolean) {
   return { parsed, values, categoriesOfSpace, title: isNew ? (parsed?.title ?? '') : draft.text.trim() };
 }
 
+/** Un impegno nato da «+ Impegno» in un filone vive nello spazio di quel filone. */
+function useSpaceOfRequestedThread(isNew: boolean, threadId: string | null, draft: EventDraft) {
+  const { data: threads = [] } = useCareThreads();
+  const spaceId = threads.find((t) => t.id === threadId)?.space_id;
+  useEffect(() => {
+    if (isNew && spaceId && !draft.overrides.spaceId) {
+      draft.override('spaceId', spaceId);
+    }
+    // scatta quando arrivano i filoni
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNew, spaceId]);
+}
+
 /**
  * Stato e regole della schermata «Nuovo / Modifica impegno»: compone la bozza (`useEventDraft`), l'interpretazione del
  * testo libero, i valori risolti, la categoria e il salvataggio. La schermata si limita a mostrarlo.
@@ -122,8 +121,9 @@ export function useEventForm(eventId: string | undefined) {
   const src = useEventSources(eventId);
   const { existing, contacts, spaces, defaultSpace } = src;
   const [error, setError] = useState('');
-  const draft = useEventDraft(existing, initialTextFrom(src.search));
+  const draft = useEventDraft(existing, initialTextFrom(src.search), src.search.get('filone') ?? '');
   const { parsed, values, categoriesOfSpace, title } = useResolvedEvent(src, draft, isNew);
+  useSpaceOfRequestedThread(isNew, src.search.get('filone'), draft);
   const { spaceId, isChore } = values;
   const category = useEventCategory({
     isNew,
@@ -147,16 +147,14 @@ export function useEventForm(eventId: string | undefined) {
     categoryId: category.categoryId,
     settleCategories: category.settled,
     recordFeedback: category.recordFeedback,
-    setError,
+    setError: (message) => showFormError(setError, message),
   });
   const space = src.spaceById(spaceId);
   const back = useBack('/oggi');
-  const dictation = useDictation(draft.setText);
 
   return {
     ...draft,
     ...values,
-    ...dictation,
     isNew,
     isLoading: src.isLoading,
     existing,

@@ -34,5 +34,9 @@ describe('testi della riga di un impegno', () => {
     });
     expect(metaLine(o, 'Casa mia', 'Luca')).toBe('Casa mia · accompagna Luca · Dott. Rossi · ogni mese');
     expect(metaLine(occ({}), undefined, null)).toBe('');
+    // una cura dice anche a chi appartiene
+    expect(metaLine(o, 'Casa mia', null, 'Papà · Morbo di Crohn')).toContain(
+      'Casa mia · Papà · Morbo di Crohn',
+    );
   });
 });

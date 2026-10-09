@@ -16,7 +16,11 @@ export async function sendChoreDigests(env: Env, now = new Date()): Promise<numb
   const day = isoDayRome(now);
   let sent = 0;
   for (const { id: userId } of users ?? []) {
-    const { data: memberships } = await db.from('space_members').select('space_id').eq('user_id', userId);
+    const { data: memberships } = await db
+      .from('space_members')
+      .select('space_id')
+      .eq('user_id', userId)
+      .neq('role', 'care_viewer'); // consulta solo la Cura: niente faccende
     const spaceIds = (memberships ?? []).map((m) => m.space_id as string);
     if (!spaceIds.length) {
       continue;
@@ -40,6 +44,7 @@ export async function sendChoreDigests(env: Env, now = new Date()): Promise<numb
       body: digest.body,
       url: '/oggi',
       tag: `chores-${day}`,
+      actions: [],
       data: {},
     });
     if (delivered === 0) {

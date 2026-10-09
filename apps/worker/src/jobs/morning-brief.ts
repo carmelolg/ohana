@@ -38,7 +38,11 @@ interface BriefItem {
 const pluralize = (n: number) => `${n} ${n === 1 ? 'impegno' : 'impegni'}`;
 
 async function spaceIdsOf(db: Db, userId: string): Promise<string[]> {
-  const { data } = await db.from('space_members').select('space_id').eq('user_id', userId);
+  const { data } = await db
+    .from('space_members')
+    .select('space_id')
+    .eq('user_id', userId)
+    .neq('role', 'care_viewer'); // consulta solo la Cura: niente impegni nel brief
   return (data ?? []).map((m) => m.space_id as string);
 }
 
@@ -74,15 +78,23 @@ async function deliverBrief(
   items: BriefItem[],
   day: string,
 ): Promise<void> {
+  // email e push sono canali indipendenti: se l'email non parte (es. Gmail non configurato) il push deve partire lo stesso
+  const failures: unknown[] = [];
+  let delivered = 0;
   if (user.notify_email) {
-    await sendEmail(
-      env,
-      user.email,
-      `La tua giornata: ${pluralize(items.length)}`,
-      renderBrief(shortName(user), items, env.APP_URL),
-    );
+    try {
+      await sendEmail(
+        env,
+        user.email,
+        `La tua giornata: ${pluralize(items.length)}`,
+        renderBrief(shortName(user), items, env.APP_URL),
+      );
+      delivered++;
+    } catch (e) {
+      failures.push(e);
+    }
   }
-  const { errors } = await deliverPush(env, db, await subscriptionsOf(db, user.id), {
+  const push = await deliverPush(env, db, await subscriptionsOf(db, user.id), {
     title: `Oggi: ${pluralize(items.length)}`,
     body: items
       .slice(0, 3)
@@ -90,10 +102,16 @@ async function deliverBrief(
       .join(' · '),
     url: '/oggi',
     tag: `brief-${day}`,
+    actions: [],
     data: {},
   });
-  for (const e of errors) {
-    console.error('push brief fallito', user.id, e);
+  delivered += push.delivered;
+  failures.push(...push.errors);
+  for (const e of failures) {
+    console.error('brief: un canale non è partito', user.id, e);
+  }
+  if (delivered === 0 && failures.length > 0) {
+    throw failures[0]; // nessun canale ha funzionato: il log si libera e il prossimo giro riprova
   }
 }
 

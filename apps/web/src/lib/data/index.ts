@@ -9,3 +9,4 @@ export * from './realtime';
 export * from './shopping';
 export * from './spaces';
 export * from './features';
+export * from './care';

@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { LocateFixed, MapPin, Search, X } from 'lucide-react';
 import { formatDistance, type Place } from '../../lib/geocode';
 import type { LocationValue } from './types';
+import { TILES_BROKEN_MESSAGE } from './leaflet';
 import { useMapPicker } from './useMapPicker';
 import { usePlaceSearch } from './usePlaceSearch';
 
@@ -135,6 +136,11 @@ export function LocationPicker({ initial, onCancel, onConfirm }: Props) {
         )}
       </div>
 
+      {map.tilesBroken && (
+        <p className="banner warn picker-warning" role="alert">
+          {TILES_BROKEN_MESSAGE} Puoi cercare l’indirizzo qui sopra e confermarlo.
+        </p>
+      )}
       <div ref={map.el} className="picker-map" />
       <div className="picker-pin" aria-hidden>
         <MapPin size={44} strokeWidth={1.5} fill="var(--accent-fill)" color="#fff" />

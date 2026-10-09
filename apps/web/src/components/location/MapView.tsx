@@ -1,12 +1,13 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CircleMarker, Map as LMap } from 'leaflet';
-import { createMap, loadLeaflet } from './leaflet';
+import { createMap, loadLeaflet, TILES_BROKEN_MESSAGE } from './leaflet';
 
 /** Mappa di sola visualizzazione con segnaposto. */
 export function MapView({ lat, lng }: { lat: number; lng: number }) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<LMap | null>(null);
   const marker = useRef<CircleMarker | null>(null);
+  const [broken, setBroken] = useState(false);
 
   useEffect(() => {
     let disposed = false;
@@ -18,6 +19,7 @@ export function MapView({ lat, lng }: { lat: number; lng: number }) {
         el.current,
         { zoomControl: true, scrollWheelZoom: false },
         { lat, lng, zoom: 16 },
+        setBroken,
       );
       if (disposed) {
         created.remove();
@@ -48,17 +50,13 @@ export function MapView({ lat, lng }: { lat: number; lng: number }) {
   }, [lat, lng]);
 
   return (
-    <div
-      ref={el}
-      role="img"
-      aria-label="Mappa del luogo"
-      style={{
-        height: 180,
-        borderRadius: 16,
-        overflow: 'hidden',
-        border: '1px solid var(--line)',
-        marginTop: 10,
-      }}
-    />
+    <>
+      <div ref={el} role="img" aria-label="Mappa del luogo" className="map-view" />
+      {broken && (
+        <p className="muted" role="alert" style={{ fontSize: 13, marginTop: 6 }}>
+          {TILES_BROKEN_MESSAGE}
+        </p>
+      )}
+    </>
   );
 }

@@ -1,4 +1,4 @@
-export type SpaceRole = 'owner' | 'admin' | 'member' | 'viewer';
+export type SpaceRole = 'owner' | 'admin' | 'member' | 'viewer' | 'care_viewer';
 /** Slug delle categorie predefinite (presenti in ogni spazio). Le categorie personalizzate non hanno slug. */
 export type BuiltinCategory =
   'visita' | 'professionista' | 'burocrazia' | 'commissione' | 'scadenza' | 'altro';
@@ -18,6 +18,7 @@ export const ROLE_LABEL: Record<SpaceRole, string> = {
   admin: 'Amministratore',
   member: 'Membro',
   viewer: 'Solo lettura',
+  care_viewer: 'Solo Cura',
 };
 
 export const ACCENTS = ['terracotta', 'ocra', 'salvia', 'blu', 'prugna'] as const;

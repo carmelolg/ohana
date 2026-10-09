@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Check, Clock } from 'lucide-react';
 import { formatEuro } from '@ohana/shared';
 import { spaceColor } from '../lib/color';
-import { useSpace } from '../lib/data';
+import { useCareLabel, useSpace } from '../lib/data';
 import { useEventActions } from '../lib/eventActions';
 import type { EventRow, Occurrence } from '../lib/types';
 import { SwipeBackground } from './occurrence/SwipeBackground';
@@ -45,6 +45,7 @@ export function OccurrenceRow({ occ, showDay }: { occ: Occurrence; showDay?: str
     onRight: () => void actions.done(ev),
     onLeft: () => void actions.snooze(ev),
   });
+  const careLabel = useCareLabel(ev.care_thread_id);
   const assignee = ev.assignee_id ? memberName(ev.assignee_id).split(' ')[0] : null;
 
   return (
@@ -72,7 +73,7 @@ export function OccurrenceRow({ occ, showDay }: { occ: Occurrence; showDay?: str
           </span>
           <span className="meta">
             <span className="dot" />
-            {metaLine(occ, space?.name, assignee)}
+            {metaLine(occ, space?.name, assignee, careLabel)}
           </span>
         </span>
         {writable && ev.status === 'open' && (

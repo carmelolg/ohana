@@ -23,11 +23,14 @@ export function metaLine(
   occ: Occurrence,
   spaceName: string | undefined,
   assigneeFirstName: string | null,
+  /** «Papà · Morbo di Crohn», se l'impegno è collegato a una cura. */
+  careLabel: string | null = null,
 ): string {
   const { event } = occ;
   return [
     spaceName,
     event.categories && event.categories.slug !== 'altro' ? event.categories.name : null,
+    careLabel,
     assigneeFirstName ? `accompagna ${assigneeFirstName}` : null,
     event.contacts?.name,
     event.rrule ? describeRrule(event.rrule) : null,
