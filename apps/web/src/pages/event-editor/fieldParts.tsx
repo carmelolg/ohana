@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react';
+import { CalendarDays, Trash2 } from 'lucide-react';
 import { describeRrule, formatDay, formatTime } from '@ohana/shared';
 import { fullName } from '../../lib/color';
 import { fromDateInput, fromDateTimeInput, toDateInput, toDateTimeInput } from '../../lib/date-input';
@@ -44,18 +44,21 @@ export function WhenField({ form }: FieldProps) {
     return (
       <label className="kv">
         <span>Giorno</span>
-        <input
-          type="date"
-          className="inline-select date-field"
-          aria-label="Giorno"
-          value={toDateInput(startsAt)}
-          onChange={(e) => {
-            const day = fromDateInput(e.target.value, 0);
-            if (day) {
-              override('startsAt', day);
-            }
-          }}
-        />
+        <span className="date-wrap">
+          <input
+            type="date"
+            className="inline-select date-field"
+            aria-label="Giorno"
+            value={toDateInput(startsAt)}
+            onChange={(e) => {
+              const day = fromDateInput(e.target.value, 0);
+              if (day) {
+                override('startsAt', day);
+              }
+            }}
+          />
+          <CalendarDays className="date-icon" size={18} aria-hidden />
+        </span>
       </label>
     );
   }
@@ -63,7 +66,7 @@ export function WhenField({ form }: FieldProps) {
     <>
       <label className="kv">
         <span>Quando</span>
-        <span>
+        <span className="date-wrap">
           <input
             type="datetime-local"
             className="inline-select datetime-field"
@@ -71,6 +74,7 @@ export function WhenField({ form }: FieldProps) {
             value={toDateTimeInput(startsAt)}
             onChange={(e) => override('startsAt', fromDateTimeInput(e.target.value))}
           />
+          <CalendarDays className="date-icon" size={18} aria-hidden />
         </span>
       </label>
       {startsAt && (

@@ -12,15 +12,11 @@ export function ReminderField({ reminders, onChange }: Props) {
   const update = (index: number, patch: Partial<ReminderDraft>) =>
     onChange(reminders.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   return (
-    <div className="kv" style={{ alignItems: 'flex-start' }}>
+    <div className="kv reminder-kv">
       <span>Promemoria</span>
-      <span style={{ flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+      <span className="reminder-list">
         {reminders.map((r, i) => (
-          <span
-            key={r.id + i}
-            className="hstack"
-            style={{ gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}
-          >
+          <span key={r.id + i} className="reminder-item">
             <select
               className="inline-select"
               aria-label="Quando avvisare"
@@ -64,7 +60,7 @@ export function ReminderField({ reminders, onChange }: Props) {
         ))}
         <button
           type="button"
-          className="pill"
+          className="pill reminder-add"
           onClick={() => onChange([...reminders, { id: newId(), offset: 60, email: true, push: true }])}
         >
           <Plus size={14} /> Promemoria

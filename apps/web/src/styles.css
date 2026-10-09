@@ -1439,6 +1439,8 @@ select.input {
   font-weight: 600;
   color: inherit;
   text-align: right;
+  /* Safari iOS ignora text-align sui select: senza questo il valore resta a sinistra della casella */
+  text-align-last: right;
   min-height: 44px;
   max-width: 62vw;
 }
@@ -1448,6 +1450,7 @@ select.input {
   padding: 2px 8px;
   min-height: 0;
   text-align: left;
+  text-align-last: left;
 }
 .inline-select.date-field {
   min-width: 150px;
@@ -1462,6 +1465,50 @@ select.input {
 .inline-select.plain {
   font-weight: inherit;
   text-align: left;
+  text-align-last: left;
+}
+/* data e ora: su iPhone il campo non ha un'icona propria, quindi la si disegna; altrove resta quella del browser */
+.date-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.date-icon {
+  display: none;
+  flex: none;
+  color: var(--text-2);
+  pointer-events: none;
+}
+@supports (-webkit-touch-callout: none) {
+  .date-icon {
+    display: block;
+  }
+}
+/* promemoria: etichetta sopra, una riga per promemoria (quando · email · push · rimuovi) allineate a sinistra */
+.kv.reminder-kv {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.reminder-kv > .reminder-list {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  text-align: left;
+}
+.reminder-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.reminder-item .inline-select {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  text-align-last: left;
+}
+.reminder-add {
+  align-self: flex-start;
 }
 
 /* ------- Cura (v3): persone assistite, filoni, terapie, parametri */
