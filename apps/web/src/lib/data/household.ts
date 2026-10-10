@@ -5,6 +5,7 @@ import type {
   EmergencyInfo,
   FollowUp,
   Maintenance,
+  MaintenanceLog,
   Procedure,
   VisitNote,
 } from '../types';
@@ -17,7 +18,45 @@ export const useBoardNotes = () =>
 
 export const useMaintenances = () =>
   useAuthedQuery<Maintenance[]>(['maintenances'], () =>
-    supabase.from('maintenances').select('*, events(id, starts_at, status)').order('created_at'),
+    supabase
+      .from('maintenances')
+      // la scadenza generata, non gli impegni collegati a mano (anche questi puntano alla manutenzione)
+      .select('*, events!events_maintenance_fk(id, starts_at, status)')
+      .order('created_at'),
+  );
+
+/** Impegno collegato a una pratica o a una manutenzione, quanto basta per la sua linea del tempo. */
+export interface LinkedEvent {
+  id: string;
+  title: string;
+  starts_at: string;
+  status: 'open' | 'done';
+}
+
+/** Impegni che l'utente ha collegato a una pratica (`procedure`) o a una manutenzione (`maintenance`). */
+export const useLinkedEvents = (kind: 'procedure' | 'maintenance', id: string | undefined) =>
+  useAuthedQuery<LinkedEvent[]>(
+    ['events', 'linked', kind, id],
+    () =>
+      supabase
+        .from('events')
+        .select('id, title, starts_at, status')
+        .eq(kind === 'procedure' ? 'linked_procedure_id' : 'linked_maintenance_id', id!)
+        .order('starts_at', { ascending: false }),
+    !!id,
+  );
+
+/** Registro delle esecuzioni di una manutenzione, dalla più recente. */
+export const useMaintenanceLog = (maintenanceId: string | undefined) =>
+  useAuthedQuery<MaintenanceLog[]>(
+    ['maintenances', 'log', maintenanceId],
+    () =>
+      supabase
+        .from('maintenance_log')
+        .select('*')
+        .eq('maintenance_id', maintenanceId!)
+        .order('done_on', { ascending: false }),
+    !!maintenanceId,
   );
 
 export const useProcedures = () =>

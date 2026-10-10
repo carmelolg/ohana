@@ -49,6 +49,32 @@ export function useScheduler(): Scheduler {
   };
 }
 
+interface Execution {
+  doneOn: string;
+  cost: number | null;
+  contactId: string | null;
+}
+
+/** Aggiunge un intervento al registro: è ciò che la linea del tempo mostra (la manutenzione tiene solo l'ultimo). */
+async function logExecution(
+  mutate: Mutate,
+  m: Pick<Maintenance, 'id' | 'space_id'>,
+  e: Execution,
+): Promise<void> {
+  await mutate({
+    table: 'maintenance_log',
+    action: 'upsert',
+    payload: {
+      id: newId(),
+      space_id: m.space_id,
+      maintenance_id: m.id,
+      done_on: e.doneOn,
+      cost: e.cost,
+      contact_id: e.contactId,
+    },
+  });
+}
+
 export interface MaintenanceInput {
   /** Presente in modifica. */
   editing: Maintenance | null;
@@ -80,6 +106,13 @@ export async function saveMaintenance(
   if (!editing) {
     const row = { id: newId(), space_id: input.spaceId, template_key: input.templateKey, ...fields };
     await mutate({ table: 'maintenances', action: 'upsert', payload: row });
+    if (input.lastDone) {
+      await logExecution(mutate, row, {
+        doneOn: input.lastDone,
+        cost: fields.last_cost,
+        contactId: fields.contact_id,
+      });
+    }
     return schedule(row, dueDate);
   }
   await mutate({ table: 'maintenances', action: 'update', payload: fields, match: { id: editing.id } });
@@ -119,12 +152,14 @@ export async function completeMaintenance(
   c: Completion,
 ): Promise<void> {
   const contactId = c.contactId || null;
+  const cost = parseMoneyInput(c.cost);
   await mutate({
     table: 'maintenances',
     action: 'update',
-    payload: { last_done_at: c.doneOn, last_cost: parseMoneyInput(c.cost), contact_id: contactId },
+    payload: { last_done_at: c.doneOn, last_cost: cost, contact_id: contactId },
     match: { id: m.id },
   });
+  await logExecution(mutate, m, { doneOn: c.doneOn, cost, contactId });
   for (const e of m.events.filter((x) => x.status === 'open')) {
     await mutate({
       table: 'events',

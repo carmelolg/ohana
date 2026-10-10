@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { LocationValue } from '../../components/LocationField';
 import type { ChecklistItem, EventRow } from '../../lib/types';
 import type { Overrides } from './eventValues';
+import { linkKeyOfEvent } from './eventLink';
 import { remindersFromEvent, type ReminderDraft } from './reminders';
 
 const NO_LOCATION: LocationValue = { text: '', lat: null, lng: null };
@@ -30,7 +31,11 @@ export function draftFromEvent(e: EventRow) {
  * Bozza dell'impegno in modifica: tutti i campi che l'utente può toccare, più le aperture opzionali (luogo, checklist).
  * Non conosce regole né salvataggio: quelle stanno in `useEventForm`.
  */
-export function useEventDraft(existing: EventRow | null, initialText: string, initialCareThread = '') {
+export function useEventDraft(
+  existing: EventRow | null,
+  initialText: string,
+  initial: { careThread?: string; link?: string } = {},
+) {
   const [text, setText] = useState(initialText);
   const [overrides, setOverrides] = useState<Overrides>({});
   const [location, setLocation] = useState<LocationValue>(NO_LOCATION);
@@ -42,7 +47,9 @@ export function useEventDraft(existing: EventRow | null, initialText: string, in
   const [showChecklist, setShowChecklist] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   /** Filone di cura (vuoto = nessuno): può arrivare già scelto dall'indirizzo, aprendo «+ Impegno» da un filone. */
-  const [careThreadId, setCareThreadId] = useState(initialCareThread);
+  const [careThreadId, setCareThreadId] = useState(initial.careThread ?? '');
+  /** Pratica o manutenzione a cui l'impegno è legato (`procedure:<id>`, `maintenance:<id>`; vuoto = nessuna). */
+  const [linkKey, setLinkKey] = useState(initial.link ?? '');
 
   // carica l'impegno esistente nello stato di modifica
   useEffect(() => {
@@ -60,6 +67,7 @@ export function useEventDraft(existing: EventRow | null, initialText: string, in
     setChecklist(d.checklist);
     setShowChecklist(d.checklist.length > 0);
     setCareThreadId(existing.care_thread_id ?? '');
+    setLinkKey(linkKeyOfEvent(existing));
   }, [existing]);
 
   return {
@@ -84,6 +92,8 @@ export function useEventDraft(existing: EventRow | null, initialText: string, in
     openChecklist: () => setShowChecklist(true),
     careThreadId,
     setCareThreadId,
+    linkKey,
+    setLinkKey,
     files,
     addFiles: (added: File[]) => setFiles((l) => [...l, ...added]),
     removeFile: (index: number) => setFiles((l) => l.filter((_, j) => j !== index)),

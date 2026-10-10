@@ -1,5 +1,6 @@
 import { CareThreadSelect } from '../../components/care/CareThreadSelect';
 import { AssigneeField, CategoryField, ContactField, RepeatField, SpaceField, WhenField } from './fieldParts';
+import { LinkSelect } from './LinkSelect';
 import { ReminderField } from './ReminderField';
 import type { EventForm } from './useEventForm';
 
@@ -13,11 +14,16 @@ export function EventFields({ form }: { form: EventForm }) {
         <>
           <CategoryField form={form} />
           <ContactField form={form} />
-          <CareThreadSelect
-            spaceId={form.spaceId}
-            value={form.careThreadId}
-            onChange={form.setCareThreadId}
-          />
+          {form.sections.care && (
+            <CareThreadSelect
+              spaceId={form.spaceId}
+              value={form.careThreadId}
+              onChange={form.setCareThreadId}
+            />
+          )}
+          {form.sections.link && (
+            <LinkSelect spaceId={form.spaceId} value={form.linkKey} onChange={form.setLinkKey} />
+          )}
         </>
       )}
       <AssigneeField form={form} />

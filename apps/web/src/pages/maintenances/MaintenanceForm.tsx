@@ -2,6 +2,7 @@ import { Sheet } from '../../components/ui';
 import { useContacts, useSpace } from '../../lib/data';
 import type { Maintenance } from '../../lib/types';
 import { MaintenanceFields } from './MaintenanceFields';
+import { MaintenanceTimeline } from './MaintenanceTimeline';
 import { type FormState } from './formState';
 import { useMaintenanceForm } from './useMaintenanceForm';
 
@@ -34,6 +35,7 @@ export function MaintenanceForm({ state, onClose, onDone }: Props) {
           spaces={editing ? [] : spaces.filter((s) => canWrite(s.id))}
           contacts={contacts}
         />
+        {editing && <MaintenanceTimeline maintenance={editing} />}
         {form.error && (
           <p className="error" role="alert">
             {form.error}

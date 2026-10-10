@@ -1,15 +1,31 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
-import { useCareThreads, useCategories, useContacts, useEvent, useSpace } from '../../lib/data';
+import {
+  useCareThreads,
+  useCategories,
+  useContacts,
+  useEvent,
+  useMaintenances,
+  useProcedures,
+  useSpace,
+} from '../../lib/data';
 import { showFormError } from '../../lib/formError';
 import { useBack } from '../../lib/nav';
+import { eventSections, parseLinkKey } from './eventLink';
 import { resolveEventValues } from './eventValues';
 import { initialReminders, type ReminderDraft } from './reminders';
 import { useEventCategory } from './useEventCategory';
 import { useEventDraft, type EventDraft } from './useEventDraft';
 import { useQuickParse } from './useQuickParse';
 import { useSaveEvent } from './useSaveEvent';
+
+/** «+ Impegno» da una pratica (`?pratica=`) o da una manutenzione (`?manutenzione=`). */
+const requestedLink = (search: URLSearchParams): string => {
+  const procedure = search.get('pratica');
+  const maintenance = search.get('manutenzione');
+  return procedure ? `procedure:${procedure}` : maintenance ? `maintenance:${maintenance}` : '';
+};
 
 const initialTextFrom = (search: URLSearchParams) =>
   [search.get('title'), search.get('text')].filter(Boolean).join(' ');
@@ -46,6 +62,7 @@ function buildEventToSave({ src, draft, values, title, reminders }: ToSaveArgs) 
     files: draft.files,
     followUpId: src.search.get('followup'),
     careThreadId: draft.careThreadId || null,
+    linkKey: draft.linkKey,
   };
 }
 
@@ -112,6 +129,23 @@ function useSpaceOfRequestedThread(isNew: boolean, threadId: string | null, draf
   }, [isNew, spaceId]);
 }
 
+/** Un impegno nato da «+ Impegno» in una pratica o in una manutenzione vive nello spazio di quell'oggetto. */
+function useSpaceOfRequestedLink(isNew: boolean, link: string, draft: EventDraft) {
+  const { data: procedures = [] } = useProcedures();
+  const { data: maintenances = [] } = useMaintenances();
+  const target = parseLinkKey(link);
+  const spaceId = (target?.kind === 'procedure' ? procedures : maintenances).find(
+    (x) => x.id === target?.id,
+  )?.space_id;
+  useEffect(() => {
+    if (isNew && spaceId && !draft.overrides.spaceId) {
+      draft.override('spaceId', spaceId);
+    }
+    // scatta quando arrivano pratiche e manutenzioni
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNew, spaceId]);
+}
+
 /**
  * Stato e regole della schermata «Nuovo / Modifica impegno»: compone la bozza (`useEventDraft`), l'interpretazione del
  * testo libero, i valori risolti, la categoria e il salvataggio. La schermata si limita a mostrarlo.
@@ -121,9 +155,13 @@ export function useEventForm(eventId: string | undefined) {
   const src = useEventSources(eventId);
   const { existing, contacts, spaces, defaultSpace } = src;
   const [error, setError] = useState('');
-  const draft = useEventDraft(existing, initialTextFrom(src.search), src.search.get('filone') ?? '');
+  const draft = useEventDraft(existing, initialTextFrom(src.search), {
+    careThread: src.search.get('filone') ?? '',
+    link: requestedLink(src.search),
+  });
   const { parsed, values, categoriesOfSpace, title } = useResolvedEvent(src, draft, isNew);
   useSpaceOfRequestedThread(isNew, src.search.get('filone'), draft);
+  useSpaceOfRequestedLink(isNew, draft.linkKey, draft);
   const { spaceId, isChore } = values;
   const category = useEventCategory({
     isNew,
@@ -171,6 +209,12 @@ export function useEventForm(eventId: string | undefined) {
     canWrite: src.canWrite,
     category,
     reminders,
+    sections: eventSections({
+      isChore,
+      categorySlug: category.selected?.slug,
+      careThreadId: draft.careThreadId,
+      linkKey: draft.linkKey,
+    }),
     showAmount: showsAmount(isChore, category.selected?.slug, draft.amount),
     save,
   };

@@ -95,6 +95,10 @@ export interface EventRow {
   maintenance_id: string | null;
   care_thread_id: string | null;
   medication_id: string | null;
+  /** Collegamento scelto dall'utente a una pratica (non è il passaggio che ha un impegno in calendario). */
+  linked_procedure_id: string | null;
+  /** Collegamento scelto dall'utente a una manutenzione (non è la scadenza generata, `maintenance_id`). */
+  linked_maintenance_id: string | null;
   created_by: string;
   event_reminders: Reminder[];
   event_checklist_items: ChecklistItem[];
@@ -192,6 +196,17 @@ export interface Maintenance {
   contact_id: string | null;
   template_key: string | null;
   events: { id: string; starts_at: string; status: 'open' | 'done' }[];
+}
+/** Una esecuzione di una manutenzione (riga del registro): data, costo e professionista di quella volta. */
+export interface MaintenanceLog {
+  id: string;
+  space_id: string;
+  maintenance_id: string;
+  done_on: string;
+  cost: number | null;
+  contact_id: string | null;
+  note: string | null;
+  created_by: string | null;
 }
 export interface ProcedureStep {
   id: string;

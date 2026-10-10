@@ -38,6 +38,23 @@ describe('saveMaintenance', () => {
     expect(schedule).toHaveBeenCalledWith(expect.objectContaining({ space_id: 's1', title: 'Caldaia' }), due);
   });
 
+  it('nuova con «ultima volta»: la registra anche nel registro, con costo e professionista', async () => {
+    const { mutate, steps, payloadOf } = fakeMutate();
+    await saveMaintenance(mutate, vi.fn(), { ...input, lastDone: '2025-11-05', contactId: 'k1' });
+    expect(steps()).toEqual(['upsert:maintenances', 'upsert:maintenance_log']);
+    expect(payloadOf('maintenance_log')!.payload).toMatchObject({
+      done_on: '2025-11-05',
+      cost: 120.5,
+      contact_id: 'k1',
+    });
+  });
+
+  it('nuova senza «ultima volta»: nessuna riga nel registro', async () => {
+    const { mutate, steps } = fakeMutate();
+    await saveMaintenance(mutate, vi.fn(), input);
+    expect(steps()).toEqual(['upsert:maintenances']);
+  });
+
   it("modifica con scadenza aperta: la sposta senza crearne un'altra", async () => {
     const { mutate, steps, payloadOf } = fakeMutate();
     const schedule = vi.fn();
@@ -66,7 +83,15 @@ describe('completeMaintenance', () => {
       contactId: 'k1',
       next: due,
     });
-    expect(steps()).toEqual(['update:maintenances', 'update:events']);
+    // oltre a ultima volta e scadenza, l'intervento entra nel registro (linea del tempo)
+    expect(steps()).toEqual(['update:maintenances', 'upsert:maintenance_log', 'update:events']);
+    expect(payloadOf('maintenance_log')!.payload).toMatchObject({
+      space_id: 's1',
+      maintenance_id: 'm1',
+      done_on: '2026-10-08',
+      cost: null,
+      contact_id: 'k1',
+    });
     expect(payloadOf('maintenances')!.payload).toMatchObject({
       last_done_at: '2026-10-08',
       last_cost: null,

@@ -9,6 +9,7 @@ import type { Procedure, ProcedureStep } from '../lib/types';
 import { AddStepForm } from './procedure/AddStepForm';
 import { DocChips } from './procedure/DocChips';
 import { ProcedureHeader } from './procedure/ProcedureHeader';
+import { ProcedureTimeline } from './procedure/ProcedureTimeline';
 import { EditProcedureSheet } from './procedure/EditProcedureSheet';
 import { addRequiredDocument, addStep, sortedSteps, toggleStep } from './procedure/procedureCommands';
 import { StepList } from './procedure/StepList';
@@ -126,6 +127,14 @@ function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDe
         onOpen={setOpenStep}
       />
       {writable && <AddStepForm onAdd={(title) => void addStep(mutate, p, title)} />}
+
+      <ProcedureTimeline
+        procedureId={p.id}
+        spaceId={p.space_id}
+        steps={steps}
+        eventDates={eventDates}
+        hue={space?.color_hue ?? 42}
+      />
 
       <DocsHeader procedure={p} writable={writable} onAdd={onAddDocument} />
       <DocChips procedure={p} writable={writable} />

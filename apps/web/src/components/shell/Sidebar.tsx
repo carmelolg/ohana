@@ -1,13 +1,17 @@
 import { NavLink } from 'react-router-dom';
 import {
   CalendarDays,
+  ClipboardList,
+  FileText,
   HeartPulse,
   Home,
   Plus,
   Settings as Cog,
   ShoppingBasket,
+  Siren,
   Users,
   Wallet,
+  Wrench,
   type LucideIcon,
 } from 'lucide-react';
 import type { SpaceFeature } from '@ohana/shared';
@@ -20,8 +24,12 @@ const LINKS: { to: string; label: string; Icon: LucideIcon; feature?: SpaceFeatu
   { to: '/calendario', label: 'Calendario', Icon: CalendarDays },
   { to: '/spesa', label: 'Spesa', Icon: ShoppingBasket, feature: 'spesa' },
   { to: '/cura', label: 'Cura', Icon: HeartPulse, feature: 'cura' },
+  { to: '/pratiche', label: 'Pratiche', Icon: ClipboardList, feature: 'pratiche' },
+  { to: '/manutenzioni', label: 'Manutenzioni', Icon: Wrench, feature: 'manutenzioni' },
+  { to: '/documenti', label: 'Documenti', Icon: FileText, feature: 'documenti' },
   { to: '/rubrica', label: 'Rubrica', Icon: Users },
   { to: '/spese', label: 'Spese', Icon: Wallet, feature: 'spese' },
+  { to: '/emergenza', label: 'Emergenza', Icon: Siren },
   { to: '/impostazioni', label: 'Impostazioni', Icon: Cog },
 ];
 

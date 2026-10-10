@@ -31,6 +31,7 @@ const base: EventToSave = {
   files: [],
   followUpId: null,
   careThreadId: null,
+  linkKey: '',
 };
 
 beforeEach(() => upload.mockReset());
@@ -124,5 +125,35 @@ describe('saveEvent', () => {
   it('un errore sulla scrittura principale si propaga', async () => {
     const { mutate } = fakeMutate((op) => op.table === 'events');
     await expect(saveEvent(mutate, base)).rejects.toThrow('scrittura rifiutata');
+  });
+});
+
+describe('saveEvent: collegamento a pratiche e manutenzioni', () => {
+  it('collegato a una pratica: scrive solo quella colonna', async () => {
+    const { mutate, payloadOf } = fakeMutate();
+    await saveEvent(mutate, { ...base, linkKey: 'procedure:p1' });
+    expect(payloadOf('events')!.payload).toMatchObject({
+      linked_procedure_id: 'p1',
+      linked_maintenance_id: null,
+    });
+  });
+
+  it('in modifica, togliere il collegamento lo azzera', async () => {
+    const { mutate, payloadOf } = fakeMutate();
+    const existing = { id: 'e1', linked_maintenance_id: 'm1' } as unknown as EventRow;
+    await saveEvent(mutate, { ...base, existing, linkKey: '' });
+    expect(payloadOf('events', 'update')!.payload).toMatchObject({
+      linked_procedure_id: null,
+      linked_maintenance_id: null,
+    });
+  });
+
+  it('una faccenda non si collega a nulla', async () => {
+    const { mutate, payloadOf } = fakeMutate();
+    await saveEvent(mutate, { ...base, isChore: true, assigneeId: 'u1', linkKey: 'maintenance:m1' });
+    expect(payloadOf('events')!.payload).toMatchObject({
+      linked_procedure_id: null,
+      linked_maintenance_id: null,
+    });
   });
 });

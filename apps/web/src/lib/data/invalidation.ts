@@ -18,6 +18,7 @@ export const TABLE_KEYS: Record<string, string[]> = {
   follow_ups: ['visit'],
   emergency_info: ['emergency'],
   maintenances: ['maintenances', 'events'],
+  maintenance_log: ['maintenances'],
   procedures: ['procedures'],
   procedure_steps: ['procedures'],
   procedure_docs: ['procedures'],

@@ -142,6 +142,15 @@ test('manutenzione da «+» («caldaia ogni anno a novembre») e card in Altro',
   await expect(row).toContainText('90 €');
   await expect(row).toContainText('Ultima');
 
+  // lo storico dell'oggetto: l'intervento appena fatto (con costo) e la prossima scadenza in programma
+  await row.click();
+  const storico = page
+    .getByRole('dialog', { name: 'Manutenzione' })
+    .getByRole('region', { name: 'Storico interventi' });
+  await expect(storico).toContainText('Eseguita');
+  await expect(storico).toContainText(/90\s€/);
+  await expect(storico).toContainText('In programma');
+
   // Altro: la card mostra lo stato
   await page.goto('/altro');
   await expect(page.getByRole('link', { name: /^Manutenzioni/ })).toBeVisible();
@@ -182,9 +191,39 @@ test('pratica ISEE da modello: passaggi, documenti, avanzamento e completamento'
   }
   await expect(page.locator('.badge', { hasText: 'COMPLETATA' })).toBeVisible();
 
+  // la cronologia mostra tutti i passaggi chiusi, nessuno ancora da fare
+  const cronologia = page.getByRole('region', { name: 'Cronologia della pratica' });
+  await expect(cronologia.getByText('Completato')).toHaveCount(5);
+  await expect(cronologia.getByText('Da fare')).toHaveCount(0);
+
   // Altro mostra «N in corso» solo per quelle aperte
   await page.goto('/pratiche');
   await expect(page.getByText('Concluse')).toBeVisible();
+});
+
+test('impegno legato a una pratica: sezione «Collega a» e voce nella cronologia', async ({ page }) => {
+  await onboard(page, uniqueEmail('lnk'), 'Lia', 'Casa mia');
+  await createFromText(page, 'ISEE mamma');
+  await page
+    .getByRole('dialog', { name: 'Nuova pratica' })
+    .getByRole('button', { name: 'Crea pratica' })
+    .click();
+  await expect(page).toHaveURL(/\/pratiche\/[0-9a-f-]+/);
+
+  // da «+ Impegno» l'editor nasce già collegato alla pratica
+  await page.getByRole('link', { name: 'Aggiungi un impegno a questa pratica' }).click();
+  await page.getByLabel('Descrivi l’impegno').fill('Colloquio al CAF domani alle 10');
+  await expect(page.getByLabel('Collega a pratica o manutenzione')).toContainText('ISEE mamma');
+  await expect(page.getByLabel('Cura')).toHaveCount(0); // «Cura» è solo per le visite
+  await page.getByRole('button', { name: 'Salva' }).click();
+
+  await page
+    .getByRole('link', { name: /ISEE mamma/ })
+    .first()
+    .click();
+  const cronologia = page.getByRole('region', { name: 'Cronologia della pratica' });
+  await expect(cronologia).toContainText('Colloquio al CAF');
+  await expect(cronologia).toContainText('In programma');
 });
 
 test("diario visite: com'è andata, prossimi passi → impegno, storico con il medico", async ({ page }) => {

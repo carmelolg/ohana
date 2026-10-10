@@ -4,6 +4,7 @@ import type { Mutate } from '../../lib/data';
 import { newId } from '../../lib/outbox';
 import type { ChecklistItem, EventRow } from '../../lib/types';
 import type { LocationValue } from '../../components/LocationField';
+import { linkColumns } from './eventLink';
 import { channelsOf, type ReminderDraft } from './reminders';
 
 /** Tutto ciò che serve a salvare un impegno, già validato dalla schermata. */
@@ -28,6 +29,8 @@ export interface EventToSave {
   followUpId: string | null;
   /** Filone di cura a cui appartiene l'impegno (vuoto = nessuno). */
   careThreadId: string | null;
+  /** Pratica o manutenzione collegata (`procedure:<id>` / `maintenance:<id>`; vuoto = nessuna). */
+  linkKey: string;
 }
 
 export interface SaveResult {
@@ -53,6 +56,7 @@ function eventRow(e: EventToSave, id: string) {
     assignee_id: e.assigneeId,
     contact_id: e.isChore ? null : e.contactId,
     care_thread_id: e.isChore ? null : e.careThreadId,
+    ...linkColumns(e.isChore ? '' : e.linkKey),
     rrule: e.rrule || null,
     amount: parseMoneyInput(e.amount),
     ...(e.existing ? {} : { created_by: e.userId }),
