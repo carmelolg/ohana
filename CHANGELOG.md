@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/carmelolg/ohana/compare/ohana-v0.2.0...ohana-v0.3.0) (2026-10-11)
+
+
+### Features
+
+* bacheca con campanella, pagina dedicata e navigazione a sottovoci ([afe5053](https://github.com/carmelolg/ohana/commit/afe505365f196e9c409bd58206ec6d5c39cec9a3))
+
 ## [0.2.0](https://github.com/carmelolg/ohana/compare/ohana-v0.1.0...ohana-v0.2.0) (2026-10-11)
 
 
