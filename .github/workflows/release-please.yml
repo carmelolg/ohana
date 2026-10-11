@@ -1,0 +1,21 @@
+name: Release Please
+
+# Apre/aggiorna la PR di release (CHANGELOG + versione) dai commit Conventional
+# su main. Il merge della PR crea tag e GitHub Release. Non fa deploy: quello
+# resta in scripts/deploy.sh.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
