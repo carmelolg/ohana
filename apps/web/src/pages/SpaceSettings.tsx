@@ -1,7 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { ROLE_LABEL } from '@ohana/shared';
 import { BackLink } from '../components/BackLink';
-import { BoardSection } from '../components/BoardSection';
 import { CategoriesSection } from '../components/CategoriesSection';
 import { deleteSpace } from '../lib/api/spaces';
 import { spaceColor } from '../lib/color';
@@ -14,7 +13,7 @@ import { MembersSection } from './space-settings/MembersSection';
 import { useFollowSelectedSpace } from './space-settings/useFollowSelectedSpace';
 import { useSpaceAction } from './space-settings/useSpaceAction';
 
-/** Gestione di uno spazio: aspetto, persone, bacheca, categorie, inviti, eliminazione. */
+/** Gestione di uno spazio: aspetto, persone, categorie, inviti, eliminazione. */
 export function SpaceSettingsPage() {
   const { id = '' } = useParams();
   const { spaceById, myRole, setSelected } = useSpace();
@@ -54,7 +53,6 @@ export function SpaceSettingsPage() {
       {isAdmin && <LookSection space={space} />}
       {isAdmin && <FeaturesSection space={space} />}
       <MembersSection space={space} role={role} />
-      <BoardSection spaceId={id} />
       <CategoriesSection spaceId={id} />
       {isAdmin && <InvitesSection space={space} />}
 

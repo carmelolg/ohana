@@ -80,7 +80,11 @@ export function VisitPrepPage() {
   const since = useMemo(() => (thread ? sinceLastVisit(entries, thread.id) : null), [entries, thread]);
 
   if (isLoading) {
-    return <div className="empty">Caricamento…</div>;
+    return (
+      <div className="empty" role="status" aria-busy="true">
+        Caricamento…
+      </div>
+    );
   }
   if (!visit) {
     return <div className="empty">Impegno non trovato</div>;

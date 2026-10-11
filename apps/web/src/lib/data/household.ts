@@ -1,6 +1,5 @@
 import { supabase } from '../supabase';
 import type {
-  BoardNote,
   DocumentRow,
   EmergencyInfo,
   FollowUp,
@@ -10,11 +9,6 @@ import type {
   VisitNote,
 } from '../types';
 import { useAuthedQuery } from './query';
-
-export const useBoardNotes = () =>
-  useAuthedQuery<BoardNote[]>(['board'], () =>
-    supabase.from('board_notes').select('*').order('created_at', { ascending: false }),
-  );
 
 export const useMaintenances = () =>
   useAuthedQuery<Maintenance[]>(['maintenances'], () =>
@@ -125,10 +119,6 @@ export const useVisitHistory = (contactId: string | null) =>
         .order('starts_at', { ascending: false }),
     !!contactId,
   );
-
-/** `true` se la nota è ancora valida (non scaduta). */
-export const noteActive = (n: BoardNote, now = new Date()): boolean =>
-  !n.expires_at || new Date(n.expires_at) > now;
 
 /** Prossima scadenza (evento aperto collegato) di una manutenzione, se c'è. */
 export function nextDue(m: { events: { starts_at: string; status: string }[] }): Date | null {

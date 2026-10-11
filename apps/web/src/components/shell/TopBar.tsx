@@ -3,6 +3,7 @@ import { Plus, Search } from 'lucide-react';
 import { spaceColor } from '../../lib/color';
 import { useSpace } from '../../lib/data';
 import { AvatarMenu } from '../AvatarMenu';
+import { BoardBell } from './BoardBell';
 
 interface Props {
   editor: boolean;
@@ -75,6 +76,7 @@ export function TopBar({ editor, onSpaces, onSearch, onCreate }: Props) {
           <button className="icon-btn navbar-search-mobile" onClick={onSearch} aria-label="Cerca">
             <Search size={22} strokeWidth={1.75} />
           </button>
+          <BoardBell />
           <AvatarMenu onManageSpaces={onSpaces} />
         </div>
       </div>

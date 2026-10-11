@@ -186,7 +186,11 @@ export function CareHubPage() {
   const view = useHubView(data, entries, events);
 
   if (data.loading) {
-    return <div className="empty">Caricamento…</div>;
+    return (
+      <div className="empty" role="status" aria-busy="true">
+        Caricamento…
+      </div>
+    );
   }
   if (!recipient) {
     return (

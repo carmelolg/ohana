@@ -9,6 +9,8 @@ describe('areaOf', () => {
     expect(areaOf('/pratiche/abc')).toBe('casa');
     expect(areaOf('/cura/xyz/terapie')).toBe('famiglia');
     expect(areaOf('/altro')).toBe('famiglia');
+    expect(areaOf('/bacheca')).toBe('famiglia');
+    expect(areaOf('/impostazioni')).toBe('impostazioni');
     expect(areaOf('/spazio/1')).toBe('famiglia');
   });
   it('non evidenzia nulla fuori dalle aree', () => {

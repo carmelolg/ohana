@@ -159,6 +159,11 @@ export interface BoardNote {
   notified_at: string | null;
   created_at: string;
 }
+/** Ultima volta che l'utente ha aperto la bacheca di uno spazio (base del badge «nuove»). */
+export interface BoardRead {
+  space_id: string;
+  read_at: string;
+}
 export interface VisitNote {
   id: string;
   event_id: string;

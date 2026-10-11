@@ -32,7 +32,11 @@ function EventEditorScreen() {
   const { isNew, existing, writable, space } = form;
 
   if (!isNew && form.isLoading) {
-    return <div className="empty">Caricamento…</div>;
+    return (
+      <div className="empty" role="status" aria-busy="true">
+        Caricamento…
+      </div>
+    );
   }
   if (!isNew && !existing) {
     return (

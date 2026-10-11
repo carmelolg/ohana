@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "release": "bash scripts/deploy.sh all",
+    "release:db": "bash scripts/deploy.sh db",
     "release:web": "bash scripts/deploy.sh web",
     "release:worker": "bash scripts/deploy.sh worker",
     "format": "prettier --write .",

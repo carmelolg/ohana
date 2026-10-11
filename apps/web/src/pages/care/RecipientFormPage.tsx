@@ -160,7 +160,9 @@ export function CareRecipientFormPage() {
   const existing = rid ? (all.find((r) => r.id === rid) ?? null) : null;
   if (rid && !existing) {
     return isLoading ? (
-      <div className="empty">Caricamento…</div>
+      <div className="empty" role="status" aria-busy="true">
+        Caricamento…
+      </div>
     ) : (
       <div className="empty">Persona non trovata</div>
     );

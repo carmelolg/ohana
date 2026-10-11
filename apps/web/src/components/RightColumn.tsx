@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { addDaysRome, startOfDayRome } from '@ohana/shared';
 import { useAuth } from '../lib/auth';
 import { netBalancesIn, transfersFor } from '../lib/balances';
@@ -12,6 +13,8 @@ import {
   useFeature,
   useSpace,
 } from '../lib/data';
+import { NextCard } from './NextCard';
+import { pickNext } from '../lib/nextOccurrence';
 import { BalanceCard, DeadlinesCard, ShoppingCard } from './right-column/Cards';
 
 const DEADLINE_DAYS = 45;
@@ -20,6 +23,7 @@ const MAX_DEADLINES = 5;
 /** Colonna destra desktop (2h): scadenze, spesa e saldo. */
 export function RightColumn() {
   const { session } = useAuth();
+  const { pathname } = useLocation();
   const { selected, memberName } = useSpace();
   const showShopping = useFeature('spesa');
   const showBalance = useFeature('spese');
@@ -36,12 +40,18 @@ export function RightColumn() {
   const deadlines = toOccurrences(events, from, to, selected)
     .filter((o) => o.event.categories?.slug === 'scadenza' && o.event.status === 'open')
     .slice(0, MAX_DEADLINES);
+  const todayEnd = addDaysRome(from, 1);
+  const todayOpen = toOccurrences(events, from, todayEnd, selected).filter(
+    (o) => o.event.status === 'open' && o.event.kind !== 'faccenda',
+  );
+  const next = pickNext(todayOpen, new Date());
   const listIds = new Set(lists.filter((l) => inScope(l.space_id)).map((l) => l.id));
   const open = items.filter((i) => listIds.has(i.list_id) && !i.checked);
   const transfers = transfersFor(netBalancesIn(expenses, settlements, inScope), me);
 
   return (
     <aside className="rightcol" aria-label="Riepilogo">
+      {next && pathname !== '/oggi' && <NextCard occ={next} now={new Date()} />}
       <DeadlinesCard deadlines={deadlines} />
       {showShopping && <ShoppingCard open={open} />}
       {showBalance && <BalanceCard transfers={transfers} me={me} nameOf={memberName} />}

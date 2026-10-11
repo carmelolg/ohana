@@ -32,3 +32,12 @@ export const publishNote = (mutate: Mutate, n: NewNote) =>
       notify_push: n.notifyPush,
     },
   });
+
+/** Segna la bacheca di questi spazi come letta adesso (una riga per utente e spazio, `user_id` lo mette il database). */
+export const markBoardRead = (mutate: Mutate, spaceIds: string[], now: Date) =>
+  mutate({
+    table: 'board_reads',
+    action: 'upsert',
+    payload: spaceIds.map((space_id) => ({ space_id, read_at: now.toISOString() })),
+    onConflict: 'space_id,user_id',
+  });

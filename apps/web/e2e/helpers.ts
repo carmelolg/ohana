@@ -42,8 +42,11 @@ export async function onboard(page: Page, email: string, first: string, space: s
   await login(page, email);
   await expect(page.getByRole('heading', { name: 'Benvenuto' })).toBeVisible();
   await page.getByLabel('Nome', { exact: true }).fill(first);
+  await page.getByRole('button', { name: 'Continua' }).click();
   await page.getByLabel('Nome dello spazio').fill(space);
-  await page.getByRole('button', { name: 'Inizia' }).click();
+  await page.getByRole('button', { name: 'Continua' }).click();
+  await page.getByRole('button', { name: 'Lo faccio dopo' }).click();
+  await page.getByRole('button', { name: 'Vai a Oggi' }).click();
   await expect(page).toHaveURL(/\/oggi/);
 }
 

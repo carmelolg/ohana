@@ -50,7 +50,11 @@ export function CareVisitClosePage() {
   const c = useVisitClose(eventId);
 
   if (c.isLoading) {
-    return <div className="empty">Caricamento…</div>;
+    return (
+      <div className="empty" role="status" aria-busy="true">
+        Caricamento…
+      </div>
+    );
   }
   if (!c.visit || !c.currentRecipient) {
     return (

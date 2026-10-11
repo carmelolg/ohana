@@ -6,6 +6,8 @@ import { Link } from 'react-router-dom';
 import { BoardBanner } from '../components/BoardBanner';
 import { ChoresBlock } from '../components/ChoresBlock';
 import { NextCard } from '../components/NextCard';
+import { OverdueBanner } from '../components/OverdueBanner';
+import { pickNext } from '../lib/nextOccurrence';
 import { CareTodayRows } from '../components/care/CareTodayRows';
 
 const WEEKDAY = new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', weekday: 'long' });
@@ -45,8 +47,7 @@ export function TodayPage() {
     parts.push(`${dueCount} ${dueCount === 1 ? 'scadenza' : 'scadenze'}`);
   }
 
-  // «Prossimo»: il primo impegno aperto non ancora iniziato, altrimenti il primo aperto della giornata
-  const next = open.find((o) => !o.event.all_day && o.at >= now) ?? open[0];
+  const next = pickNext(open, now);
 
   return (
     <>
@@ -60,16 +61,9 @@ export function TodayPage() {
       {next && <NextCard occ={next} now={now} />}
       <CareTodayRows />
 
-      {overdue.length > 0 && (
-        <>
-          <div className="label section-label" style={{ color: 'var(--danger)' }}>
-            In ritardo
-          </div>
-          {overdue.map((o) => (
-            <OccurrenceRow key={o.key} occ={o} showDay={formatDayShort(o.at).toUpperCase().slice(0, 6)} />
-          ))}
-        </>
-      )}
+      {overdue.map((o) => (
+        <OverdueBanner key={o.key} occ={o} />
+      ))}
 
       <div className="list">
         {todayList.map((o) => (

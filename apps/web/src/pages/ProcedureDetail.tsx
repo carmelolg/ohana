@@ -24,7 +24,11 @@ export default function ProcedureDetailPage() {
   const { data: list = [], isLoading } = useProcedures();
   const procedure = list.find((x) => x.id === id);
   if (isLoading) {
-    return <div className="empty">Caricamento…</div>;
+    return (
+      <div className="empty" role="status" aria-busy="true">
+        Caricamento…
+      </div>
+    );
   }
   if (!procedure) {
     return (

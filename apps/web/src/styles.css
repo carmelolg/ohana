@@ -453,9 +453,20 @@ h2.page-title {
     background: var(--surface);
     font-weight: 600;
   }
-  .side-head {
-    font-weight: 700;
+  .side-head-row {
+    display: flex;
+    align-items: center;
     margin-top: 6px;
+  }
+  .side-head {
+    flex: 1;
+    min-width: 0;
+    font-weight: 700;
+  }
+  .side-toggle {
+    flex: none;
+    min-width: 44px;
+    min-height: 44px;
   }
   .side-sub {
     min-height: 40px;
@@ -706,10 +717,17 @@ select.input {
   font-size: 14px;
 }
 .empty {
-  padding: 40px 0;
+  margin-top: 14px;
+  padding: 32px 20px;
   text-align: center;
   color: var(--text-2);
   font-size: 15px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--r-card);
+}
+.empty[aria-busy='true'] {
+  border-style: solid;
+  border-color: transparent;
 }
 
 /* ------- sheet */
@@ -857,6 +875,8 @@ select.input {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  color: inherit;
+  text-decoration: none;
 }
 .pill[aria-pressed='true'] {
   background: var(--accent-soft);
@@ -2724,4 +2744,177 @@ a.chip[aria-pressed='true'] {
   font-size: 12px;
   text-align: center;
   padding-top: 14px;
+}
+
+/* Primo accesso a passi (A-Accesso). */
+.login .hero h1.step-title {
+  font-size: 30px;
+  letter-spacing: -0.02em;
+}
+.step-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+.more-note {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--surface-2);
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+/* Banner «in ritardo» di Oggi (A-Aree). */
+.overdue-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--danger-soft);
+}
+.overdue-icon {
+  flex: none;
+  color: var(--danger);
+}
+.overdue-text {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+}
+.overdue-text span {
+  font-size: 13px;
+  color: var(--danger);
+}
+.overdue-actions {
+  display: flex;
+  gap: 8px;
+}
+.overdue-btn {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 22px;
+  border: 1.5px solid var(--danger);
+  background: transparent;
+  color: var(--danger);
+  font: 600 14px var(--font);
+}
+.overdue-btn.solid {
+  background: var(--danger);
+  color: #fff;
+}
+
+.rightcol .next-card {
+  margin: 0 0 16px;
+}
+
+/* Bacheca: banner in Oggi, pagina dedicata e righe delle note */
+.board-banner {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.board-pin {
+  margin-top: 3px;
+}
+.board-note-body {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.board-note-meta {
+  font-size: 12px;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bell {
+  position: relative;
+}
+.bell-badge {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+.note-new {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 20px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 11px;
+  font-weight: 700;
+}
+.board-head {
+  justify-content: space-between;
+}
+.board-hint {
+  font-size: 14px;
+}
+.board-empty {
+  padding: 12px 0;
+}
+.note-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.note-row.dimmed {
+  opacity: 0.6;
+}
+.note-row-body {
+  flex: 1;
+  min-width: 0;
+}
+.note-row-text {
+  font-size: 15px;
+  line-height: 1.4;
+}
+.note-row-meta {
+  font-size: 12px;
+  margin-top: 2px;
+}
+.note-row-actions {
+  gap: 0;
+}
+.board-menu {
+  width: 340px;
+  max-height: min(70vh, 480px);
+  overflow-y: auto;
+}
+.board-menu-head {
+  padding: 8px 10px 4px;
+  font-size: 17px;
+  font-weight: 600;
+}
+.board-menu .note-row {
+  padding: 10px;
+}
+.board-menu-all {
+  margin-top: 4px;
+  color: var(--accent-ink);
+  font-weight: 600;
 }

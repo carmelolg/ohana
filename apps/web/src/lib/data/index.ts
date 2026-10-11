@@ -1,5 +1,6 @@
 // Livello dati dell'app: letture (React Query), scritture (outbox offline) e sincronizzazione realtime.
 // Le pagine importano da qui e non conoscono né tabelle né client Supabase.
+export * from './board';
 export * from './calendarImports';
 export * from './catalog';
 export * from './deadlines';
