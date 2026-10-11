@@ -6,7 +6,11 @@ const WHEN = new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', day: 'n
 interface Props {
   note: BoardNote;
   authorName: string;
+  /** Mostrato solo quando la lista mescola più spazi. */
+  spaceName?: string;
   expired: boolean;
+  /** Scritta dopo l'ultima apertura della bacheca. */
+  isNew: boolean;
   /** Chi può fissare o eliminare: l'autore o un admin. */
   canManage: boolean;
   onTogglePinned: () => void;
@@ -14,8 +18,11 @@ interface Props {
 }
 
 /** Quando è stata scritta, fino a quando vale, se è fissata. */
-function noteMeta(note: BoardNote, expired: boolean): string {
+function noteMeta(note: BoardNote, expired: boolean, spaceName?: string): string {
   const parts = [WHEN.format(new Date(note.created_at))];
+  if (spaceName) {
+    parts.unshift(spaceName);
+  }
   if (note.expires_at) {
     parts.push(`${expired ? 'scaduta' : 'fino al'} ${WHEN.format(new Date(note.expires_at))}`);
   }
@@ -25,29 +32,29 @@ function noteMeta(note: BoardNote, expired: boolean): string {
   return parts.join(' · ');
 }
 
-/** Una nota della bacheca nella pagina dello spazio. */
-export function NoteRow({ note, authorName, expired, canManage, onTogglePinned, onDelete }: Props) {
+/** Una nota della bacheca. */
+export function NoteRow({
+  note,
+  authorName,
+  spaceName,
+  expired,
+  isNew,
+  canManage,
+  onTogglePinned,
+  onDelete,
+}: Props) {
+  const dimmed = expired || !note.pinned;
   return (
-    <div
-      style={{
-        padding: '12px 0',
-        borderBottom: '1px solid var(--line)',
-        display: 'flex',
-        gap: 8,
-        alignItems: 'flex-start',
-        opacity: expired || !note.pinned ? 0.6 : 1,
-      }}
-    >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 15, lineHeight: 1.4 }}>
+    <div className={'note-row' + (dimmed ? ' dimmed' : '')}>
+      <div className="note-row-body">
+        <div className="note-row-text">
           <b>{authorName}:</b> {note.text}
+          {isNew && <span className="note-new">Nuova</span>}
         </div>
-        <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
-          {noteMeta(note, expired)}
-        </div>
+        <div className="muted note-row-meta">{noteMeta(note, expired, spaceName)}</div>
       </div>
       {canManage && (
-        <div className="hstack" style={{ gap: 0 }}>
+        <div className="hstack note-row-actions">
           <button
             className="icon-btn"
             aria-label={note.pinned ? 'Togli dall’alto' : 'Fissa in alto'}

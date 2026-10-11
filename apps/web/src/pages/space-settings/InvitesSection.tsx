@@ -9,6 +9,7 @@ import {
   type SpaceInvite,
 } from '../../lib/api/spaces';
 import { useAuth } from '../../lib/auth';
+import { shareInviteLink } from '../../lib/shareInvite';
 import { useToast } from '../../lib/toast';
 import type { Space } from '../../lib/types';
 import { useSpaceAction } from './useSpaceAction';
@@ -64,17 +65,10 @@ export function InvitesSection({ space }: { space: Space }) {
   const reload = () => qc.invalidateQueries({ queryKey: ['invites', space.id] });
 
   async function share(invite: SpaceInvite) {
-    const url = inviteLink(invite);
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: `Invito a ${space.name}`, url });
-        return;
-      } catch {
-        /* condivisione annullata: si ripiega sulla copia del link */
-      }
+    const outcome = await shareInviteLink(space.name, inviteLink(invite));
+    if (outcome === 'copied') {
+      toast('Link d’invito copiato · valido 7 giorni');
     }
-    await navigator.clipboard.writeText(url);
-    toast('Link d’invito copiato · valido 7 giorni');
   }
 
   async function invite(e: React.FormEvent) {

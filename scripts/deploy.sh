@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Deploy di Ohana su Cloudflare: frontend (Pages) e Worker.
-# Uso: bash scripts/deploy.sh [web|worker|all] [--skip-checks]
+# Uso: bash scripts/deploy.sh [db|web|worker|all] [--skip-checks]
+#   db       applica le migrazioni Supabase nuove (richiede supabase link)
 #   web      costruisce e pubblica il frontend
 #   worker   pubblica il Worker e controlla /health
-#   all      entrambi (default)
+#   all      db, worker e web, in quest'ordine (default): le migrazioni vanno prima del codice che le usa
 set -euo pipefail
 
 PAGES_PROJECT="ohana"
@@ -17,11 +18,11 @@ target="all"
 skip_checks="no"
 for arg in "$@"; do
   case "$arg" in
-    web | worker | all) target="$arg" ;;
+    db | web | worker | all) target="$arg" ;;
     --skip-checks) skip_checks="yes" ;;
     *)
       echo "Argomento sconosciuto: $arg" >&2
-      echo "Uso: bash scripts/deploy.sh [web|worker|all] [--skip-checks]" >&2
+      echo "Uso: bash scripts/deploy.sh [db|web|worker|all] [--skip-checks]" >&2
       exit 1
       ;;
   esac
@@ -52,6 +53,19 @@ check_web_env() {
   done
 }
 
+deploy_db() {
+  # Il progetto va collegato una sola volta con `npx supabase link --project-ref <ref>`:
+  # senza il file .temp/project-ref, db push non saprebbe quale database aggiornare.
+  if [ ! -f supabase/.temp/project-ref ]; then
+    echo "Progetto Supabase non collegato: esegui npx supabase link --project-ref <ref>" >&2
+    exit 1
+  fi
+  step "Migrazioni Supabase da applicare"
+  npx --yes supabase@latest db push --linked --dry-run
+  step "Applicazione delle migrazioni (la CLI chiede conferma)"
+  npx --yes supabase@latest db push --linked
+}
+
 deploy_web() {
   check_web_env
   step "Build del frontend"
@@ -74,9 +88,11 @@ if [ "$skip_checks" = "no" ]; then
 fi
 
 case "$target" in
+  db) deploy_db ;;
   web) deploy_web ;;
   worker) deploy_worker ;;
   all)
+    deploy_db
     deploy_worker
     deploy_web
     ;;

@@ -84,7 +84,7 @@ test('faccenda: assegnatario obbligatorio e niente orario', async ({ page }) => 
   await expect(page.getByLabel('Giorno')).toBeVisible();
 });
 
-test('bacheca: una nota in Oggi, le altre con «+N note»; massimo 280 caratteri', async ({ page }) => {
+test('bacheca: una nota in Oggi, le altre dalla campanella; massimo 280 caratteri', async ({ page }) => {
   await onboard(page, uniqueEmail('bac'), 'Bea', 'Casa mia');
   await createFromText(page, 'nota: le chiavi di casa le ho io fino a domenica');
   const composer = page.getByRole('dialog', { name: 'Nota in bacheca' });
@@ -95,7 +95,6 @@ test('bacheca: una nota in Oggi, le altre con «+N note»; massimo 280 caratteri
   await composer.getByRole('button', { name: 'Pubblica' }).click();
   const banner = page.getByRole('region', { name: 'Bacheca' });
   await expect(banner).toContainText('le chiavi di casa le ho io fino a domenica');
-  await expect(banner).not.toContainText('+1 nota');
 
   const c2 = await (async () => {
     await openPlus(page);
@@ -109,9 +108,37 @@ test('bacheca: una nota in Oggi, le altre con «+N note»; massimo 280 caratteri
   await ta.fill('Pane da prendere');
   await c2.getByRole('button', { name: 'Pubblica' }).click();
   await expect(banner).toContainText('Pane da prendere'); // la più recente
-  await expect(banner).toContainText('+1 nota');
-  await banner.getByRole('button', { name: /\+1 nota/ }).click();
-  await expect(banner).toContainText('le chiavi di casa');
+  await expect(banner).not.toContainText('le chiavi di casa'); // in Oggi solo la più recente
+
+  // la campanella apre il menu con le ultime note; da lì si va alla pagina Bacheca con tutte
+  await page.getByRole('button', { name: 'Bacheca' }).click();
+  const menu = page.getByRole('dialog', { name: 'Ultime note della bacheca' });
+  await expect(menu).toContainText('Pane da prendere');
+  await expect(menu).toContainText('le chiavi di casa');
+  await menu.getByRole('button', { name: /Vedi tutta la bacheca/ }).click();
+  await expect(page).toHaveURL(/\/bacheca$/);
+  await expect(page.getByRole('heading', { name: 'Bacheca' })).toBeVisible();
+  await expect(page.getByText('le chiavi di casa le ho io fino a domenica')).toBeVisible();
+  await expect(page.getByText('Pane da prendere')).toBeVisible();
+});
+
+test('bacheca: card in Famiglia con il conteggio, e nota dalla pagina dedicata', async ({ page }) => {
+  await onboard(page, uniqueEmail('bac2'), 'Bea', 'Casa mia');
+  await page.goto('/famiglia');
+  const card = page.locator('.more-card', { hasText: 'Bacheca' }); // la barra laterale desktop ha un altro link «Bacheca»
+  await expect(card).toContainText('Messaggi per tutta la famiglia');
+  await card.click();
+  await expect(page).toHaveURL(/\/bacheca$/);
+  await expect(page.getByText('Nessuna nota')).toBeVisible();
+  await page.getByRole('button', { name: '+ Nota' }).click();
+  const composer = page.getByRole('dialog', { name: 'Nota in bacheca' });
+  await composer.getByLabel('Testo della nota').fill('Ricordatevi il pane');
+  await composer.getByRole('button', { name: 'Pubblica' }).click();
+  await expect(page.getByText('Ricordatevi il pane')).toBeVisible();
+  await page.getByRole('link', { name: 'Famiglia' }).first().click();
+  await expect(page.locator('.more-card', { hasText: 'Bacheca' })).toContainText('1 nota per la famiglia');
+  // una nota scritta da me non è «nuova»
+  await expect(page.locator('.more-card', { hasText: 'Bacheca' })).not.toContainText('nuov');
 });
 
 test('manutenzione da «+» («caldaia ogni anno a novembre») e card in Altro', async ({ page }) => {
@@ -291,7 +318,6 @@ test('Casa e Famiglia: card con lo stato; Emergenza in rosso; accessi in massimo
   for (const n of ['Rubrica', 'Emergenza']) {
     await expect(main.getByRole('link', { name: new RegExp(`^${n}`) })).toBeVisible();
   }
-  await expect(main.getByRole('link', { name: /Profilo e impostazioni/ })).toBeVisible();
   await expect(main.getByRole('link', { name: /Spazi e inviti/ })).toBeVisible();
   const color = await main
     .getByRole('link', { name: /^Emergenza/ })

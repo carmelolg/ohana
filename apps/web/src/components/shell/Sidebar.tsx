@@ -8,6 +8,7 @@ import {
   HeartPulse,
   Home,
   House,
+  Pin,
   Plus,
   Settings as Cog,
   ShoppingBasket,
@@ -21,15 +22,17 @@ import type { SpaceFeature } from '@ohana/shared';
 import { spaceColor } from '../../lib/color';
 import { useFeatures, useScopedRecipients, useSpace } from '../../lib/data';
 import { careName } from '@ohana/shared';
+import { SideGroup } from './SideGroup';
+import { useSideOpen } from './useSideOpen';
 
-interface SideLink {
+export interface SideLink {
   to: string;
   label: string;
   Icon: LucideIcon;
   feature?: SpaceFeature;
 }
 
-/** Le quattro aree con le loro sottovoci: la sottovoce segue la stessa regola di `FeatureGate`. */
+/** Le aree con le loro sottovoci: la sottovoce segue la stessa regola di `FeatureGate`. */
 const GROUPS: { head: SideLink; items: SideLink[] }[] = [
   { head: { to: '/oggi', label: 'Oggi', Icon: Home }, items: [] },
   { head: { to: '/calendario', label: 'Agenda', Icon: CalendarDays }, items: [] },
@@ -48,11 +51,12 @@ const GROUPS: { head: SideLink; items: SideLink[] }[] = [
     head: { to: '/famiglia', label: 'Famiglia', Icon: Users },
     items: [
       { to: '/cura', label: 'Cura', Icon: HeartPulse, feature: 'cura' },
+      { to: '/bacheca', label: 'Bacheca', Icon: Pin },
       { to: '/rubrica', label: 'Rubrica', Icon: BookUser },
       { to: '/emergenza', label: 'Emergenza', Icon: Siren },
-      { to: '/impostazioni', label: 'Impostazioni', Icon: Cog },
     ],
   },
+  { head: { to: '/impostazioni', label: 'Impostazioni', Icon: Cog }, items: [] },
 ];
 
 const ACTIVE = { background: 'var(--surface)', fontWeight: 600 };
@@ -62,23 +66,17 @@ export function Sidebar({ onSpaces }: { onSpaces: () => void }) {
   const { spaces, selected, setSelected } = useSpace();
   const isOn = useFeatures();
   const people = useScopedRecipients();
+  const { isOpen, toggle } = useSideOpen();
   return (
     <aside className="sidebar" aria-label="Navigazione">
       {GROUPS.map(({ head, items }) => (
-        <div key={head.to} className="side-group">
-          <NavLink className="side-link side-head" to={head.to} end={items.length > 0}>
-            <head.Icon size={20} strokeWidth={1.75} />
-            {head.label}
-          </NavLink>
-          {items
-            .filter((l) => !l.feature || isOn(l.feature))
-            .map(({ to, label, Icon }) => (
-              <NavLink key={to} className="side-link side-sub" to={to}>
-                <Icon size={18} strokeWidth={1.75} />
-                {label}
-              </NavLink>
-            ))}
-        </div>
+        <SideGroup
+          key={head.to}
+          head={head}
+          items={items.filter((l) => !l.feature || isOn(l.feature))}
+          open={isOpen(head.to)}
+          onToggle={() => toggle(head.to)}
+        />
       ))}
       {people.length > 0 && (
         <>

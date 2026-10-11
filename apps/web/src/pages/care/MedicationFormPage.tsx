@@ -179,7 +179,9 @@ export function CareMedicationFormPage() {
   const existing = mid && mid !== 'nuova' ? (data.meds.find((m) => m.id === mid) ?? null) : null;
   if (!data.recipient) {
     return data.loading ? (
-      <div className="empty">Caricamento…</div>
+      <div className="empty" role="status" aria-busy="true">
+        Caricamento…
+      </div>
     ) : (
       <div className="empty">Persona non trovata</div>
     );

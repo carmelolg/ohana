@@ -9,7 +9,7 @@ const TABS = [
   { area: 'famiglia', to: '/famiglia', label: 'Famiglia', Icon: Users },
 ] as const satisfies readonly { area: Area; to: string; label: string; Icon: unknown }[];
 
-/** Barra inferiore mobile: Oggi · Agenda · [+] · Casa · Famiglia. L'area attiva resta evidenziata nelle sue sottopagine. */
+/** Barra inferiore mobile: Oggi · Agenda · [+] · Casa · Famiglia. Le impostazioni si aprono dal menu dell'avatar. L'area attiva resta evidenziata nelle sue sottopagine. */
 export function TabBar({ onCreate }: { onCreate: () => void }) {
   const active = areaOf(useLocation().pathname);
   const tab = ({ area, to, label, Icon }: (typeof TABS)[number]) => (

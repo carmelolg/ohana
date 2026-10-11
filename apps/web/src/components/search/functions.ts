@@ -17,6 +17,7 @@ const FUNCTIONS: AppFunction[] = [
   { label: 'Scansiona documento', to: '/scansiona', keywords: 'foto ocr', feature: 'documenti' },
   { label: 'Pratiche', to: '/pratiche', keywords: 'isee 730 patente', feature: 'pratiche' },
   { label: 'Cura', to: '/cura', keywords: 'terapie genitori salute', feature: 'cura' },
+  { label: 'Bacheca', to: '/bacheca', keywords: 'note messaggi avvisi' },
   { label: 'Rubrica', to: '/rubrica', keywords: 'contatti numeri' },
   { label: 'Emergenza', to: '/emergenza', keywords: '112 urgenza' },
   { label: 'Impostazioni', to: '/impostazioni', keywords: 'profilo notifiche tema' },

@@ -359,7 +359,6 @@ test("mobile: l'area attiva resta evidenziata nelle sue sottopagine; testata del
       ['/spese', 'Casa'],
       ['/famiglia', 'Famiglia'],
       ['/rubrica', 'Famiglia'],
-      ['/impostazioni', 'Famiglia'],
       ['/calendario', 'Agenda'],
     ];
     for (const [path, area] of areas) {
@@ -491,4 +490,23 @@ test('logo nella barra superiore: sempre visibile, porta a Oggi, non rompe il la
     await logo.click();
     await expect(page).toHaveURL(/\/oggi$/);
   }
+});
+
+test('desktop: le sottovoci di Casa e Famiglia partono chiuse e si aprono con la freccia', async ({
+  page,
+}) => {
+  await onboard(page, uniqueEmail('side'), 'Sara', 'Casa mia');
+  test.skip((page.viewportSize()?.width ?? 0) < 1024, 'la barra laterale c’è solo su desktop');
+  const side = page.getByRole('complementary', { name: 'Navigazione' });
+  await expect(side.getByRole('link', { name: 'Rubrica' })).toHaveCount(0);
+  await expect(side.getByRole('link', { name: 'Impostazioni' })).toBeVisible(); // primo livello, sempre in vista
+
+  await side.getByRole('button', { name: 'Espandi Famiglia' }).click();
+  await expect(side.getByRole('link', { name: 'Rubrica' })).toBeVisible();
+  await side.getByRole('button', { name: 'Comprimi Famiglia' }).click();
+  await expect(side.getByRole('link', { name: 'Rubrica' })).toHaveCount(0);
+
+  // entrando in un'area il suo gruppo si apre da solo
+  await page.goto('/casa');
+  await expect(side.getByRole('link', { name: 'Scadenze' })).toBeVisible();
 });

@@ -33,7 +33,11 @@ export function InvitePage() {
   }
 
   if (pv === undefined || loading) {
-    return <div className="empty">Caricamento…</div>;
+    return (
+      <div className="empty" role="status" aria-busy="true">
+        Caricamento…
+      </div>
+    );
   }
   if (pv === null || pv.expired) {
     return (

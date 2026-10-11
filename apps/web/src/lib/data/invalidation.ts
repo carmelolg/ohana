@@ -14,6 +14,7 @@ export const TABLE_KEYS: Record<string, string[]> = {
   contacts: ['contacts', 'events'],
   categories: ['categories', 'events', 'event'],
   board_notes: ['board'],
+  board_reads: ['board-reads'],
   visit_notes: ['visit'],
   follow_ups: ['visit'],
   emergency_info: ['emergency'],

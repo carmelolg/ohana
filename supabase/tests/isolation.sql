@@ -294,6 +294,20 @@ select t.expect_error($$insert into board_notes (space_id, text) values ('aaaaaa
 select t.as_su();
 select t.expect_count($$select 1 from board_notes where text = 'Le chiavi le ho io fino a domenica'$$, 1, 'viewer non modifica/cancella la bacheca');
 
+-- ---- bacheca: «letto fino a» privato
+select t.as_user('00000000-0000-0000-0000-00000000000a');
+insert into board_reads (space_id) values ('aaaaaaaa-0000-0000-0000-000000000001');
+select t.expect_error($$insert into board_reads (space_id, user_id) values ('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000e')$$, 'letto fino a: non per conto di altri');
+select t.as_user('00000000-0000-0000-0000-00000000000e');
+select t.expect_count('select 1 from board_reads', 0, 'letto fino a: non vedo la riga altrui');
+insert into board_reads (space_id) values ('aaaaaaaa-0000-0000-0000-000000000001');
+update board_reads set read_at = now();
+select t.expect_count('select 1 from board_reads', 1, 'viewer segna la bacheca come letta');
+select t.as_user('00000000-0000-0000-0000-00000000000d');
+select t.expect_error($$insert into board_reads (space_id) values ('aaaaaaaa-0000-0000-0000-000000000001')$$, 'estraneo non segna la bacheca come letta');
+select t.as_su();
+select t.expect_count('select 1 from board_reads', 2, 'letto fino a: una riga per utente');
+
 -- ---- diario visite
 select t.as_user('00000000-0000-0000-0000-00000000000a');
 insert into visit_notes (id, event_id, text) values ('aaaaaaaa-0000-0000-0000-0000000000f2', 'aaaaaaaa-0000-0000-0000-0000000000e2', 'Pressione nella norma');
@@ -440,6 +454,7 @@ select t.expect_count('select 1 from documents', 1, 'viewer non elimina document
 delete from spaces where id = 'aaaaaaaa-0000-0000-0000-000000000001';
 select t.as_su();
 select t.expect_count($$select 1 from board_notes where space_id = 'aaaaaaaa-0000-0000-0000-000000000001'$$, 0, 'cascade bacheca');
+select t.expect_count($$select 1 from board_reads where space_id = 'aaaaaaaa-0000-0000-0000-000000000001'$$, 0, 'cascade letto fino a');
 select t.expect_count($$select 1 from maintenances where space_id = 'aaaaaaaa-0000-0000-0000-000000000001'$$, 0, 'cascade manutenzioni');
 select t.expect_count($$select 1 from maintenance_log where space_id = 'aaaaaaaa-0000-0000-0000-000000000001'$$, 0, 'cascade registro manutenzioni');
 select t.expect_count($$select 1 from procedure_steps$$, 0, 'cascade passaggi');
@@ -567,6 +582,7 @@ select t.expect_count('select 1 from expenses where space_id = ''ffffffff-0000-0
 select t.expect_count('select 1 from contacts where space_id = ''ffffffff-0000-0000-0000-000000000001''', 0, 'care_viewer non vede la rubrica');
 select t.expect_count('select 1 from shopping_lists where space_id = ''ffffffff-0000-0000-0000-000000000001''', 0, 'care_viewer non vede la spesa');
 select t.expect_count('select 1 from board_notes where space_id = ''ffffffff-0000-0000-0000-000000000001''', 0, 'care_viewer non vede la bacheca');
+select t.expect_error($$insert into board_reads (space_id) values ('ffffffff-0000-0000-0000-000000000001')$$, 'care_viewer non ha la bacheca');
 select t.expect_count('select 1 from categories where space_id = ''ffffffff-0000-0000-0000-000000000001''', 0, 'care_viewer non vede le categorie');
 select t.expect_error($$insert into care_entries (space_id, recipient_id, thread_id, type, entry_date, title) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000a1', 'ffffffff-0000-0000-0000-0000000000b1', 'nota', current_date, 'x')$$, 'care_viewer non scrive tasselli');
 select t.expect_error($$insert into medication_doses (space_id, medication_id, day, slot) values ('ffffffff-0000-0000-0000-000000000001', 'ffffffff-0000-0000-0000-0000000000d1', current_date, '20:00')$$, 'care_viewer non segna dosi');

@@ -20,6 +20,7 @@ const EventEditor = named(() => import('./pages/EventEditor'), 'EventEditor');
 const ShoppingPage = named(() => import('./pages/Shopping'), 'ShoppingPage');
 const ContactsPage = named(() => import('./pages/Contacts'), 'ContactsPage');
 const ExpensesPage = named(() => import('./pages/Expenses'), 'ExpensesPage');
+const BachecaPage = named(() => import('./pages/Bacheca'), 'BachecaPage');
 const CasaPage = named(() => import('./pages/Casa'), 'CasaPage');
 const FamigliaPage = named(() => import('./pages/Famiglia'), 'FamigliaPage');
 const SettingsPage = named(() => import('./pages/Settings'), 'SettingsPage');
@@ -94,6 +95,7 @@ function AppRoutes() {
         />
         <Route path="/casa" element={<CasaPage />} />
         <Route path="/famiglia" element={<FamigliaPage />} />
+        <Route path="/bacheca" element={<BachecaPage />} />
         <Route path="/altro" element={<Navigate to="/famiglia" replace />} />
         <Route path="/agenda" element={<Navigate to="/calendario" replace />} />
         <Route path="/rubrica" element={<ContactsPage />} />

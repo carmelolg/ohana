@@ -1,10 +1,11 @@
-export type Area = 'oggi' | 'agenda' | 'casa' | 'famiglia';
+export type Area = 'oggi' | 'agenda' | 'casa' | 'famiglia' | 'impostazioni';
 
-/** Prefissi di route per area: ogni pagina dell'app sta sotto una delle quattro aree. */
+/** Prefissi di route per area: ogni pagina dell'app sta sotto una delle aree. */
 const AREA_PATHS: Record<Exclude<Area, 'oggi'>, string[]> = {
   agenda: ['/calendario', '/agenda'],
   casa: ['/casa', '/spesa', '/spese', '/scadenze', '/manutenzioni', '/pratiche', '/documenti', '/scansiona'],
-  famiglia: ['/famiglia', '/altro', '/rubrica', '/emergenza', '/cura', '/impostazioni', '/spazio'],
+  famiglia: ['/famiglia', '/altro', '/rubrica', '/emergenza', '/cura', '/bacheca', '/spazio'],
+  impostazioni: ['/impostazioni'],
 };
 
 const isUnder = (pathname: string, base: string) => pathname === base || pathname.startsWith(base + '/');
