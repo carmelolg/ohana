@@ -97,6 +97,20 @@ export interface ProcedureTemplate {
 
 export const PROCEDURE_TEMPLATES: ProcedureTemplate[] = [
   {
+    key: 'lavori',
+    title: 'Intervento a fasi',
+    // senza parole chiave: «sostituzione caldaia» resta una manutenzione per l'aggiunta rapida
+    keywords: [],
+    steps: [
+      'Richiesta primo preventivo',
+      'Richiesta secondo preventivo',
+      'Affidamento a una ditta',
+      'Lavori',
+      'Pagamento saldo',
+    ],
+    docs: ['Preventivo', 'Conferma d’ordine', 'Fattura'],
+  },
+  {
     key: 'isee',
     title: 'ISEE',
     keywords: ['isee', 'dsu'],

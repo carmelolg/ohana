@@ -1,3 +1,4 @@
+import { Switch } from '../../components/Switch';
 import { useState } from 'react';
 import { SPACE_FEATURES, featureOnIn, toggleFeature, type SpaceFeature } from '@ohana/shared';
 import { updateSpace } from '../../lib/api/spaces';
@@ -29,7 +30,7 @@ export function FeaturesSection({ space }: { space: Space }) {
       </p>
       <div className="group">
         {SPACE_FEATURES.map(({ key, label, hint }) => (
-          <label key={key} className="kv" style={{ minHeight: 44 }}>
+          <div key={key} className="kv">
             <span style={{ color: 'inherit' }}>
               {label}
               <br />
@@ -37,16 +38,13 @@ export function FeaturesSection({ space }: { space: Space }) {
                 {hint}
               </span>
             </span>
-            <input
-              type="checkbox"
-              role="switch"
-              style={{ width: 22, height: 22 }}
-              aria-label={label}
+            <Switch
+              label={label}
               checked={featureOnIn(space, key)}
               disabled={busy}
-              onChange={(e) => void change(key, e.target.checked)}
+              onChange={(on) => void change(key, on)}
             />
-          </label>
+          </div>
         ))}
       </div>
     </>

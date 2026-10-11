@@ -52,7 +52,7 @@ export function Header({ spaces, activeId, onSpace, status, editLabel, onEdit }:
   return (
     <>
       <div className="hstack" style={{ justifyContent: 'space-between' }}>
-        <BackLink to="/altro" label="Altro" />
+        <BackLink to="/famiglia" label="Famiglia" />
         {editLabel && (
           <button className="btn ghost small" style={{ marginTop: 6 }} onClick={onEdit}>
             {editLabel}

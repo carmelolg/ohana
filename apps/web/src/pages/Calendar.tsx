@@ -24,7 +24,7 @@ export function CalendarPage() {
 
   return (
     <>
-      <h2 className="page-title">Calendario</h2>
+      <h2 className="page-title">Agenda</h2>
       <div className="seg" role="group" aria-label="Vista">
         {VIEWS.map((v) => (
           <button

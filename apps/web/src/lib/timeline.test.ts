@@ -131,6 +131,9 @@ const step = (over: Partial<ProcedureStep>): ProcedureStep => ({
   note: null,
   done_at: null,
   event_id: null,
+  amount: null,
+  contact_id: null,
+  quote_outcome: null,
   ...over,
 });
 

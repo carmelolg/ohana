@@ -20,13 +20,15 @@ const EventEditor = named(() => import('./pages/EventEditor'), 'EventEditor');
 const ShoppingPage = named(() => import('./pages/Shopping'), 'ShoppingPage');
 const ContactsPage = named(() => import('./pages/Contacts'), 'ContactsPage');
 const ExpensesPage = named(() => import('./pages/Expenses'), 'ExpensesPage');
-const MorePage = named(() => import('./pages/More'), 'MorePage');
+const CasaPage = named(() => import('./pages/Casa'), 'CasaPage');
+const FamigliaPage = named(() => import('./pages/Famiglia'), 'FamigliaPage');
 const SettingsPage = named(() => import('./pages/Settings'), 'SettingsPage');
 const SpaceSettingsPage = named(() => import('./pages/SpaceSettings'), 'SpaceSettingsPage');
 const EmergencyPage = lazy(() => import('./pages/Emergency'));
 const MaintenancesPage = lazy(() => import('./pages/Maintenances'));
 const ProceduresPage = lazy(() => import('./pages/Procedures'));
 const ProcedureDetailPage = lazy(() => import('./pages/ProcedureDetail'));
+const DeadlinesPage = lazy(() => import('./pages/Deadlines'));
 const DocumentsPage = lazy(() => import('./pages/Documents'));
 const ScanPage = lazy(() => import('./pages/Scan'));
 const CareRoutes = named(() => import('./pages/care/CareRoutes'), 'CareRoutes');
@@ -90,7 +92,10 @@ function AppRoutes() {
             </FeatureGate>
           }
         />
-        <Route path="/altro" element={<MorePage />} />
+        <Route path="/casa" element={<CasaPage />} />
+        <Route path="/famiglia" element={<FamigliaPage />} />
+        <Route path="/altro" element={<Navigate to="/famiglia" replace />} />
+        <Route path="/agenda" element={<Navigate to="/calendario" replace />} />
         <Route path="/rubrica" element={<ContactsPage />} />
         <Route
           path="/spese"
@@ -127,6 +132,7 @@ function AppRoutes() {
             </FeatureGate>
           }
         />
+        <Route path="/scadenze" element={<DeadlinesPage />} />
         <Route
           path="/documenti"
           element={

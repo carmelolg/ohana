@@ -12,6 +12,7 @@ import {
 } from '../../lib/data';
 import { showFormError } from '../../lib/formError';
 import { useBack } from '../../lib/nav';
+import { canEditEvent } from './eventAccess';
 import { eventSections, parseLinkKey } from './eventLink';
 import { resolveEventValues } from './eventValues';
 import { initialReminders, type ReminderDraft } from './reminders';
@@ -196,7 +197,13 @@ export function useEventForm(eventId: string | undefined) {
     isNew,
     isLoading: src.isLoading,
     existing,
-    writable: src.canWrite(spaceId) || (isNew && !!defaultSpace),
+    writable: canEditEvent({
+      existing,
+      isNew,
+      canWriteSpace: src.canWrite(spaceId),
+      hasDefaultSpace: !!defaultSpace,
+    }),
+    isImported: !!existing?.import_id,
     busy,
     error,
     back,

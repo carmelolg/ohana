@@ -64,8 +64,10 @@ export function TopBar({ editor, onSpaces, onSearch, onCreate }: Props) {
           </button>
         </div>
         <div className="navbar-right">
-          <button className="btn ghost small navbar-action" onClick={onSearch} aria-label="Cerca">
-            <Search size={18} strokeWidth={1.75} /> Cerca <span className="kbd">/</span>
+          <button className="search-field navbar-action" onClick={onSearch} aria-label="Cerca">
+            <Search size={18} strokeWidth={1.75} />
+            <span className="search-field-text">Cerca impegni, contatti, documenti…</span>
+            <span className="kbd">/</span>
           </button>
           <button className="btn accent small navbar-action" onClick={onCreate}>
             <Plus size={18} strokeWidth={2} /> Nuovo <span className="kbd kbd-inv">N</span>

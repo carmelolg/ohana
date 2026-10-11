@@ -11,9 +11,8 @@ interface Props {
   style?: React.CSSProperties;
 }
 
-/** Casella di spunta con area tattile di 44 px (la parte visibile è 20 px). */
+/** Casella di spunta con area tattile di 44 px (la parte visibile è 24 px, quadrata arrotondata, verde quando piena). */
 export function CheckButton({ checked, label, onToggle, disabled, emphasis, style }: Props) {
-  const border = checked ? 0 : emphasis ? '2px solid var(--accent)' : '1.5px solid var(--text-2)';
   return (
     <button
       type="button"
@@ -25,18 +24,10 @@ export function CheckButton({ checked, label, onToggle, disabled, emphasis, styl
       style={{ width: 44, height: 44, display: 'grid', placeItems: 'center', flex: 'none', ...style }}
     >
       <span
-        style={{
-          width: 20,
-          height: 20,
-          borderRadius: 6,
-          display: 'grid',
-          placeItems: 'center',
-          background: checked ? 'var(--accent-fill)' : 'transparent',
-          color: 'var(--on-accent)',
-          border,
-        }}
+        className={'check-box' + (checked ? ' on' : '')}
+        style={!checked && emphasis ? { borderColor: 'var(--accent)', borderWidth: 2 } : undefined}
       >
-        {checked && <Check size={13} strokeWidth={3} />}
+        {checked && <Check size={14} strokeWidth={3} />}
       </span>
     </button>
   );

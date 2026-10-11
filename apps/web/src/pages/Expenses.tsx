@@ -34,7 +34,7 @@ export function ExpensesPage() {
 
   return (
     <>
-      <BackLink to="/altro" label="Altro" />
+      <BackLink to="/casa" label="Casa" />
       <div className="hstack" style={{ justifyContent: 'space-between' }}>
         <h2 className="page-title">Spese</h2>
         {writable && (

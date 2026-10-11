@@ -31,35 +31,11 @@ export function OptionRow({ option, recommended, parsed, onPick }: Props) {
       type="button"
       onClick={onPick}
       aria-label={option.title}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 14,
-        padding: '13px 4px',
-        borderBottom: '1px solid var(--line)',
-        width: '100%',
-        textAlign: 'left',
-        minHeight: 64,
-        background: recommended ? 'var(--accent-soft)' : undefined,
-        borderRadius: recommended ? 12 : 0,
-      }}
+      className={'option-row' + (recommended ? ' recommended' : '')}
     >
-      <span
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 12,
-          background: 'var(--bg)',
-          display: 'grid',
-          placeItems: 'center',
-          font: '600 13px var(--mono)',
-          flex: 'none',
-        }}
-      >
-        {option.badge}
-      </span>
-      <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
-        <span style={{ fontSize: 16, fontWeight: 600 }}>
+      <span className="option-badge">{option.badge}</span>
+      <span className="option-text">
+        <span className="option-title">
           {option.title}
           {recommended && (
             <span className="badge" style={{ marginLeft: 8 }}>
@@ -67,9 +43,7 @@ export function OptionRow({ option, recommended, parsed, onPick }: Props) {
             </span>
           )}
         </span>
-        <span className="muted" style={{ fontSize: 13 }}>
-          {template ? `Modello: ${template}` : option.sub}
-        </span>
+        <span className="muted option-sub">{template ? `Modello: ${template}` : option.sub}</span>
       </span>
     </button>
   );

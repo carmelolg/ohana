@@ -63,6 +63,9 @@ export async function addStep(mutate: Mutate, p: Procedure, title: string): Prom
     note: null,
     done_at: null,
     event_id: null,
+    amount: null,
+    contact_id: null,
+    quote_outcome: null,
   };
   await mutate(
     { table: 'procedure_steps', action: 'upsert', payload: step },
@@ -74,7 +77,27 @@ export async function addStep(mutate: Mutate, p: Procedure, title: string): Prom
 }
 
 export async function addRequiredDocument(mutate: Mutate, p: Procedure, name: string): Promise<void> {
-  const doc = { id: newId(), procedure_id: p.id, name, attachment_id: null };
+  const doc = { id: newId(), procedure_id: p.id, name, attachment_id: null, step_id: null };
+  await mutate(
+    { table: 'procedure_docs', action: 'upsert', payload: doc },
+    patchProcedure(p.id, (x) => ({ ...x, procedure_docs: [...x.procedure_docs, doc] })),
+  );
+}
+
+/** Allega un file a una fase (preventivo, conferma d'ordine, fattura): è un documento della pratica legato alla fase. */
+export async function attachToStep(
+  mutate: Mutate,
+  p: Procedure,
+  step: ProcedureStep,
+  file: { attachmentId: string; name: string },
+): Promise<void> {
+  const doc = {
+    id: newId(),
+    procedure_id: p.id,
+    name: file.name,
+    attachment_id: file.attachmentId,
+    step_id: step.id,
+  };
   await mutate(
     { table: 'procedure_docs', action: 'upsert', payload: doc },
     patchProcedure(p.id, (x) => ({ ...x, procedure_docs: [...x.procedure_docs, doc] })),

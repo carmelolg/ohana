@@ -18,6 +18,7 @@ export const TABLE_KEYS: Record<string, string[]> = {
   follow_ups: ['visit'],
   emergency_info: ['emergency'],
   maintenances: ['maintenances', 'events'],
+  calendar_imports: ['calendar-imports'],
   maintenance_log: ['maintenances'],
   procedures: ['procedures'],
   procedure_steps: ['procedures'],
@@ -40,7 +41,7 @@ export const TABLE_KEYS: Record<string, string[]> = {
 };
 
 /** Tabelle che invalidano le query dopo una scrittura ma non sono nella pubblicazione realtime (nessun bisogno di aggiornamenti live). */
-export const NOT_REALTIME = new Set(['category_feedback', 'care_audit']);
+export const NOT_REALTIME = new Set(['category_feedback', 'care_audit', 'calendar_imports']);
 
 /** Tabelle da ascoltare in realtime: DEVONO stare nella pubblicazione `supabase_realtime`, altrimenti l'intera sottoscrizione fallisce in silenzio. */
 export const REALTIME_TABLES = Object.keys(TABLE_KEYS).filter((t) => !NOT_REALTIME.has(t));

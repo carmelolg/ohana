@@ -85,7 +85,9 @@ describe('ics', () => {
       new Date('2026-10-07T08:00:00Z'),
     );
     expect(ics).toContain('BEGIN:VCALENDAR');
-    expect(ics).toContain('DTSTART:20261020T070000Z');
+    // una ricorrenza porta l'ora di Roma (non UTC fissa), altrimenti slitta di un'ora a ogni cambio ora legale/solare
+    expect(ics).toContain('DTSTART;TZID=Europe/Rome:20261020T090000');
+    expect(ics).toContain('BEGIN:VTIMEZONE');
     expect(ics).toContain('SUMMARY:Bolletta\\, luce');
     expect(ics).toContain('a\\;b'); // RFC 5545: il punto e virgola nel testo va preceduto da una barra inversa
     expect(ics).toContain('RRULE:FREQ=MONTHLY');

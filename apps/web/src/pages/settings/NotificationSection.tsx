@@ -1,3 +1,4 @@
+import { Switch } from '../../components/Switch';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../lib/auth';
 import { currentEndpoint, disablePush, enablePush, isIOS, isStandalone, pushSupported } from '../../lib/push';
@@ -23,15 +24,10 @@ function ToggleRow({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="kv">
+    <div className="kv">
       <span>{label}</span>
-      <input
-        type="checkbox"
-        className="toggle-input"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-    </label>
+      <Switch label={label} checked={checked} onChange={onChange} />
+    </div>
   );
 }
 

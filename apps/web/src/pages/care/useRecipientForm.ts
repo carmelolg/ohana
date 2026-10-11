@@ -78,7 +78,7 @@ export function useRecipientForm(existing: CareRecipient | null) {
     });
     if (ok) {
       await deleteRecipient(mutate, id);
-      nav('/altro', { replace: true });
+      nav('/famiglia', { replace: true });
     }
   }
 

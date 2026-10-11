@@ -67,7 +67,7 @@ export default function DocumentsPage() {
 
   return (
     <>
-      <BackLink to="/altro" label="Altro" />
+      <BackLink to="/casa" label="Casa" />
       <h2 className="page-title" style={{ fontSize: 36 }}>
         Documenti
       </h2>

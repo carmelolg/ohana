@@ -6,6 +6,8 @@ import { useSpace } from '../../lib/data';
 import { useToast } from '../../lib/toast';
 
 const feedUrl = (token: string) => `${WORKER_URL}/ics/${token}.ics`;
+/** Apple Calendario si iscrive con `webcal://`: stessa pagina, ma si apre direttamente nell'app. */
+const appleUrl = (token: string) => feedUrl(token).replace(/^https?:\/\//, 'webcal://');
 
 /** Link di calendario in sola lettura per Google/Apple: uno per spazio o uno per tutti. */
 export function CalendarFeedsSection() {
@@ -29,8 +31,8 @@ export function CalendarFeedsSection() {
     await deleteCalendarFeed(id);
     void refresh();
   }
-  function copy(token: string) {
-    void navigator.clipboard.writeText(feedUrl(token));
+  function copy(url: string) {
+    void navigator.clipboard.writeText(url);
     toast('Link copiato');
   }
 
@@ -38,15 +40,22 @@ export function CalendarFeedsSection() {
     <>
       <div className="label section-label">Calendario (Google / Apple)</div>
       <p className="muted" style={{ fontSize: 14 }}>
-        Copia il link e aggiungilo come «calendario da URL». È in sola lettura e si aggiorna da solo (Google
-        ogni 8-24 ore).
+        Mostra gli impegni di Ohana nel tuo calendario. È in sola lettura e si aggiorna da solo (Google ogni
+        8-24 ore). Gli impegni di Cura compaiono solo come «Impegno di cura», senza titolo né note.
+      </p>
+      <p className="muted" style={{ fontSize: 14 }}>
+        <b>Google Calendar</b> (dal computer): accanto a «Altri calendari» scegli «Da URL» e incolla il link.{' '}
+        <b>Apple Calendario</b>: File › Nuova sottoscrizione calendario, e incolla il link per Apple.
       </p>
       {feeds.map((f) => (
         <div key={f.id} className="kv">
           <span>{f.space_id ? spaces.find((s) => s.id === f.space_id)?.name : 'Tutti gli spazi'}</span>
           <span>
-            <button className="btn ghost small" onClick={() => copy(f.token)}>
+            <button className="btn ghost small" onClick={() => copy(feedUrl(f.token))}>
               Copia link
+            </button>
+            <button className="btn ghost small" onClick={() => copy(appleUrl(f.token))}>
+              Link per Apple
             </button>
             <button className="icon-btn" aria-label="Revoca" onClick={() => revoke(f.id)}>
               ✕

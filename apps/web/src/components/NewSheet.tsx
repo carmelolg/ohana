@@ -13,6 +13,16 @@ import { OptionRow } from './new-sheet/OptionRow';
 import { destinationFor, optionsFor } from './new-sheet/options';
 import { PromptBar } from './new-sheet/PromptBar';
 import { Sheet } from './ui';
+import { UnderstoodCard } from './new-sheet/UnderstoodCard';
+import { understoodChips } from './new-sheet/understood';
+import { X } from 'lucide-react';
+
+const EXAMPLES = [
+  'plastica ogni giovedì',
+  'dentista domani alle 15',
+  'caldaia ogni anno a novembre',
+  'nota: latte in frigo',
+];
 
 const MIN_CHARS_TO_DETECT = 3;
 
@@ -77,6 +87,12 @@ export function NewSheet({ onClose }: { onClose: () => void }) {
   }
   return (
     <Sheet onClose={onClose} label="Cosa vuoi creare?">
+      <div className="sheet-head">
+        <span className="sheet-title">Aggiungi</span>
+        <button type="button" className="sheet-close" aria-label="Chiudi" onClick={onClose}>
+          <X size={18} strokeWidth={2} />
+        </button>
+      </div>
       <PromptBar
         text={text}
         listening={voice.listening}
@@ -84,7 +100,26 @@ export function NewSheet({ onClose }: { onClose: () => void }) {
         onSubmit={() => go(detected ?? 'appuntamento')}
         onToggleVoice={toggleVoice}
       />
-      <div role="list">
+      {detected && parsed && (
+        <UnderstoodCard
+          title={parsed.title || text.trim()}
+          kindLabel={optionsFor(detected, isOn).find((o) => o.kind === detected)?.title ?? 'Impegno'}
+          chips={understoodChips(parsed, ctx)}
+        />
+      )}
+      {!detected && (
+        <div className="examples">
+          <span className="label">Prova a scrivere</span>
+          <div className="examples-row">
+            {EXAMPLES.map((x) => (
+              <button key={x} type="button" className="example" onClick={() => setText(x)}>
+                {x}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div role="list" className="option-grid">
         {optionsFor(detected, isOn).map((option) => (
           <OptionRow
             key={option.kind}
@@ -96,9 +131,7 @@ export function NewSheet({ onClose }: { onClose: () => void }) {
         ))}
         <CareRecordOptions onPick={setRecordFor} />
       </div>
-      <p className="muted" style={{ fontSize: 12, textAlign: 'center', paddingTop: 14 }}>
-        Il testo libero capisce da solo cosa stai creando.
-      </p>
+      <p className="muted sheet-hint">Il testo libero capisce da solo cosa stai creando.</p>
     </Sheet>
   );
 }

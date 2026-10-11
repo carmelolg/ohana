@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { MAINTENANCE_TEMPLATES } from '@ohana/shared';
 import { BackLink } from '../components/BackLink';
 import { spaceColor } from '../lib/color';
 import { useContacts, useMaintenances, useSpace } from '../lib/data';
 import type { Maintenance } from '../lib/types';
+import { ProjectCards } from './maintenances/ProjectCards';
 import { DoneSheet } from './maintenances/DoneSheet';
 import { MaintenanceForm, type FormState } from './maintenances/MaintenanceForm';
 import { MaintenanceRow } from './maintenances/MaintenanceRow';
@@ -30,7 +31,7 @@ export default function MaintenancesPage() {
 
   return (
     <>
-      <BackLink to="/altro" label="Altro" />
+      <BackLink to="/casa" label="Casa" />
       {currentSpace && (
         <div
           className="muted"
@@ -46,6 +47,8 @@ export default function MaintenancesPage() {
       <p className="muted" style={{ fontSize: 14, marginTop: 6 }}>
         Diventano scadenze ricorrenti, con il professionista collegato
       </p>
+
+      <ProjectCards />
 
       <div className="list">
         {rows.map(({ m, due }) => (
@@ -69,6 +72,9 @@ export default function MaintenancesPage() {
         <>
           <div className="label section-label">Aggiungi da modello</div>
           <div className="pill-row">
+            <Link className="pill" to="/pratiche?nuova=lavori">
+              + Intervento a fasi
+            </Link>
             {MAINTENANCE_TEMPLATES.filter((t) => t.key === 'custom' || !usedTemplates.has(t.key)).map((t) => (
               <button
                 key={t.key}

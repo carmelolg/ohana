@@ -84,6 +84,14 @@ function MobileBody({
   return (
     <>
       <div className="care-section-head">
+        <span className="label">Oggi</span>
+      </div>
+      <DoseChecklist
+        items={view.todayItems}
+        tagOf={tagOf(data)}
+        onToggle={data.canWrite ? toggleDose : null}
+      />
+      <div className="care-section-head">
         <span className="label">Filoni di cura</span>
         <span className="muted" style={{ fontSize: 12 }}>
           {active.length} attivi
@@ -95,14 +103,6 @@ function MobileBody({
           + Nuovo filone
         </Link>
       )}
-      <div className="care-section-head">
-        <span className="label">Oggi</span>
-      </div>
-      <DoseChecklist
-        items={view.todayItems}
-        tagOf={tagOf(data)}
-        onToggle={data.canWrite ? toggleDose : null}
-      />
       <nav className="care-shortcuts" aria-label="Sezioni di cura">
         {SECTIONS.map(([path, label]) => (
           <Link key={path} to={`/cura/${recipient.id}/${path}`}>
@@ -191,7 +191,7 @@ export function CareHubPage() {
   if (!recipient) {
     return (
       <div>
-        <BackLink to="/altro" label="Altro" />
+        <BackLink to="/famiglia" label="Famiglia" />
         <div className="empty">
           Nessuna persona assistita in questa vista.
           <br />
@@ -202,7 +202,7 @@ export function CareHubPage() {
   }
   return (
     <div>
-      <BackLink to="/altro" label="Altro" />
+      <BackLink to="/famiglia" label="Famiglia" />
       <HubHeader recipient={recipient} me={session?.user.id ?? ''} canWrite={data.canWrite} />
       <PersonChips people={data.scope} currentId={recipient.id} canAdd={data.canWrite} />
       {desktop ? (

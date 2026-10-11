@@ -12,6 +12,9 @@ const step = (id: string, position: number, done: boolean): ProcedureStep => ({
   note: null,
   done_at: done ? '2026-10-01T00:00:00Z' : null,
   event_id: null,
+  amount: null,
+  contact_id: null,
+  quote_outcome: null,
 });
 const procedure = (steps: ProcedureStep[], status: Procedure['status'] = 'in_corso'): Procedure =>
   ({

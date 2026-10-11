@@ -71,7 +71,7 @@ test('Emergenza: dati salvati, poi la pagina si apre anche senza rete', async ({
   await page.goto('/oggi');
   await page.getByRole('button', { name: 'Menu del profilo' }).click();
   await page.getByRole('menuitem', { name: 'Esci' }).click();
-  await expect(page.getByRole('button', { name: 'Invia link di accesso' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ricevi il link per entrare' })).toBeVisible();
   expect(
     await page.evaluate(
       async () => !!(await (await caches.open('ohana-emergency-v1')).match('/__emergency.json')),

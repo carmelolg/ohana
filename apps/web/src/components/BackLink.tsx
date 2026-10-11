@@ -8,7 +8,7 @@ interface BackLinkProps {
   history?: boolean;
 }
 
-/** Freccia «‹ Altro» per tornare dalla sottopagina alla funzione principale, su mobile e su desktop. */
+/** Freccia «‹ Casa» / «‹ Famiglia» per tornare dalla sottopagina alla funzione principale, su mobile e su desktop. */
 export function BackLink({ to, label, history = false }: BackLinkProps) {
   const back = useBack(to);
   const content = (

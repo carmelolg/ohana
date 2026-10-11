@@ -1,6 +1,7 @@
 import { createDb } from '../db';
 import type { Env } from '../env';
 import { handleAction } from './action';
+import { handleCalendarSync } from './calendar-sync';
 import { handleFeed, handleSingleEvent } from './ics';
 import { PUBLIC_CORS } from './respond';
 import { handleScanParse, scanCors } from './scan-parse';
@@ -13,9 +14,17 @@ interface Route {
   handle: Handler;
 }
 
+/** Richieste con l'accesso dell'utente, ammesse solo dall'app (CORS ristretto). */
+const APP_PATHS = new Set(['/scan/parse', '/calendar/sync']);
+
 // L'ordine conta: `/ics/e/...` deve essere provato prima di `/ics/...`.
 const ROUTES: Route[] = [
   { method: 'POST', path: /^\/scan\/parse$/, handle: (req, env) => handleScanParse(req, env, createDb(env)) },
+  {
+    method: 'POST',
+    path: /^\/calendar\/sync$/,
+    handle: (req, env) => handleCalendarSync(req, env, createDb(env)),
+  },
   { method: null, path: /^\/health$/, handle: () => new Response('ok') },
   {
     method: 'GET',
@@ -34,7 +43,7 @@ const ROUTES: Route[] = [
 export async function route(req: Request, env: Env): Promise<Response> {
   const { pathname } = new URL(req.url);
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: pathname === '/scan/parse' ? scanCors(env) : PUBLIC_CORS });
+    return new Response(null, { headers: APP_PATHS.has(pathname) ? scanCors(env) : PUBLIC_CORS });
   }
   for (const { method, path, handle } of ROUTES) {
     const match = path.exec(pathname);

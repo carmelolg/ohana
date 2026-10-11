@@ -11,9 +11,9 @@ Tutto gira su piani gratuiti: Supabase (database, login), Cloudflare Pages (sito
    npx supabase db push
    ```
    Ogni migrazione nuova (`supabase/migrations/`) va applicata con lo stesso `db push`. La sezione Cura aggiunge `0015`–`0017`: vanno applicate **prima** di pubblicare l'app, altrimenti le schermate di Cura danno errori di colonna o tabella mancante.
-3. **Authentication → URL Configuration**: *Site URL* = dominio dell'app (`https://ohanapp.org`); in *Redirect URLs* aggiungi `https://ohanapp.org/**` (e, finché serve, `https://ohana-1ia.pages.dev/**`).
+3. **Authentication → URL Configuration**: _Site URL_ = dominio dell'app (`https://ohanapp.org`); in _Redirect URLs_ aggiungi `https://ohanapp.org/**` (e, finché serve, `https://ohana-1ia.pages.dev/**`).
 4. **Email SMTP** (passo 3a).
-5. Copia da **Project Settings → API**: *Project URL*, chiave `anon` (frontend) e `service_role` (solo Worker, mai nel frontend).
+5. Copia da **Project Settings → API**: _Project URL_, chiave `anon` (frontend) e `service_role` (solo Worker, mai nel frontend).
 
 Il piano Free va in pausa dopo 7 giorni senza attività: il cron del Worker ogni 5 minuti lo tiene sveglio.
 
@@ -34,13 +34,13 @@ Le email partono da due punti: i **link di accesso** (Supabase Auth) e i **prome
 
 1. Attiva la verifica in due passaggi sull'account Google.
 2. Crea una «password per le app» su myaccount.google.com/apppasswords.
-3. Supabase → *Authentication → SMTP Settings*: host `smtp.gmail.com`, porta `465`, utente e mittente = il tuo Gmail, password = password per le app.
+3. Supabase → _Authentication → SMTP Settings_: host `smtp.gmail.com`, porta `465`, utente e mittente = il tuo Gmail, password = password per le app.
 
 ### 3b. Promemoria via Gmail API (`MAIL_PROVIDER = "gmail"`)
 
 1. [Google Cloud Console](https://console.cloud.google.com) → nuovo progetto → abilita **Gmail API**.
-2. *Schermata consenso OAuth*: tipo *Esterno*, aggiungi il tuo Gmail come **utente di test**, scope `https://www.googleapis.com/auth/gmail.send`. Poi **pubblica l'app** («In produzione»): in modalità *Test* il refresh token scade dopo 7 giorni. Al consenso comparirà «app non verificata» → *Avanzate → Vai a…*.
-3. *Credenziali → Crea credenziali → ID client OAuth* → tipo **App desktop**. Copia client id e secret.
+2. _Schermata consenso OAuth_: tipo _Esterno_, aggiungi il tuo Gmail come **utente di test**, scope `https://www.googleapis.com/auth/gmail.send`. Poi **pubblica l'app** («In produzione»): in modalità _Test_ il refresh token scade dopo 7 giorni. Al consenso comparirà «app non verificata» → _Avanzate → Vai a…_.
+3. _Credenziali → Crea credenziali → ID client OAuth_ → tipo **App desktop**. Copia client id e secret.
 4. Ottieni il refresh token:
    ```bash
    cd apps/worker
@@ -95,23 +95,25 @@ Si pubblica da terminale con lo script del passo 7; il collegamento Git del mono
 
 Il routing della SPA è gestito da `apps/web/public/_redirects`.
 
-Se preferisci il collegamento Git: *Workers & Pages → Create → Pages → Connect to Git*, build `pnpm install && pnpm --filter @ohana/web build`, output `apps/web/dist`, le stesse variabili `VITE_*` e `NODE_VERSION=20`.
+Se preferisci il collegamento Git: _Workers & Pages → Create → Pages → Connect to Git_, build `pnpm install && pnpm --filter @ohana/web build`, output `apps/web/dist`, le stesse variabili `VITE_*` e `NODE_VERSION=20`.
 
 Il progetto Pages è quello di nome `ohana` (sottodominio `ohana-1ia.pages.dev`, se `ohana.pages.dev` era già preso).
 
 ### Dominio personalizzato (`ohanapp.org`)
-1. **Cloudflare → Workers & Pages → `ohana` → Custom domains → Set up a custom domain** → `ohanapp.org`. Se il dominio è registrato altrove, prima *Add a site* in Cloudflare e sposta i nameserver da quelli che indica. Certificato HTTPS e record DNS li crea Cloudflare.
-2. Facoltativo, `www`: aggiungi anche `www.ohanapp.org` come dominio personalizzato e, sulla zona, una *Redirect Rule* da `www.ohanapp.org/*` a `https://ohanapp.org/${1}` (301).
-3. Quando il dominio risulta *Active*: Supabase (passo 1.3: *Site URL* e *Redirect URLs*) e `APP_URL` in `apps/worker/wrangler.toml`, poi `pnpm run release:worker`. `APP_URL` costruisce i link nelle email e nelle notifiche, ed è l'unica origine ammessa dal Worker per le richieste dal browser (CORS).
+
+1. **Cloudflare → Workers & Pages → `ohana` → Custom domains → Set up a custom domain** → `ohanapp.org`. Se il dominio è registrato altrove, prima _Add a site_ in Cloudflare e sposta i nameserver da quelli che indica. Certificato HTTPS e record DNS li crea Cloudflare.
+2. Facoltativo, `www`: aggiungi anche `www.ohanapp.org` come dominio personalizzato e, sulla zona, una _Redirect Rule_ da `www.ohanapp.org/*` a `https://ohanapp.org/${1}` (301).
+3. Quando il dominio risulta _Active_: Supabase (passo 1.3: _Site URL_ e _Redirect URLs_) e `APP_URL` in `apps/worker/wrangler.toml`, poi `pnpm run release:worker`. `APP_URL` costruisce i link nelle email e nelle notifiche, ed è l'unica origine ammessa dal Worker per le richieste dal browser (CORS).
 4. Incolla di nuovo `supabase/templates/accesso.html` nei template Supabase (Magic Link e Confirm signup): il logo punta al nuovo dominio.
 5. Le app già installate da `ohana-1ia.pages.dev` non si spostano: un dominio diverso è un'origine diversa. Vanno reinstallate dal nuovo indirizzo, con nuovo login e nuovo consenso alle notifiche.
 
-Se il progetto Pages è collegato a GitHub, ogni `git push` crea una build automatica che non trova le variabili `VITE_*` e pubblica una pagina vuota, che copre il rilascio fatto con lo script. Disattivala: *Settings → Builds & deployments → Automatic deployments → Disabled*.
+Se il progetto Pages è collegato a GitHub, ogni `git push` crea una build automatica che non trova le variabili `VITE_*` e pubblica una pagina vuota, che copre il rilascio fatto con lo script. Disattivala: _Settings → Builds & deployments → Automatic deployments → Disabled_.
 
 ## 6. Backup settimanale (facoltativo)
 
 La GitHub Action `.github/workflows/backup.yml` esegue `pg_dump` ogni domenica e conserva il dump 30 giorni come artifact. Secrets del repository:
-- `SUPABASE_DB_URL`: stringa «Session pooler» da *Project Settings → Database*
+
+- `SUPABASE_DB_URL`: stringa «Session pooler» da _Project Settings → Database_
 - per Cloudflare R2: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`, `R2_BUCKET`
 
 Senza R2, rimuovi lo step «Carica su Cloudflare R2».
@@ -130,6 +132,7 @@ bash scripts/deploy.sh all --skip-checks   # salta le verifiche
 Usa `pnpm run release`: `pnpm deploy` è un comando interno di pnpm.
 
 In ordine lo script:
+
 1. esegue `typecheck`, `lint`, `format:check`, `test`; se una fallisce non pubblica nulla;
 2. (Worker) `wrangler deploy` e controllo di `WORKER_URL/health`;
 3. (Frontend) controlla che `apps/web/.env.production` abbia le quattro variabili `VITE_*` valorizzate, poi `pnpm build` e `wrangler pages deploy` sul progetto `ohana`, ramo `main`.
@@ -140,4 +143,4 @@ Requisiti: `npx wrangler login` fatto e segreti del Worker già salvati. Se la P
 
 Il login invia un link e un **codice numerico** (6–10 cifre, a seconda di `otp_length`). Il codice serve nella PWA installata, dove il link si aprirebbe nel browser.
 
-Perché il codice compaia nell'email, il template in *Authentication → Email Templates* deve contenere `{{ .Token }}`, sia in **Magic Link** sia in **Confirm signup**. Un template pronto, con logo, è in `supabase/templates/accesso.html`: copialo in entrambi.
+Perché il codice compaia nell'email, il template in _Authentication → Email Templates_ deve contenere `{{ .Token }}`, sia in **Magic Link** sia in **Confirm signup**. Un template pronto, con logo, è in `supabase/templates/accesso.html`: copialo in entrambi.

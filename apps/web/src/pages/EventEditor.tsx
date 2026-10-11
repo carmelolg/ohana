@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
 import { formatDay, formatTime } from '@ohana/shared';
@@ -10,6 +10,7 @@ import { spaceColor } from '../lib/color';
 import { useMutate, useSpace, useSpaceRecipients } from '../lib/data';
 import { useDialog } from '../lib/dialog';
 import { useEventActions } from '../lib/eventActions';
+import { snoozeOptions } from '../lib/snoozeOptions';
 import { AttachmentList } from './event-editor/AttachmentList';
 import { ChecklistField } from './event-editor/ChecklistField';
 import { EventFields } from './event-editor/EventFields';
@@ -44,14 +45,22 @@ function EventEditorScreen() {
   return (
     <div style={{ ['--space' as string]: spaceColor(space?.color_hue) }}>
       <EditorHeader form={form} />
+      {existing && writable && <StatusBar form={form} />}
       <FormError message={form.error} />
       {existing?.categories?.slug === 'visita' && existing.status === 'done' && (
         <CompletedVisit form={form} />
       )}
       {existing?.categories?.slug === 'visita' && <VisitCareLink ev={existing} />}
-      {!writable && <p className="banner warn">Hai accesso in sola lettura a questo spazio.</p>}
+      {form.isImported && (
+        <p className="banner warn">
+          Impegno importato da un calendario esterno: per cambiarlo modificalo lì, si aggiornerà da solo.
+        </p>
+      )}
+      {!writable && !form.isImported && (
+        <p className="banner warn">Hai accesso in sola lettura a questo spazio.</p>
+      )}
       <EditorBody form={form} />
-      {existing && writable && <StatusActions form={form} />}
+      {existing && writable && <DeleteAction form={form} />}
     </div>
   );
 }
@@ -183,16 +192,16 @@ function ExtrasBar({ form }: { form: EventForm }) {
   );
 }
 
-/** «Segna fatto» / «Riapri» ed «Elimina» per un impegno già salvato. */
-function StatusActions({ form }: { form: EventForm }) {
+/** «Segna fatto» / «Riapri» e «Rimanda»: sempre visibili in cima a un impegno salvato (il link «Prepara la visita» sta in `VisitCareLink`). */
+function StatusBar({ form }: { form: EventForm }) {
   const mutate = useMutate();
-  const dialog = useDialog();
   const actions = useEventActions();
+  const [snoozing, setSnoozing] = useState(false);
   const { existing, back } = form;
   if (!existing) {
     return null;
   }
-
+  const isOpen = existing.status === 'open';
   const reopen = async () => {
     await mutate({
       table: 'events',
@@ -206,6 +215,53 @@ function StatusActions({ form }: { form: EventForm }) {
     await actions.done(existing);
     back();
   };
+  const snooze = async (minutes: number) => {
+    await actions.snooze(existing, minutes);
+    back();
+  };
+  return (
+    <div className="status-bar">
+      <div className="hstack" style={{ flexWrap: 'wrap' }}>
+        {isOpen ? (
+          <button className="btn ok small" onClick={markDone}>
+            Segna fatto
+          </button>
+        ) : (
+          <button className="btn ghost small" onClick={reopen}>
+            Riapri
+          </button>
+        )}
+        {isOpen && !existing.rrule && (
+          <button
+            className="btn ghost small"
+            aria-expanded={snoozing}
+            onClick={() => setSnoozing((on) => !on)}
+          >
+            Rimanda
+          </button>
+        )}
+      </div>
+      {snoozing && (
+        <div className="chips-row" role="group" aria-label="Rimanda a">
+          {snoozeOptions(new Date()).map((o) => (
+            <button key={o.label} className="chip" onClick={() => void snooze(o.minutes)}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** «Elimina» in fondo, rosso e secondario. */
+function DeleteAction({ form }: { form: EventForm }) {
+  const dialog = useDialog();
+  const actions = useEventActions();
+  const { existing, back } = form;
+  if (!existing) {
+    return null;
+  }
   const remove = async () => {
     const confirmed = await dialog.confirm({
       title: 'Eliminare questo impegno?',
@@ -219,18 +275,8 @@ function StatusActions({ form }: { form: EventForm }) {
     await actions.remove(existing);
     back();
   };
-
   return (
-    <div className="hstack" style={{ marginTop: 22, flexWrap: 'wrap' }}>
-      {existing.status === 'open' ? (
-        <button className="btn ghost small" onClick={markDone}>
-          Segna fatto
-        </button>
-      ) : (
-        <button className="btn ghost small" onClick={reopen}>
-          Riapri
-        </button>
-      )}
+    <div className="hstack" style={{ marginTop: 22 }}>
       <button className="btn danger small" onClick={remove}>
         <Trash2 size={16} /> Elimina
       </button>

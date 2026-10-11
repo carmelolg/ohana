@@ -31,7 +31,7 @@ export function BoardSection({ spaceId }: { spaceId: string }) {
 
   return (
     <>
-      <div className="hstack" style={{ justifyContent: 'space-between' }}>
+      <div id="bacheca" className="hstack" style={{ justifyContent: 'space-between' }}>
         <div className="label section-label">Bacheca</div>
         {writable && (
           <button className="btn small" style={{ marginTop: 14 }} onClick={() => setComposing(true)}>

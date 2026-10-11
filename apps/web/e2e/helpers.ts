@@ -6,7 +6,7 @@ const MAIL = process.env.MAILPIT_URL ?? 'http://127.0.0.1:54324'; // Mailpit di 
 export async function login(page: Page, email: string, redirect = '/') {
   await page.goto(redirect);
   await page.getByLabel('Email').fill(email);
-  await page.getByRole('button', { name: 'Invia link di accesso' }).click();
+  await page.getByRole('button', { name: 'Ricevi il link per entrare' }).click();
   await expect(page.getByText('Link inviato')).toBeVisible();
   const link = await magicLink(page, email);
   await page.goto(link);

@@ -351,6 +351,29 @@ delete from maintenances;
 select t.as_user('00000000-0000-0000-0000-00000000000a');
 select t.expect_count('select 1 from maintenances', 1, 'viewer non elimina manutenzioni');
 
+-- ---- calendari importati
+select t.as_user('00000000-0000-0000-0000-00000000000a');
+insert into calendar_imports (id, space_id, user_id, name, url) values ('aaaaaaaa-0000-0000-0000-0000000000c9', 'aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a', 'Famiglia', 'https://calendar.google.com/calendar/ical/x/private-abc/basic.ics');
+select t.expect_error($$select url from calendar_imports$$, 'l''indirizzo segreto non si legge dal client');
+select t.expect_error($$select * from calendar_imports$$, 'select * sul calendario importato');
+select t.expect_count('select id, name from calendar_imports', 1, 'ana vede i suoi calendari importati');
+select t.expect_error($$insert into calendar_imports (space_id, user_id, name, url) values ('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a', 'x', 'ftp://esempio.it/x.ics')$$, 'indirizzo non https');
+select t.expect_error($$insert into calendar_imports (space_id, user_id, name, url) values ('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000b', 'x', 'https://esempio.it/x.ics')$$, 'calendario a nome di un altro utente');
+select t.expect_error($$update calendar_imports set last_error = 'x'$$, 'il client non scrive lo stato della sincronizzazione');
+insert into events (id, space_id, title, starts_at, import_id, external_id) values ('aaaaaaaa-0000-0000-0000-0000000000c8', 'aaaaaaaa-0000-0000-0000-000000000001', 'Importato', now(), 'aaaaaaaa-0000-0000-0000-0000000000c9', 'uid-1');
+select t.expect_error($$insert into events (space_id, title, starts_at, import_id, external_id) values ('aaaaaaaa-0000-0000-0000-000000000001', 'Doppio', now(), 'aaaaaaaa-0000-0000-0000-0000000000c9', 'uid-1')$$, 'stesso impegno importato due volte');
+select t.expect_error($$insert into events (space_id, title, starts_at, import_id) values ('aaaaaaaa-0000-0000-0000-000000000001', 'x', now(), 'aaaaaaaa-0000-0000-0000-0000000000c9')$$, 'import senza identificatore esterno');
+select t.as_user('00000000-0000-0000-0000-00000000000b');
+select t.expect_error($$insert into events (space_id, title, starts_at, import_id, external_id) values ('dddddddd-0000-0000-0000-000000000001', 'x', now(), 'aaaaaaaa-0000-0000-0000-0000000000c9', 'uid-9')$$, 'impegno collegato a un calendario di un altro spazio');
+select t.as_user('00000000-0000-0000-0000-00000000000d');
+select t.expect_count('select id from calendar_imports', 0, 'estraneo non vede i calendari importati');
+select t.expect_error($$insert into calendar_imports (space_id, user_id, name, url) values ('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000d', 'x', 'https://esempio.it/x.ics')$$, 'estraneo non collega calendari');
+select t.as_user('00000000-0000-0000-0000-00000000000e');
+select t.expect_error($$insert into calendar_imports (space_id, user_id, name, url) values ('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000e', 'x', 'https://esempio.it/x.ics')$$, 'viewer non collega calendari');
+select t.as_user('00000000-0000-0000-0000-00000000000a');
+delete from calendar_imports where id = 'aaaaaaaa-0000-0000-0000-0000000000c9';
+select t.expect_count($$select 1 from events where id = 'aaaaaaaa-0000-0000-0000-0000000000c8'$$, 0, 'scollegare il calendario rimuove gli impegni importati');
+
 -- ---- pratiche
 insert into procedures (id, space_id, title, owner_id, due_date) values ('aaaaaaaa-0000-0000-0000-0000000000d1', 'aaaaaaaa-0000-0000-0000-000000000001', 'ISEE 2027', '00000000-0000-0000-0000-00000000000a', current_date + 90);
 select t.expect_error($$insert into procedures (space_id, title, owner_id) values ('aaaaaaaa-0000-0000-0000-000000000001', 'x', '00000000-0000-0000-0000-00000000000d')$$, 'responsabile non membro');
@@ -358,6 +381,9 @@ select t.expect_error($$insert into procedures (space_id, title, status) values 
 insert into procedure_steps (id, procedure_id, position, title) values ('aaaaaaaa-0000-0000-0000-0000000000d2', 'aaaaaaaa-0000-0000-0000-0000000000d1', 0, 'Raccogliere documenti');
 select t.expect_error($$insert into procedure_steps (procedure_id, position, title, event_id) values ('aaaaaaaa-0000-0000-0000-0000000000d1', 1, 'x', 'dddddddd-0000-0000-0000-0000000000e1')$$, 'passaggio con impegno di un altro spazio');
 update procedure_steps set event_id = 'aaaaaaaa-0000-0000-0000-0000000000e2' where id = 'aaaaaaaa-0000-0000-0000-0000000000d2';
+select t.expect_error($$update procedure_steps set contact_id = 'dddddddd-0000-0000-0000-0000000000c1' where id = 'aaaaaaaa-0000-0000-0000-0000000000d2'$$, 'fase con ditta di un altro spazio');
+select t.expect_error($$update procedure_steps set quote_outcome = 'boh' where id = 'aaaaaaaa-0000-0000-0000-0000000000d2'$$, 'esito preventivo non valido');
+update procedure_steps set amount = 2850, quote_outcome = 'scelto' where id = 'aaaaaaaa-0000-0000-0000-0000000000d2';
 -- ---- impegni collegati a pratiche e manutenzioni
 select t.as_user('00000000-0000-0000-0000-00000000000b');
 insert into procedures (id, space_id, title) values ('dddddddd-0000-0000-0000-0000000000d1', 'dddddddd-0000-0000-0000-000000000001', 'Pratica altrui');

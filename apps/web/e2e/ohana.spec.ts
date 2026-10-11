@@ -347,24 +347,34 @@ test('Esc nel selettore luogo chiude solo il selettore, non la sheet sotto', asy
   await expect(page.getByRole('dialog', { name: 'Contatto' })).toBeVisible();
 });
 
-test("mobile: «Altro» evidenziato nelle sue sottopagine; testata dell'editor fissa", async ({ page }) => {
+test("mobile: l'area attiva resta evidenziata nelle sue sottopagine; testata dell'editor fissa", async ({
+  page,
+}) => {
   await onboard(page, uniqueEmail('tab'), 'Tina', 'Casa mia');
   const mobile = (page.viewportSize()?.width ?? 0) < 1024;
   if (mobile) {
     const tabs = page.getByRole('navigation', { name: 'Navigazione principale' });
-    for (const path of ['/altro', '/rubrica', '/spese', '/impostazioni']) {
+    const areas: [string, string][] = [
+      ['/casa', 'Casa'],
+      ['/spese', 'Casa'],
+      ['/famiglia', 'Famiglia'],
+      ['/rubrica', 'Famiglia'],
+      ['/impostazioni', 'Famiglia'],
+      ['/calendario', 'Agenda'],
+    ];
+    for (const [path, area] of areas) {
       await page.goto(path);
-      await expect(tabs.getByRole('link', { name: 'Altro' })).toHaveAttribute('aria-current', 'page');
+      await expect(tabs.getByRole('link', { name: area })).toHaveAttribute('aria-current', 'page');
       await expect(tabs.getByRole('link', { name: 'Oggi' })).not.toHaveAttribute('aria-current', 'page');
       expect(
         await tabs
-          .getByRole('link', { name: 'Altro' })
+          .getByRole('link', { name: area })
           .evaluate((el) => Number(getComputedStyle(el).fontWeight)),
       ).toBeGreaterThanOrEqual(700);
     }
     await page.goto('/oggi');
     await expect(tabs.getByRole('link', { name: 'Oggi' })).toHaveAttribute('aria-current', 'page');
-    await expect(tabs.getByRole('link', { name: 'Altro' })).not.toHaveAttribute('aria-current', 'page');
+    await expect(tabs.getByRole('link', { name: 'Famiglia' })).not.toHaveAttribute('aria-current', 'page');
     // da Rubrica si torna a Oggi con la tab «Oggi»
     await page.goto('/rubrica');
     await tabs.getByRole('link', { name: 'Oggi' }).click();
@@ -425,10 +435,10 @@ test("navigazione: menu dell'avatar, ricerca anche su mobile, indietro sicuro", 
   if (mobile) {
     await page.getByRole('button', { name: 'Indietro' }).click();
     await expect(page).toHaveURL(/\/oggi/);
-    // Rubrica: «‹ Altro» riporta al menu Altro
+    // Rubrica: «‹ Famiglia» riporta all'area Famiglia
     await page.goto('/rubrica');
-    await page.getByRole('link', { name: 'Altro' }).first().click();
-    await expect(page).toHaveURL(/\/altro/);
+    await page.getByRole('link', { name: 'Famiglia' }).first().click();
+    await expect(page).toHaveURL(/\/famiglia/);
   }
 
   // ricerca raggiungibile anche su mobile (prima solo da tastiera)
@@ -445,7 +455,7 @@ test("navigazione: menu dell'avatar, ricerca anche su mobile, indietro sicuro", 
   // Esci
   await trigger.click();
   await menu.getByRole('menuitem', { name: 'Esci' }).click();
-  await expect(page.getByRole('button', { name: 'Invia link di accesso' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ricevi il link per entrare' })).toBeVisible();
 });
 
 test('logo nella barra superiore: sempre visibile, porta a Oggi, non rompe il layout con nomi lunghi', async ({

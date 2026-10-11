@@ -14,7 +14,7 @@ export interface Transfer {
   amount: number;
 }
 
-const toCents = (n: number) => Math.round(n * 100);
+export const toCents = (n: number) => Math.round(n * 100);
 const toEuro = (c: number) => c / 100;
 
 /** Divide `total` (euro) in parti uguali; i centesimi residui vanno ai primi. */

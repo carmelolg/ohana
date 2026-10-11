@@ -57,7 +57,7 @@ export function LoginForm({ redirectTo, defaultEmail = '' }: { redirectTo?: stri
         onChange={(e) => setEmail(e.target.value)}
       />
       <button className="btn" type="submit" disabled={busy || !email}>
-        Invia link di accesso
+        Ricevi il link per entrare
       </button>
       <button className="btn ghost" type="button" onClick={google}>
         Continua con Google
@@ -76,13 +76,13 @@ export function LoginPage() {
     <div className="login" role="main">
       <div className="hero">
         <img src="/icons/icon.svg" alt="Ohana" />
-        <h1>Ohana</h1>
-        <p>Impegni, spesa, scadenze e spese di famiglia, condivisi con chi vuoi tu.</p>
+        <h1>La famiglia, in ordine.</h1>
+        <p>Impegni, faccende, spesa, spese e cura dei genitori in un unico posto, condiviso con chi vuoi.</p>
       </div>
       <div className="actions">
         <LoginForm />
         <p className="muted" style={{ fontSize: 13, textAlign: 'center' }}>
-          Niente password: ti mandiamo un link e un codice via email.
+          Niente password: ti mandiamo un link e un codice.
         </p>
       </div>
     </div>

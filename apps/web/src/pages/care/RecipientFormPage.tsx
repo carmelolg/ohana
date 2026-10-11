@@ -105,7 +105,7 @@ function Screen({ existing }: { existing: CareRecipient | null }) {
   const photoInput = useRef<HTMLInputElement>(null);
   return (
     <div className="care-form">
-      <BackLink to={existing ? `/cura/${c.id}` : '/altro'} label={existing ? 'Scheda' : 'Altro'} />
+      <BackLink to={existing ? `/cura/${c.id}` : '/famiglia'} label={existing ? 'Scheda' : 'Famiglia'} />
       <h1 className="care-name">{existing ? 'Modifica scheda' : 'Nuova persona assistita'}</h1>
       <FormError message={c.error} />
       {!existing && (

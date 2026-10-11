@@ -151,8 +151,8 @@ test('manutenzione da «+» («caldaia ogni anno a novembre») e card in Altro',
   await expect(storico).toContainText(/90\s€/);
   await expect(storico).toContainText('In programma');
 
-  // Altro: la card mostra lo stato
-  await page.goto('/altro');
+  // Casa: la card mostra lo stato
+  await page.goto('/casa');
   await expect(page.getByRole('link', { name: /^Manutenzioni/ })).toBeVisible();
 });
 
@@ -196,7 +196,7 @@ test('pratica ISEE da modello: passaggi, documenti, avanzamento e completamento'
   await expect(cronologia.getByText('Completato')).toHaveCount(5);
   await expect(cronologia.getByText('Da fare')).toHaveCount(0);
 
-  // Altro mostra «N in corso» solo per quelle aperte
+  // Casa mostra «N in corso» solo per quelle aperte
   await page.goto('/pratiche');
   await expect(page.getByText('Concluse')).toBeVisible();
 });
@@ -280,16 +280,18 @@ test("diario visite: com'è andata, prossimi passi → impegno, storico con il m
   await expect(page.getByRole('button', { name: /Storico con Dott\. Rossi/ })).toBeVisible();
 });
 
-test('Altro: griglia di card con lo stato; Emergenza in rosso; accessi in massimo 2 tap', async ({
-  page,
-}) => {
+test('Casa e Famiglia: card con lo stato; Emergenza in rosso; accessi in massimo 2 tap', async ({ page }) => {
   await onboard(page, uniqueEmail('alt'), 'Ada', 'Casa mia');
-  await page.goto('/altro');
+  await page.goto('/casa');
   const main = page.getByRole('main');
-  for (const n of ['Pratiche', 'Manutenzioni', 'Rubrica', 'Spese', 'Documenti', 'Emergenza']) {
+  for (const n of ['Spesa', 'Spese', 'Manutenzioni', 'Documenti', 'Pratiche']) {
     await expect(main.getByRole('link', { name: new RegExp(`^${n}`) })).toBeVisible();
   }
-  await expect(main.getByRole('link', { name: 'Profilo e impostazioni' })).toBeVisible();
+  await page.goto('/famiglia');
+  for (const n of ['Rubrica', 'Emergenza']) {
+    await expect(main.getByRole('link', { name: new RegExp(`^${n}`) })).toBeVisible();
+  }
+  await expect(main.getByRole('link', { name: /Profilo e impostazioni/ })).toBeVisible();
   await expect(main.getByRole('link', { name: /Spazi e inviti/ })).toBeVisible();
   const color = await main
     .getByRole('link', { name: /^Emergenza/ })
@@ -303,9 +305,10 @@ test('Altro: griglia di card con lo stato; Emergenza in rosso; accessi in massim
       .first()
       .evaluate((el) => getComputedStyle(el).color),
   );
+  await page.goto('/casa');
   // griglia a due colonne
   const boxes = await Promise.all(
-    ['Pratiche', 'Manutenzioni'].map(
+    ['Spesa', 'Spese'].map(
       async (n) => (await main.getByRole('link', { name: new RegExp(`^${n}`) }).boundingBox())!,
     ),
   );
@@ -533,11 +536,11 @@ test('la categoria impara dalle correzioni (Naive Bayes) e si può azzerare', as
   await expect(page.getByLabel('Categoria').locator('option:checked')).toHaveText('Altro'); // dimenticato
 });
 
-test('funzioni per spazio: spegnere «Spesa» e «Spese» le toglie da menu, Altro e indirizzi', async ({
+test('funzioni per spazio: spegnere «Spesa» e «Spese» le toglie da menu, Casa e indirizzi', async ({
   page,
 }) => {
   await onboard(page, uniqueEmail('feat'), 'Ada', 'Genitori');
-  await page.goto('/altro');
+  await page.goto('/famiglia');
   await page.getByRole('link', { name: /Spazi e inviti/ }).click();
   await expect(page.getByRole('heading', { name: 'Genitori' })).toBeVisible();
   await page.getByRole('switch', { name: 'Lista della spesa' }).click();
@@ -546,9 +549,10 @@ test('funzioni per spazio: spegnere «Spesa» e «Spese» le toglie da menu, Alt
   await expect(page.getByRole('switch', { name: 'Spese e saldi' })).not.toBeChecked();
   await expect(page.getByRole('switch', { name: 'Lista della spesa' })).not.toBeChecked();
 
-  await page.goto('/altro');
+  await page.goto('/famiglia');
   const main = page.getByRole('main');
   await expect(main.getByRole('link', { name: /^Emergenza/ })).toBeVisible();
+  await page.goto('/casa');
   await expect(main.getByRole('link', { name: /^Spese/ })).toHaveCount(0);
   await expect(page.getByRole('link', { name: /^Spesa$/ })).toHaveCount(0);
 
@@ -556,10 +560,10 @@ test('funzioni per spazio: spegnere «Spesa» e «Spese» le toglie da menu, Alt
   await expect(page).toHaveURL(/\/oggi/);
 
   // riaccesa, torna tutto
-  await page.goto('/altro');
+  await page.goto('/famiglia');
   await page.getByRole('link', { name: /Spazi e inviti/ }).click();
   await page.getByRole('switch', { name: 'Spese e saldi' }).click();
   await expect(page.getByRole('switch', { name: 'Spese e saldi' })).toBeChecked();
-  await page.goto('/altro');
+  await page.goto('/casa');
   await expect(page.getByRole('main').getByRole('link', { name: /^Spese/ })).toBeVisible();
 });

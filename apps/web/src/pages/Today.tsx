@@ -5,6 +5,7 @@ import { OccurrenceRow } from '../components/OccurrenceRow';
 import { Link } from 'react-router-dom';
 import { BoardBanner } from '../components/BoardBanner';
 import { ChoresBlock } from '../components/ChoresBlock';
+import { NextCard } from '../components/NextCard';
 import { CareTodayRows } from '../components/care/CareTodayRows';
 
 const WEEKDAY = new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', weekday: 'long' });
@@ -44,15 +45,19 @@ export function TodayPage() {
     parts.push(`${dueCount} ${dueCount === 1 ? 'scadenza' : 'scadenze'}`);
   }
 
+  // «Prossimo»: il primo impegno aperto non ancora iniziato, altrimenti il primo aperto della giornata
+  const next = open.find((o) => !o.event.all_day && o.at >= now) ?? open[0];
+
   return (
     <>
       <BoardBanner />
       <div className="page-head">
-        <div className="label">{WEEKDAY.format(now)}</div>
+        <div className="today-day">{WEEKDAY.format(now)}</div>
         <h1 className="big">{BIG.format(now)}</h1>
         <p className="sub">{open.length ? parts.join(' · ') : 'Niente in programma oggi'}</p>
       </div>
 
+      {next && <NextCard occ={next} now={now} />}
       <CareTodayRows />
 
       {overdue.length > 0 && (

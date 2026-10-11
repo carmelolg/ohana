@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth';
 import { useSpace } from '../lib/data';
 import { AppearanceSection } from './settings/AppearanceSection';
 import { CalendarFeedsSection } from './settings/CalendarFeedsSection';
+import { ImportedCalendarsSection } from './settings/ImportedCalendarsSection';
 import { NotificationSection } from './settings/NotificationSection';
 import { ProfileSection } from './settings/ProfileSection';
 
@@ -22,6 +23,7 @@ export function SettingsPage() {
       <AppearanceSection profile={profile} />
       <NotificationSection profile={profile} />
       <CalendarFeedsSection />
+      <ImportedCalendarsSection />
 
       <div className="label section-label">Spazi</div>
       {spaces.map((s) => (

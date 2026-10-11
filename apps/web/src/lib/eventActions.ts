@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCareRecipients, useMutate } from './data';
 import { useToast } from './toast';
 import type { EventRow } from './types';
+import { snoozeMessage } from './snoozeOptions';
 
 /** Azioni rapide su un impegno (usate da swipe, pulsanti e dettaglio). */
 export function useEventActions() {
@@ -68,7 +69,7 @@ export function useEventActions() {
       }
       await apply(ev, patch);
       toast({
-        msg: minutes >= 1440 ? 'Rimandato a domani' : 'Rimandato di 1 ora',
+        msg: snoozeMessage(minutes),
         action: { label: 'Annulla', run: undo(ev) },
       });
     },

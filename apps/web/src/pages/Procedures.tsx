@@ -43,7 +43,7 @@ export default function ProceduresPage() {
 
   return (
     <>
-      <BackLink to="/altro" label="Altro" />
+      <BackLink to="/casa" label="Casa" />
       <div className="hstack" style={{ justifyContent: 'space-between' }}>
         <h2 className="page-title" style={{ fontSize: 36 }}>
           Pratiche

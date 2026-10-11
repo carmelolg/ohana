@@ -99,6 +99,8 @@ export interface EventRow {
   linked_procedure_id: string | null;
   /** Collegamento scelto dall'utente a una manutenzione (non è la scadenza generata, `maintenance_id`). */
   linked_maintenance_id: string | null;
+  /** Calendario esterno da cui l'impegno è stato importato: in app è in sola lettura. */
+  import_id: string | null;
   created_by: string;
   event_reminders: Reminder[];
   event_checklist_items: ChecklistItem[];
@@ -216,12 +218,20 @@ export interface ProcedureStep {
   note: string | null;
   done_at: string | null;
   event_id: string | null;
+  /** Importo della fase (preventivo, saldo…), se ce n'è uno. */
+  amount: number | null;
+  /** Ditta o professionista della fase (rubrica). */
+  contact_id: string | null;
+  /** Esito di un preventivo messo a confronto. */
+  quote_outcome: 'scelto' | 'scartato' | null;
 }
 export interface ProcedureDoc {
   id: string;
   procedure_id: string;
   name: string;
   attachment_id: string | null;
+  /** Fase a cui appartiene il documento (preventivo, conferma d'ordine, fattura). */
+  step_id: string | null;
 }
 export interface Procedure {
   id: string;

@@ -4,6 +4,7 @@ import { sendDoseReminders } from './jobs/care-doses';
 import { sendChoreDigests } from './jobs/chore-digest';
 import { dispatch } from './jobs/dispatch';
 import { enqueue } from './jobs/enqueue';
+import { syncCalendarImports } from './jobs/calendar-sync';
 import { sendBriefs } from './jobs/morning-brief';
 
 type Job = [name: string, run: (env: Env, now: Date) => Promise<unknown>];
@@ -16,6 +17,7 @@ const JOBS: Job[] = [
   ['chores', sendChoreDigests],
   ['board', sendBoardPushes],
   ['dosi', sendDoseReminders],
+  ['calendari', syncCalendarImports],
 ];
 
 /** Un giro di cron (ogni 5 minuti): accoda, invia e prepara i riepiloghi. */

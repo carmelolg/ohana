@@ -1,10 +1,13 @@
 import { NavLink } from 'react-router-dom';
 import {
+  BookUser,
+  CalendarClock,
   CalendarDays,
   ClipboardList,
   FileText,
   HeartPulse,
   Home,
+  House,
   Plus,
   Settings as Cog,
   ShoppingBasket,
@@ -19,18 +22,37 @@ import { spaceColor } from '../../lib/color';
 import { useFeatures, useScopedRecipients, useSpace } from '../../lib/data';
 import { careName } from '@ohana/shared';
 
-const LINKS: { to: string; label: string; Icon: LucideIcon; feature?: SpaceFeature }[] = [
-  { to: '/oggi', label: 'Oggi', Icon: Home },
-  { to: '/calendario', label: 'Calendario', Icon: CalendarDays },
-  { to: '/spesa', label: 'Spesa', Icon: ShoppingBasket, feature: 'spesa' },
-  { to: '/cura', label: 'Cura', Icon: HeartPulse, feature: 'cura' },
-  { to: '/pratiche', label: 'Pratiche', Icon: ClipboardList, feature: 'pratiche' },
-  { to: '/manutenzioni', label: 'Manutenzioni', Icon: Wrench, feature: 'manutenzioni' },
-  { to: '/documenti', label: 'Documenti', Icon: FileText, feature: 'documenti' },
-  { to: '/rubrica', label: 'Rubrica', Icon: Users },
-  { to: '/spese', label: 'Spese', Icon: Wallet, feature: 'spese' },
-  { to: '/emergenza', label: 'Emergenza', Icon: Siren },
-  { to: '/impostazioni', label: 'Impostazioni', Icon: Cog },
+interface SideLink {
+  to: string;
+  label: string;
+  Icon: LucideIcon;
+  feature?: SpaceFeature;
+}
+
+/** Le quattro aree con le loro sottovoci: la sottovoce segue la stessa regola di `FeatureGate`. */
+const GROUPS: { head: SideLink; items: SideLink[] }[] = [
+  { head: { to: '/oggi', label: 'Oggi', Icon: Home }, items: [] },
+  { head: { to: '/calendario', label: 'Agenda', Icon: CalendarDays }, items: [] },
+  {
+    head: { to: '/casa', label: 'Casa', Icon: House },
+    items: [
+      { to: '/spesa', label: 'Spesa', Icon: ShoppingBasket, feature: 'spesa' },
+      { to: '/spese', label: 'Spese', Icon: Wallet, feature: 'spese' },
+      { to: '/scadenze', label: 'Scadenze', Icon: CalendarClock },
+      { to: '/manutenzioni', label: 'Manutenzioni', Icon: Wrench, feature: 'manutenzioni' },
+      { to: '/documenti', label: 'Documenti', Icon: FileText, feature: 'documenti' },
+      { to: '/pratiche', label: 'Pratiche', Icon: ClipboardList, feature: 'pratiche' },
+    ],
+  },
+  {
+    head: { to: '/famiglia', label: 'Famiglia', Icon: Users },
+    items: [
+      { to: '/cura', label: 'Cura', Icon: HeartPulse, feature: 'cura' },
+      { to: '/rubrica', label: 'Rubrica', Icon: BookUser },
+      { to: '/emergenza', label: 'Emergenza', Icon: Siren },
+      { to: '/impostazioni', label: 'Impostazioni', Icon: Cog },
+    ],
+  },
 ];
 
 const ACTIVE = { background: 'var(--surface)', fontWeight: 600 };
@@ -42,11 +64,21 @@ export function Sidebar({ onSpaces }: { onSpaces: () => void }) {
   const people = useScopedRecipients();
   return (
     <aside className="sidebar" aria-label="Navigazione">
-      {LINKS.filter((l) => !l.feature || isOn(l.feature)).map(({ to, label, Icon }) => (
-        <NavLink key={to} className="side-link" to={to}>
-          <Icon size={20} strokeWidth={1.75} />
-          {label}
-        </NavLink>
+      {GROUPS.map(({ head, items }) => (
+        <div key={head.to} className="side-group">
+          <NavLink className="side-link side-head" to={head.to} end={items.length > 0}>
+            <head.Icon size={20} strokeWidth={1.75} />
+            {head.label}
+          </NavLink>
+          {items
+            .filter((l) => !l.feature || isOn(l.feature))
+            .map(({ to, label, Icon }) => (
+              <NavLink key={to} className="side-link side-sub" to={to}>
+                <Icon size={18} strokeWidth={1.75} />
+                {label}
+              </NavLink>
+            ))}
+        </div>
       ))}
       {people.length > 0 && (
         <>

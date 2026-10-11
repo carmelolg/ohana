@@ -170,6 +170,22 @@ export function maintenanceRows(
   return sortTimeline([...planned, ...done, ...linked.map(linkedRow)]);
 }
 
+/** Cosa sa la riga di un passaggio oltre al titolo: ditta e chip degli allegati. */
+export interface StepDetails {
+  contactName?: (id: string) => string | undefined;
+  chipsOf?: (stepId: string) => TimelineChip[];
+}
+
+/** «Nota · Clima Sud · 2.850 €» — le parti presenti di un passaggio a fasi. */
+function stepText(s: ProcedureStep, contactName?: (id: string) => string | undefined): string | undefined {
+  const parts = [
+    s.note,
+    s.contact_id ? contactName?.(s.contact_id) : undefined,
+    s.amount != null ? formatEuro(Number(s.amount)).replace(',00', '') : undefined,
+  ].filter(Boolean);
+  return parts.length ? parts.join(' · ') : undefined;
+}
+
 /**
  * Pratica: passaggi chiusi con la loro data e passaggi aperti. Un passaggio aperto segue la posizione nell'iter
  * (il primo da fare sta subito sopra l'ultimo fatto); mostra una data solo se è già nel calendario.
@@ -178,6 +194,7 @@ export function procedureRows(
   steps: ProcedureStep[],
   eventDates: Map<string, string>,
   linked: LinkedEvent[] = [],
+  details: StepDetails = {},
 ): TimelineRow[] {
   // l'impegno di un passaggio è già nella riga del passaggio: non si ripete
   const ofSteps = new Set(steps.map((s) => s.event_id).filter(Boolean));
@@ -196,9 +213,9 @@ export function procedureRows(
         dated: !!s.done_at || !!startsAt,
         type: s.done_at ? 'Completato' : startsAt ? plannedLabel(at) : 'Da fare',
         title: s.title,
-        text: s.note ?? undefined,
+        text: stepText(s, details.contactName),
         href: !s.done_at && s.event_id ? `/evento/${s.event_id}` : undefined,
-        chips: [],
+        chips: details.chipsOf?.(s.id) ?? [],
       };
     }),
   ]);

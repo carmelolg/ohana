@@ -52,7 +52,7 @@ async function createVisit(page: Page, careThread?: string) {
 
 test('Cura: card in Altro, persona, filone, terapia e dose segnata', async ({ page }) => {
   await onboard(page, uniqueEmail('cur'), 'Luca', 'Mamma e papà');
-  await page.goto('/altro');
+  await page.goto('/famiglia');
   await expect(page.getByRole('main').getByRole('link', { name: /^Cura/ })).toBeVisible();
   await page.getByRole('main').getByRole('link', { name: /^Cura/ }).click();
   await expect(page.getByText('Nessuna persona assistita')).toBeVisible();
@@ -103,7 +103,7 @@ test('Cura: chiudi una visita, il tassello va nel filone giusto e nasce il prome
   await expect(page.locator('.tl-type', { hasText: 'Visita' })).toBeVisible();
 
   // il «prossimo controllo» è un impegno vero: lo mostra la card di Altro
-  await page.goto('/altro');
+  await page.goto('/famiglia');
   await expect(page.getByRole('main').getByRole('link', { name: /^Cura/ })).toContainText(/controllo/i);
 
   // la scheda del filone ricorda l'ultimo tassello e il prossimo passo
@@ -156,7 +156,7 @@ test('Cura: chi ha il ruolo «Solo Cura» vede la Cura ma non le Spese', async (
     .click()
     .catch(() => undefined);
   await page.keyboard.press('Escape');
-  await page.goto('/altro');
+  await page.goto('/famiglia');
   await page.getByRole('link', { name: /Spazi e inviti/ }).click();
   await page.getByLabel('Email da invitare').fill(guestEmail);
   await page.getByLabel('Ruolo').selectOption({ label: 'Solo Cura' });
@@ -169,7 +169,7 @@ test('Cura: chi ha il ruolo «Solo Cura» vede la Cura ma non le Spese', async (
     await guest.getByRole('button', { name: /Entra in / }).click();
     await expect(guest).toHaveURL(/\/oggi/);
 
-    await guest.goto('/altro');
+    await guest.goto('/famiglia');
     await expect(guest.getByRole('main').getByRole('link', { name: /^Cura/ })).toBeVisible();
     await expect(guest.getByRole('link', { name: /^Spese/ })).toHaveCount(0);
     await guest.goto('/spese');
@@ -196,7 +196,7 @@ test('Cura: «+ Impegno» dal filone crea un impegno già collegato alla cura', 
   await expect(page).toHaveURL(/\/filone\//); // «Salva» riporta al filone da cui si era partiti
 
   // l'impegno è del filone: la card di Altro mostra il prossimo controllo
-  await page.goto('/altro');
+  await page.goto('/famiglia');
   await expect(page.getByRole('main').getByRole('link', { name: /^Cura/ })).toContainText(/controllo/i);
 });
 

@@ -6,6 +6,8 @@ import { useMutate, useProcedureEvents, useProcedures, useSpace } from '../lib/d
 import { useDialog } from '../lib/dialog';
 import { useToast } from '../lib/toast';
 import type { Procedure, ProcedureStep } from '../lib/types';
+import { AdvanceButton } from './procedure/AdvanceButton';
+import { PhaseSummary } from './procedure/PhaseSummary';
 import { AddStepForm } from './procedure/AddStepForm';
 import { DocChips } from './procedure/DocChips';
 import { ProcedureHeader } from './procedure/ProcedureHeader';
@@ -61,6 +63,19 @@ function DocsHeader({
   );
 }
 
+function TopBar({ writable, onEdit }: { writable: boolean; onEdit: () => void }) {
+  return (
+    <div className="hstack" style={{ justifyContent: 'space-between' }}>
+      <BackLink to="/pratiche" label="Pratiche" />
+      {writable && (
+        <button className="btn ghost small" style={{ marginTop: 6 }} onClick={onEdit}>
+          Modifica
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDeleted: () => void }) {
   const { spaceById, memberName, canWrite } = useSpace();
   const mutate = useMutate();
@@ -103,14 +118,7 @@ function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDe
 
   return (
     <div style={{ ['--space' as string]: spaceColor(space?.color_hue) }}>
-      <div className="hstack" style={{ justifyContent: 'space-between' }}>
-        <BackLink to="/pratiche" label="Pratiche" />
-        {writable && (
-          <button className="btn ghost small" style={{ marginTop: 6 }} onClick={() => setEditing(true)}>
-            Modifica
-          </button>
-        )}
-      </div>
+      <TopBar writable={writable} onEdit={() => setEditing(true)} />
       <ProcedureHeader
         procedure={p}
         spaceName={space?.name}
@@ -118,6 +126,11 @@ function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDe
         done={done}
         total={steps.length}
       />
+
+      {writable && p.status === 'in_corso' && (
+        <AdvanceButton steps={steps} onAdvance={(s) => void onToggle(s)} />
+      )}
+      <PhaseSummary steps={steps} />
 
       <StepList
         steps={steps}
@@ -134,6 +147,7 @@ function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDe
         steps={steps}
         eventDates={eventDates}
         hue={space?.color_hue ?? 42}
+        docs={p.procedure_docs}
       />
 
       <DocsHeader procedure={p} writable={writable} onAdd={onAddDocument} />

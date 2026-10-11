@@ -51,7 +51,7 @@ export function ContactsPage() {
 
   return (
     <>
-      <BackLink to="/altro" label="Altro" />
+      <BackLink to="/famiglia" label="Famiglia" />
       <div className="hstack" style={{ justifyContent: 'space-between' }}>
         <h2 className="page-title">Rubrica</h2>
         {writable && (
