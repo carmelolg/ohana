@@ -1,23 +1,25 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ButtonHTMLAttributes } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { Trash2 } from 'lucide-react';
+import { Check, Trash2 } from 'lucide-react';
 import { formatDay, formatTime } from '@ohana/shared';
 import { FormError } from '../components/FormError';
 import { LocationField } from '../components/LocationField';
 import { VisitDiary } from '../components/VisitDiary';
 import { VisitCareLink, VisitCareOutcome } from '../components/care/VisitCarePanel';
 import { spaceColor } from '../lib/color';
-import { useMutate, useSpace, useSpaceRecipients } from '../lib/data';
+import { useEventExpenses, useSpace, useSpaceRecipients } from '../lib/data';
 import { useDialog } from '../lib/dialog';
 import { useEventActions } from '../lib/eventActions';
-import { snoozeOptions } from '../lib/snoozeOptions';
 import { AttachmentList } from './event-editor/AttachmentList';
 import { ChecklistField } from './event-editor/ChecklistField';
 import { EventFields } from './event-editor/EventFields';
+import { LinkedExpenses } from './event-editor/LinkedExpenses';
 import { QuickText } from './event-editor/QuickText';
 import { TITLE_REQUIRED } from './event-editor/validation';
 import { AmountField, EditorHeader, KindSwitch, NotesField } from './event-editor/sections';
+import { StatusBar } from './event-editor/StatusBar';
 import { useEventForm, type EventForm } from './event-editor/useEventForm';
+import { ExpenseForm } from './expenses/ExpenseForm';
 
 /** Rimonta l'editor a ogni cambio di impegno o di parametri (altrimenti da «modifica» a «nuovo» resterebbero i dati precedenti). */
 export function EventEditor() {
@@ -98,16 +100,17 @@ function EditorBody({ form }: { form: EventForm }) {
         pending={form.files}
         onRemovePending={form.removeFile}
       />
+      {existing && <LinkedExpenses eventId={existing.id} />}
       {!isChore && <ExtrasBar form={form} />}
     </>
   );
 }
 
-/** Luogo e checklist compaiono solo dopo averli aperti con i pulsanti «Luogo» e «+ Checklist». */
+/** Il luogo è sempre visibile; la checklist compare solo dopo averla aperta con «+ Checklist». */
 function OptionalSections({ form }: { form: EventForm }) {
   return (
     <>
-      {form.showLocation && <LocationField value={form.location} onChange={form.setLocation} />}
+      <LocationField value={form.location} onChange={form.setLocation} />
       {form.showChecklist && (
         <ChecklistField
           items={form.checklist}
@@ -160,101 +163,60 @@ function CompletedVisit({ form }: { form: EventForm }) {
   );
 }
 
-/** «+ Allegato», «+ Checklist», «Luogo» e «+ Spesa». */
-function ExtrasBar({ form }: { form: EventForm }) {
-  const fileInput = useRef<HTMLInputElement>(null);
-  const { existing } = form;
+/** Pulsante di aggiunta: pieno quando la voce ha già un contenuto (luogo, checklist, allegati), così si distingue dagli altri. */
+function ExtraPill({
+  isSet,
+  children,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { isSet: boolean }) {
   return (
-    <div className="pill-row">
-      <button type="button" className="pill" onClick={() => fileInput.current?.click()}>
-        + Allegato
-      </button>
-      <button type="button" className="pill" onClick={form.openChecklist}>
-        + Checklist
-      </button>
-      <button type="button" className="pill" onClick={form.openLocation}>
-        Luogo
-      </button>
-      {existing && (
-        <Link
-          className="pill"
-          style={{ textDecoration: 'none', color: 'inherit' }}
-          to={`/spese?evento=${existing.id}&spazio=${existing.space_id}`}
-        >
-          + Spesa
-        </Link>
-      )}
-      <input
-        ref={fileInput}
-        type="file"
-        hidden
-        multiple
-        accept="image/*,application/pdf"
-        onChange={(e) => form.addFiles(Array.from(e.target.files ?? []))}
-      />
-    </div>
+    <button type="button" className={isSet ? 'pill set' : 'pill'} {...props}>
+      {isSet && <Check size={14} strokeWidth={2.25} aria-hidden="true" />}
+      {children}
+    </button>
   );
 }
 
-/** «Segna fatto» / «Riapri» e «Rimanda»: sempre visibili in cima a un impegno salvato (il link «Prepara la visita» sta in `VisitCareLink`). */
-function StatusBar({ form }: { form: EventForm }) {
-  const mutate = useMutate();
-  const actions = useEventActions();
-  const [snoozing, setSnoozing] = useState(false);
-  const { existing, back } = form;
-  if (!existing) {
-    return null;
-  }
-  const isOpen = existing.status === 'open';
-  const reopen = async () => {
-    await mutate({
-      table: 'events',
-      action: 'update',
-      payload: { status: 'open' },
-      match: { id: existing.id },
-    });
-    back();
-  };
-  const markDone = async () => {
-    await actions.done(existing);
-    back();
-  };
-  const snooze = async (minutes: number) => {
-    await actions.snooze(existing, minutes);
-    back();
-  };
+/** «+ Allegato», «+ Checklist» e «+ Spesa». La spesa si apre sopra l'impegno, senza lasciarlo. */
+function ExtrasBar({ form }: { form: EventForm }) {
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [expenseOpen, setExpenseOpen] = useState(false);
+  const { existing } = form;
+  const hasFiles = form.files.length > 0 || (existing?.attachments.length ?? 0) > 0;
+  const hasExpenses = useEventExpenses(existing?.id).length > 0;
   return (
-    <div className="status-bar">
-      <div className="hstack" style={{ flexWrap: 'wrap' }}>
-        {isOpen ? (
-          <button className="btn ok small" onClick={markDone}>
-            Segna fatto
-          </button>
-        ) : (
-          <button className="btn ghost small" onClick={reopen}>
-            Riapri
-          </button>
+    <>
+      <div className="pill-row">
+        <ExtraPill isSet={hasFiles} onClick={() => fileInput.current?.click()}>
+          + Allegato
+        </ExtraPill>
+        <ExtraPill isSet={form.checklist.length > 0} onClick={form.openChecklist}>
+          + Checklist
+        </ExtraPill>
+        {existing && (
+          <ExtraPill isSet={hasExpenses} onClick={() => setExpenseOpen(true)}>
+            + Spesa
+          </ExtraPill>
         )}
-        {isOpen && !existing.rrule && (
-          <button
-            className="btn ghost small"
-            aria-expanded={snoozing}
-            onClick={() => setSnoozing((on) => !on)}
-          >
-            Rimanda
-          </button>
-        )}
+        <input
+          ref={fileInput}
+          type="file"
+          hidden
+          multiple
+          accept="image/*,application/pdf"
+          onChange={(e) => form.addFiles(Array.from(e.target.files ?? []))}
+        />
       </div>
-      {snoozing && (
-        <div className="chips-row" role="group" aria-label="Rimanda a">
-          {snoozeOptions(new Date()).map((o) => (
-            <button key={o.label} className="chip" onClick={() => void snooze(o.minutes)}>
-              {o.label}
-            </button>
-          ))}
-        </div>
+      {existing && expenseOpen && (
+        <ExpenseForm
+          initialSpace={existing.space_id}
+          eventId={existing.id}
+          initialDesc={existing.title}
+          initialAmount={existing.amount != null ? String(existing.amount) : ''}
+          onClose={() => setExpenseOpen(false)}
+        />
       )}
-    </div>
+    </>
   );
 }
 

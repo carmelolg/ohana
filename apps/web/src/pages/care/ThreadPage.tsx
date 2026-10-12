@@ -112,14 +112,14 @@ function useThreadEntries(rid: string | undefined, tid: string | undefined, filt
   return { own, shown };
 }
 
-/** Impegni aperti collegati al filone, dal più vicino; si vedono dove ha senso cercare una visita (Tutto, Visite). */
-function useScheduled(tid: string | undefined, filter: FilterKey) {
+/** Impegni collegati al filone (aperti e svolti), in ordine di data; si vedono dove ha senso cercare una visita (Tutto, Visite). */
+function useThreadEvents(tid: string | undefined, filter: FilterKey) {
   const { data: events = [] } = useCareEvents();
   return useMemo(
     () =>
       filter === 'tutto' || filter === 'visite'
         ? events
-            .filter((e) => e.care_thread_id === tid && e.status === 'open')
+            .filter((e) => e.care_thread_id === tid)
             .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
         : [],
     [events, tid, filter],
@@ -134,7 +134,7 @@ export function CareThreadPage() {
   const [filter, setFilter] = useState<FilterKey>('tutto');
   const [adding, setAdding] = useState(false);
   const { own, shown } = useThreadEntries(rid, tid, filter);
-  const scheduled = useScheduled(tid, filter);
+  const scheduled = useThreadEvents(tid, filter);
   const thread = data.threads.find((t) => t.id === tid);
 
   // il registro degli accessi sa chi ha consultato il filone
@@ -193,7 +193,7 @@ export function CareThreadPage() {
         />
       )}
       {data.canWrite && (
-        <div className="hstack" style={{ marginTop: 8 }}>
+        <div className="hstack thread-actions">
           <button className="btn ghost small" onClick={() => setAdding(true)}>
             + Aggiungi
           </button>

@@ -165,7 +165,6 @@ test('luogo: selettore stile mappe con suggerimenti vicini alla posizione', asyn
   await onboard(page, uniqueEmail('loc'), 'Luca', 'Casa mia');
   await openNew(page);
   await page.getByLabel('Descrivi l’impegno').fill('Cardiologo domani alle 9');
-  await page.getByRole('button', { name: 'Luogo', exact: true }).click();
   await page.getByRole('button', { name: 'Scegli luogo sulla mappa' }).click();
   const picker = page.getByRole('dialog', { name: 'Scegli il luogo' });
   await expect(picker).toBeVisible();

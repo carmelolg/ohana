@@ -1,4 +1,4 @@
-import { ENTRY_TYPE_LABEL, formatEuro, romeToDate } from '@ohana/shared';
+import { ENTRY_TYPE_LABEL, formatEuro, formatReading, readingInfo, romeToDate } from '@ohana/shared';
 import type { CareReminderEvent, LinkedEvent } from './data';
 import type { CareEntry, Maintenance, MaintenanceLog, ProcedureStep } from './types';
 
@@ -6,6 +6,12 @@ const TIME = new Intl.DateTimeFormat('it-IT', {
   timeZone: 'Europe/Rome',
   hour: '2-digit',
   minute: '2-digit',
+});
+const DUE_DAY = new Intl.DateTimeFormat('it-IT', {
+  timeZone: 'Europe/Rome',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
 });
 const MORNING_HOUR = 9; // una data senza orario cade al mattino, così non scivola al giorno prima tra fusi
 
@@ -32,6 +38,8 @@ export interface TimelineRow {
   title: string;
   href?: string;
   text?: string;
+  /** Valori misurati e prossimi passi del tassello, una riga ciascuno: si leggono senza aprire la visita. */
+  facts?: string[];
   chips: TimelineChip[];
 }
 
@@ -52,33 +60,51 @@ const plannedLabel = (at: number) => `In programma · ${TIME.format(new Date(at)
 interface CareContext {
   authorName: (id: string) => string;
   openFile: (path: string) => void;
+  /** Allegati degli impegni: stanno nel bucket generico, non in quello della Cura. */
+  openAttachment: (path: string) => void;
 }
 
-/** Filone di cura: tasselli registrati e impegni aperti. */
-export function careRows(
-  entries: CareEntry[],
-  upcoming: CareReminderEvent[],
-  ctx: CareContext,
-): TimelineRow[] {
-  // un impegno che ha già il suo tassello (visita chiusa) non si ripete
+/** Impegno del filone: in programma se è aperto, tra i fatti come «Impegno svolto» quando è segnato fatto. */
+function careEventRow(event: CareReminderEvent, ctx: CareContext): TimelineRow {
+  const at = Date.parse(event.starts_at);
+  const planned = event.status === 'open';
+  return {
+    id: event.id,
+    at,
+    order: at,
+    planned,
+    filled: false,
+    dated: true,
+    type: planned ? plannedLabel(at) : 'Impegno svolto',
+    title: event.title,
+    href: `/evento/${event.id}`,
+    chips: event.attachments.map((a) => ({
+      id: a.id,
+      label: `📎 ${a.name}`,
+      onOpen: () => ctx.openAttachment(a.path),
+    })),
+  };
+}
+
+/** Valori del referto e prossimi passi, in forma leggibile («PCR: 23 mg/dL», «Prossimo controllo · 13 gen 2027»). */
+function entryFacts(entry: CareEntry): string[] {
+  const readings = Object.entries(entry.readings).map(
+    ([key, value]) => `${readingInfo(key).label}: ${formatReading(key, value)}`,
+  );
+  const followUps = entry.follow_ups.map((f) => {
+    const due = f.due_date ? DUE_DAY.format(new Date(f.due_date + 'T09:00:00')) : f.due_hint;
+    return due ? `${f.title} · ${due}` : f.title;
+  });
+  return [...readings, ...followUps];
+}
+
+/** Filone di cura: tasselli registrati e impegni (in programma o svolti). */
+export function careRows(entries: CareEntry[], events: CareReminderEvent[], ctx: CareContext): TimelineRow[] {
+  // un impegno che ha già il suo tassello (visita chiusa con l'esito) non si ripete
   const recorded = new Set(entries.map((e) => e.event_id).filter(Boolean));
-  const planned: TimelineRow[] = upcoming
+  const planned: TimelineRow[] = events
     .filter((e) => !recorded.has(e.id))
-    .map((event) => {
-      const at = Date.parse(event.starts_at);
-      return {
-        id: event.id,
-        at,
-        order: at,
-        planned: true,
-        filled: false,
-        dated: true,
-        type: plannedLabel(at),
-        title: event.title,
-        href: `/evento/${event.id}`,
-        chips: [],
-      };
-    });
+    .map((event) => careEventRow(event, ctx));
   const done: TimelineRow[] = entries.map((entry) => {
     const at = Date.parse(entry.entry_date + 'T09:00:00');
     const author =
@@ -93,6 +119,7 @@ export function careRows(
       type: ENTRY_TYPE_LABEL[entry.type] + (author ? ` · ${author}` : ''),
       title: entry.title,
       text: entry.text ?? undefined,
+      facts: entryFacts(entry),
       chips: entry.care_files.map((f) => ({
         id: f.id,
         label: `📎 ${f.name}`,

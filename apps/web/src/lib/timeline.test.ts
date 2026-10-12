@@ -10,14 +10,22 @@ const entry = (over: Partial<CareEntry>): CareEntry =>
     entry_date: '2026-03-10',
     title: 'Nota',
     text: null,
+    readings: {},
+    follow_ups: [],
     author_id: 'u1',
     event_id: null,
     care_files: [],
     ...over,
   }) as unknown as CareEntry;
 const event = (id: string, starts_at: string): CareReminderEvent =>
-  ({ id, title: `Impegno ${id}`, starts_at, status: 'open' }) as unknown as CareReminderEvent;
-const ctx = { authorName: (id: string) => `Utente ${id}`, openFile: vi.fn() };
+  ({
+    id,
+    title: `Impegno ${id}`,
+    starts_at,
+    status: 'open',
+    attachments: [],
+  }) as unknown as CareReminderEvent;
+const ctx = { authorName: (id: string) => `Utente ${id}`, openFile: vi.fn(), openAttachment: vi.fn() };
 
 describe('careRows', () => {
   it('in cima gli impegni, dal più lontano al più vicino; poi i tasselli dal più recente', () => {
@@ -49,6 +57,22 @@ describe('careRows', () => {
     expect(note).toMatchObject({ filled: false, type: 'Nota' });
   });
 
+  it('valori del referto e prossimi passi compaiono come righe leggibili', () => {
+    const [row] = careRows(
+      [
+        entry({
+          readings: { crp_mgdl: 23 },
+          follow_ups: [
+            { title: 'Prossimo controllo', due_date: '2027-01-13', due_hint: null, event_id: null },
+          ],
+        } as never),
+      ],
+      [],
+      ctx,
+    );
+    expect(row.facts).toEqual(['PCR: 23 mg/dl', 'Prossimo controllo · 13 gen 2027']);
+  });
+
   it('i file diventano chip che aprono il percorso giusto', () => {
     const [row] = careRows(
       [entry({ care_files: [{ id: 'f', name: 'Referto', path: 's/r/f.pdf' }] as never })],
@@ -58,6 +82,28 @@ describe('careRows', () => {
     row.chips[0].onOpen();
     expect(row.chips[0].label).toBe('📎 Referto');
     expect(ctx.openFile).toHaveBeenCalledWith('s/r/f.pdf');
+  });
+
+  it('un impegno del filone segnato fatto compare tra i fatti, senza il tassello della visita', () => {
+    const done = {
+      ...event('e2', '2026-10-22T08:50:00Z'),
+      status: 'done',
+      attachments: [],
+    } as unknown as CareReminderEvent;
+    const [row] = careRows([], [done], ctx);
+    expect(row.planned).toBe(false);
+    expect(row.type).toBe('Impegno svolto');
+  });
+
+  it("gli allegati dell'impegno in programma sono chip apribili dal bucket degli allegati", () => {
+    const planned = {
+      ...event('e1', '2026-10-22T09:00:00Z'),
+      attachments: [{ id: 'a1', path: 's/e1/esame.pdf', name: 'esame.pdf', created_at: '2026-10-01' }],
+    } as unknown as CareReminderEvent;
+    const [row] = careRows([], [planned], ctx);
+    expect(row.chips.map((c) => c.label)).toEqual(['📎 esame.pdf']);
+    row.chips[0].onOpen();
+    expect(ctx.openAttachment).toHaveBeenCalledWith('s/e1/esame.pdf');
   });
 });
 

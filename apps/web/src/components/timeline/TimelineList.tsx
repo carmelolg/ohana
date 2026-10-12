@@ -54,6 +54,13 @@ function Row({ row, hue, year, last }: { row: TimelineRow; hue: number; year: nu
           <span className="tl-title">{row.title}</span>
         )}
         {row.text && <span className="tl-text">{row.text}</span>}
+        {row.facts && row.facts.length > 0 && (
+          <ul className="tl-facts">
+            {row.facts.map((fact) => (
+              <li key={fact}>{fact}</li>
+            ))}
+          </ul>
+        )}
         {row.chips.length > 0 && (
           <div className="tl-chips">
             {row.chips.map((chip) => (

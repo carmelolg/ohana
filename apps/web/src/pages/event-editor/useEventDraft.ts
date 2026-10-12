@@ -28,7 +28,7 @@ export function draftFromEvent(e: EventRow) {
 }
 
 /**
- * Bozza dell'impegno in modifica: tutti i campi che l'utente può toccare, più le aperture opzionali (luogo, checklist).
+ * Bozza dell'impegno in modifica: tutti i campi che l'utente può toccare, più l'apertura opzionale della checklist.
  * Non conosce regole né salvataggio: quelle stanno in `useEventForm`.
  */
 export function useEventDraft(
@@ -39,7 +39,6 @@ export function useEventDraft(
   const [text, setText] = useState(initialText);
   const [overrides, setOverrides] = useState<Overrides>({});
   const [location, setLocation] = useState<LocationValue>(NO_LOCATION);
-  const [showLocation, setShowLocation] = useState(false);
   const [notes, setNotes] = useState('');
   const [amount, setAmount] = useState('');
   const [editedReminders, setEditedReminders] = useState<ReminderDraft[] | null>(null);
@@ -60,7 +59,6 @@ export function useEventDraft(
     setText(d.text);
     setOverrides(d.overrides);
     setLocation(d.location);
-    setShowLocation(!!existing.location);
     setNotes(d.notes);
     setAmount(d.amount);
     setEditedReminders(d.reminders);
@@ -78,8 +76,6 @@ export function useEventDraft(
       setOverrides((o) => ({ ...o, [key]: value })),
     location,
     setLocation,
-    showLocation,
-    openLocation: () => setShowLocation(true),
     notes,
     setNotes,
     amount,

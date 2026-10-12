@@ -99,6 +99,8 @@ export interface CareReminderEvent {
   care_thread_id: string | null;
   status: 'open' | 'done';
   starts_at: string;
+  /** Allegati dell'impegno (referti, documenti): la RLS li nasconde al `care_viewer`. */
+  attachments: { id: string; path: string; name: string; created_at: string }[];
 }
 
 /** Impegni collegati a una terapia o a un filone (ricette da chiedere, piani in scadenza, visite). */
@@ -106,7 +108,9 @@ export const useCareEvents = () =>
   useAuthedQuery<CareReminderEvent[]>(['care', 'events'], () =>
     supabase
       .from('events')
-      .select('id, title, medication_id, care_thread_id, status, starts_at')
+      .select(
+        'id, title, medication_id, care_thread_id, status, starts_at, attachments(id, path, name, created_at)',
+      )
       .or('medication_id.not.is.null,care_thread_id.not.is.null'),
   );
 

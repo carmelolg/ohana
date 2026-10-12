@@ -7,6 +7,9 @@ import type { EventRow } from './types';
 import { snoozeMessage } from './snoozeOptions';
 
 /** Azioni rapide su un impegno (usate da swipe, pulsanti e dettaglio). */
+/** Visita singola (non ricorrente): dopo «fatto» si invita a scrivere com'è andata. */
+export const isSingleVisit = (ev: EventRow) => ev.categories?.slug === 'visita' && !ev.rrule;
+
 export function useEventActions() {
   const mutate = useMutate();
   const toast = useToast();
@@ -41,7 +44,7 @@ export function useEventActions() {
     async done(ev: EventRow) {
       await apply(ev, doneActionPatch(ev, new Date()));
       // visita conclusa → invito a scrivere «com'è andata»
-      if (ev.categories?.slug === 'visita' && !ev.rrule) {
+      if (isSingleVisit(ev)) {
         // in uno spazio con persone assistite l'esito diventa un tassello del filone (4c), altrimenti è il diario
         const withCare = recipients.some((r) => r.space_id === ev.space_id);
         toast({

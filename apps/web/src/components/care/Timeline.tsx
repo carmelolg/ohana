@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { openCareFile } from '../../lib/api/careFiles';
+import { openAttachment } from '../../lib/files';
 import type { CareReminderEvent } from '../../lib/data';
 import { careRows } from '../../lib/timeline';
 import type { CareEntry } from '../../lib/types';
@@ -22,7 +23,12 @@ interface Props {
 /** Linea del tempo verticale di un filone (4b): tasselli e impegni in programma insieme. */
 export function Timeline({ entries, upcoming = NO_EVENTS, hue, authorName, year, limit }: Props) {
   const rows = useMemo(
-    () => careRows(entries, upcoming, { authorName, openFile: (path) => void openCareFile(path) }),
+    () =>
+      careRows(entries, upcoming, {
+        authorName,
+        openFile: (path) => void openCareFile(path),
+        openAttachment: (path) => void openAttachment(path),
+      }),
     [entries, upcoming, authorName],
   );
   return <TimelineList rows={rows} hue={hue} year={year} limit={limit} />;

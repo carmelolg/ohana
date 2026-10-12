@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { BackLink } from '../../components/BackLink';
 import { openCareFile, removeCareFile, uploadCareFile } from '../../lib/api/careFiles';
-import { useCareEntries, useCareFiles } from '../../lib/data';
+import { useCareEntries, useCareEvents, useCareFiles, type CareReminderEvent } from '../../lib/data';
+import { openAttachment } from '../../lib/files';
 import { useToast } from '../../lib/toast';
 import type { CareFile } from '../../lib/types';
 import { useRecipientData } from './useRecipientData';
@@ -41,7 +42,32 @@ function FileRow({
   );
 }
 
-/** Documenti della persona: referti, esami e ricette allegati ai tasselli o caricati direttamente. */
+/** Allegati degli impegni del filone (visite, esami programmati): stanno nel bucket generico, ma si vedono qui in ordine di data. */
+function EventAttachments({ events }: { events: CareReminderEvent[] }) {
+  return (
+    <section aria-label="Allegati degli impegni">
+      <h2 className="label" style={{ marginTop: 18 }}>
+        Dagli impegni
+      </h2>
+      <div className="group">
+        {events.flatMap((e) =>
+          e.attachments.map((a) => (
+            <div className="kv" key={a.id}>
+              <button type="button" className="file-chip" onClick={() => void openAttachment(a.path)}>
+                📎 {a.name}
+              </button>
+              <span className="muted" style={{ fontSize: 13, fontWeight: 400 }}>
+                {e.title} · {FULL_DATE.format(new Date(e.starts_at))}
+              </span>
+            </div>
+          )),
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** Documenti della persona: referti, esami e ricette allegati ai tasselli o caricati direttamente, più gli allegati degli impegni dei suoi filoni. */
 export function CareFilesPage() {
   const { rid } = useParams();
   const data = useRecipientData(rid);
@@ -49,6 +75,7 @@ export function CareFilesPage() {
   const qc = useQueryClient();
   const { data: files = [] } = useCareFiles(rid);
   const { data: entries = [] } = useCareEntries(rid);
+  const { data: careEvents = [] } = useCareEvents();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const { recipient } = data;
@@ -62,6 +89,10 @@ export function CareFilesPage() {
     );
   }
   const refresh = () => qc.invalidateQueries({ queryKey: ['care'] });
+  const threadIds = new Set(data.threads.map((t) => t.id));
+  const eventsWithFiles = careEvents
+    .filter((e) => e.care_thread_id && threadIds.has(e.care_thread_id) && e.attachments.length > 0)
+    .sort((a, b) => b.starts_at.localeCompare(a.starts_at));
 
   async function upload(list: File[]) {
     setBusy(true);
@@ -115,9 +146,10 @@ export function CareFilesPage() {
           />
         ))}
       </div>
-      {files.length === 0 && (
+      {files.length === 0 && eventsWithFiles.length === 0 && (
         <div className="empty">Nessun documento. I referti allegati ai tasselli compaiono qui.</div>
       )}
+      {eventsWithFiles.length > 0 && <EventAttachments events={eventsWithFiles} />}
       <p className="care-disclaimer">
         I file sanitari sono privati e si aprono con un link che scade dopo un minuto.
       </p>

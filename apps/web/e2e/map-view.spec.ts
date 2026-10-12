@@ -13,7 +13,6 @@ for (const bad of [
     await onboard(page, uniqueEmail('p'), 'Luca', 'Casa mia');
     await openNew(page);
     await page.getByLabel('Descrivi l’impegno').fill('Cardiologo domani alle 9');
-    await page.getByRole('button', { name: 'Luogo', exact: true }).click();
     await page.getByRole('button', { name: 'Scegli luogo sulla mappa' }).click();
     await expect(page.locator('.leaflet-tile-loaded').first()).toBeVisible({ timeout: 15000 });
     await expect(page.locator('.leaflet-control-zoom')).toBeVisible();
@@ -27,7 +26,6 @@ test('mappa: se i tasselli non si caricano compare un avviso chiaro e si può an
   await onboard(page, uniqueEmail('q'), 'Luca', 'Casa mia');
   await openNew(page);
   await page.getByLabel('Descrivi l’impegno').fill('Cardiologo domani alle 9');
-  await page.getByRole('button', { name: 'Luogo', exact: true }).click();
   await page.getByRole('button', { name: 'Scegli luogo sulla mappa' }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'Non riesco a caricare la mappa' })).toBeVisible({
     timeout: 15000,
