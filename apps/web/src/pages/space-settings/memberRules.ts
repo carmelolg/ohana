@@ -8,6 +8,9 @@ export function canEditMember(myRole: SpaceRole | undefined, memberRole: SpaceRo
   return myRole === 'owner' || (myRole === 'admin' && ASSIGNABLE_BY_ADMIN.includes(memberRole));
 }
 
+/** Nome, cognome e soprannome degli altri li corregge solo il proprietario dello spazio. */
+export const canEditProfile = (myRole: SpaceRole | undefined): boolean => myRole === 'owner';
+
 /** Ruoli che chi sta modificando può assegnare. */
 export const assignableRoles = (myRole: SpaceRole | undefined): SpaceRole[] =>
   myRole === 'owner' ? ALL_ROLES : ASSIGNABLE_BY_ADMIN;

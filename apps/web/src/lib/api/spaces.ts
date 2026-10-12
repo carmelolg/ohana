@@ -48,6 +48,29 @@ export async function setMemberRole(spaceId: string, userId: string, role: Space
   unwrap(await supabase.from('space_members').update({ role }).match({ space_id: spaceId, user_id: userId }));
 }
 
+export interface MemberPerson {
+  first: string;
+  last: string;
+  nick: string;
+}
+
+/** Il proprietario corregge i dati anagrafici di un membro: passa da una funzione che tocca solo questi tre campi. */
+export async function updateMemberProfile(
+  spaceId: string,
+  userId: string,
+  person: MemberPerson,
+): Promise<void> {
+  unwrap(
+    await supabase.rpc('update_member_profile', {
+      sid: spaceId,
+      uid: userId,
+      first: person.first,
+      last: person.last,
+      nick: person.nick,
+    }),
+  );
+}
+
 export async function removeMember(spaceId: string, userId: string): Promise<void> {
   unwrap(await supabase.from('space_members').delete().match({ space_id: spaceId, user_id: userId }));
 }

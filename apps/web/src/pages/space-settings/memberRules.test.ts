@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { assignableRoles, canEditMember, leaveDialog, removalError } from './memberRules';
+import { assignableRoles, canEditMember, canEditProfile, leaveDialog, removalError } from './memberRules';
 
 describe('regole sulle persone di uno spazio', () => {
+  it('i dati anagrafici li corregge solo il proprietario', () => {
+    expect(canEditProfile('owner')).toBe(true);
+    expect(canEditProfile('admin')).toBe(false);
+    expect(canEditProfile('member')).toBe(false);
+    expect(canEditProfile(undefined)).toBe(false);
+  });
+
   it('chi può cambiare il ruolo di chi', () => {
     expect(canEditMember('owner', 'owner')).toBe(true);
     expect(canEditMember('admin', 'member')).toBe(true);

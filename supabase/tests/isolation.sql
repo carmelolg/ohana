@@ -650,6 +650,18 @@ select t.as_user('00000000-0000-0000-0000-00000000000b');
 update spaces set disabled_features = array['cura'] where id = 'ffffffff-0000-0000-0000-000000000001';
 select t.expect_error($$update spaces set disabled_features = array['inesistente'] where id = 'ffffffff-0000-0000-0000-000000000001'$$, 'funzione di spazio non valida');
 
+-- ---- dati anagrafici dei membri: solo il proprietario dello spazio
+select t.as_user('00000000-0000-0000-0000-00000000000b');
+select update_member_profile('ffffffff-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000e', ' Elena ', 'Rossi', ' ');
+select t.expect_count($$select 1 from profiles where id = '00000000-0000-0000-0000-00000000000e' and first_name = 'Elena' and last_name = 'Rossi' and nickname is null$$, 1, 'il proprietario corregge i dati di un membro');
+select t.expect_error($$select update_member_profile('ffffffff-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000e', '', 'Rossi', null)$$, 'il nome non può essere vuoto');
+select t.expect_error($$select update_member_profile('ffffffff-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a', 'Ana', 'X', null)$$, 'non si modifica chi non è nello spazio');
+select t.as_user('00000000-0000-0000-0000-00000000000e');
+select t.expect_error($$select update_member_profile('ffffffff-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000b', 'Bruno', 'X', null)$$, 'chi consulta soltanto non modifica i dati degli altri');
+select t.as_user('00000000-0000-0000-0000-00000000000d');
+select t.expect_error($$select update_member_profile('ffffffff-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000e', 'Hack', 'X', null)$$, 'un estraneo non modifica i dati dei membri');
+select t.as_su();
+
 -- ---- cascata: eliminare lo spazio elimina la Cura
 delete from spaces where id = 'ffffffff-0000-0000-0000-000000000001';
 select t.as_su();
