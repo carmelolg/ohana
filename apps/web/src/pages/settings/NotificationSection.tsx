@@ -1,9 +1,10 @@
-import { Switch } from '../../components/Switch';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../lib/auth';
 import { currentEndpoint, disablePush, enablePush, isIOS, isStandalone, pushSupported } from '../../lib/push';
 import { useToast } from '../../lib/toast';
 import type { Profile } from '../../lib/types';
+import { SettingsCard } from '../../components/SettingsCard';
+import { ToggleRow } from '../../components/ToggleRow';
 import { useProfileUpdate } from './useProfileUpdate';
 
 const REMINDER_CHOICES: [minutes: number, label: string][] = [
@@ -13,23 +14,6 @@ const REMINDER_CHOICES: [minutes: number, label: string][] = [
   [2880, '2 giorni prima'],
   [10080, '1 settimana prima'],
 ];
-
-function ToggleRow({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <div className="kv">
-      <span>{label}</span>
-      <Switch label={label} checked={checked} onChange={onChange} />
-    </div>
-  );
-}
 
 /** Iscrizione push di questo dispositivo. */
 function usePushToggle() {
@@ -58,9 +42,11 @@ function PushRow() {
   const push = usePushToggle();
   if (!pushSupported()) {
     return (
-      <div className="kv">
-        <span>Push</span>
-        <span className="muted">Non supportate da questo browser</span>
+      <div className="set-row">
+        <div className="set-row-text">
+          <span>Push</span>
+          <span className="muted set-hint">Non supportate da questo browser</span>
+        </div>
       </div>
     );
   }
@@ -79,55 +65,43 @@ function PushRow() {
 export function NotificationSection({ profile }: { profile: Profile }) {
   const patch = useProfileUpdate();
   return (
-    <>
-      <div className="label section-label">Notifiche</div>
-      <div className="group">
-        <label className="kv">
+    <SettingsCard id="notifiche" title="Notifiche" hint="Quando e dove ricevere i promemoria.">
+      <label className="set-row">
+        <div className="set-row-text">
           <span>Promemoria predefinito</span>
-          <select
-            className="inline-select"
-            aria-label="Promemoria predefinito"
-            value={profile.default_reminder_minutes}
-            onChange={(e) => patch({ default_reminder_minutes: Number(e.target.value) })}
-          >
-            {REMINDER_CHOICES.map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <ToggleRow
-          label="Email"
-          checked={profile.notify_email}
-          onChange={(notify_email) => patch({ notify_email })}
-        />
-        <ToggleRow
-          label={`Brief del mattino ${profile.morning_brief_time.slice(0, 5)}`}
-          checked={profile.morning_brief}
-          onChange={(morning_brief) => patch({ morning_brief })}
-        />
-        <ToggleRow
-          label="Riepilogo faccende alle 8:00 (push)"
-          checked={profile.notify_chores_push}
-          onChange={(notify_chores_push) => patch({ notify_chores_push })}
-        />
-        <PushRow />
-      </div>
-
-      <div className="label section-label">Scansione documenti</div>
-      <div className="group">
-        <ToggleRow
-          label="Migliora la lettura con AI"
-          checked={profile.scan_llm_fallback}
-          onChange={(scan_llm_fallback) => patch({ scan_llm_fallback })}
-        />
-      </div>
-      <p className="muted" style={{ fontSize: 13 }}>
-        Disattivato per impostazione predefinita. La lettura avviene sempre sul tuo dispositivo; se attivi
-        questa opzione e un campo non viene letto, puoi scegliere di inviare <b>solo il testo</b> (mai la
-        foto) a un servizio AI tramite il server di Ohana.
-      </p>
-    </>
+          <span className="muted set-hint">Per i nuovi impegni, quanto prima avvisarti.</span>
+        </div>
+        <select
+          className="inline-select"
+          aria-label="Promemoria predefinito"
+          value={profile.default_reminder_minutes}
+          onChange={(e) => patch({ default_reminder_minutes: Number(e.target.value) })}
+        >
+          {REMINDER_CHOICES.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <ToggleRow
+        label="Email"
+        hint="Promemoria e riepiloghi anche via email."
+        checked={profile.notify_email}
+        onChange={(notify_email) => patch({ notify_email })}
+      />
+      <ToggleRow
+        label={`Brief del mattino ${profile.morning_brief_time.slice(0, 5)}`}
+        hint="Cosa c'è oggi, ogni mattina."
+        checked={profile.morning_brief}
+        onChange={(morning_brief) => patch({ morning_brief })}
+      />
+      <ToggleRow
+        label="Riepilogo faccende alle 8:00 (push)"
+        checked={profile.notify_chores_push}
+        onChange={(notify_chores_push) => patch({ notify_chores_push })}
+      />
+      <PushRow />
+    </SettingsCard>
   );
 }

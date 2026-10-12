@@ -1,47 +1,39 @@
-import { Link } from 'react-router-dom';
+import { LogOut, UserRound } from 'lucide-react';
 import { BackLink } from '../components/BackLink';
 import { useAuth } from '../lib/auth';
-import { useSpace } from '../lib/data';
 import { AppearanceSection } from './settings/AppearanceSection';
 import { CalendarFeedsSection } from './settings/CalendarFeedsSection';
 import { ImportedCalendarsSection } from './settings/ImportedCalendarsSection';
 import { NotificationSection } from './settings/NotificationSection';
 import { ProfileSection } from './settings/ProfileSection';
+import { ScanSection } from './settings/ScanSection';
+import { SettingsCard } from '../components/SettingsCard';
 
-/** Profilo e impostazioni personali. Ogni sezione è un componente a sé, con le proprie modifiche. */
+/** Il mio profilo: solo ciò che riguarda me, in ogni spazio. Le impostazioni di uno spazio stanno nella sua pagina. */
 export function SettingsPage() {
   const { profile, signOut } = useAuth();
-  const { spaces } = useSpace();
   if (!profile) {
     return null;
   }
   return (
     <>
       <BackLink to="/oggi" label="Indietro" history />
-      <h2 className="page-title">Profilo e impostazioni</h2>
-      <ProfileSection profile={profile} />
-      <AppearanceSection profile={profile} />
-      <NotificationSection profile={profile} />
-      <CalendarFeedsSection />
-      <ImportedCalendarsSection />
-
-      <div className="label section-label">Spazi</div>
-      {spaces.map((s) => (
-        <Link
-          key={s.id}
-          to={`/spazio/${s.id}`}
-          className="kv"
-          style={{ color: 'inherit', textDecoration: 'none' }}
-        >
-          <span style={{ color: 'inherit' }}>{s.name}</span>
-          <span className="muted">Gestisci ›</span>
-        </Link>
-      ))}
-
-      <div style={{ marginTop: 28 }}>
-        <button className="btn ghost" onClick={signOut}>
-          Esci
-        </button>
+      <h2 className="page-title">Il mio profilo</h2>
+      <p className="scope-note scope-personal">
+        <UserRound size={16} strokeWidth={1.75} aria-hidden /> Solo per te: vale in tutti i tuoi spazi.
+      </p>
+      <div className="set-page">
+        <ProfileSection profile={profile} />
+        <AppearanceSection profile={profile} />
+        <NotificationSection profile={profile} />
+        <CalendarFeedsSection />
+        <ImportedCalendarsSection />
+        <ScanSection profile={profile} />
+        <SettingsCard id="account" title="Account">
+          <button className="btn ghost set-signout" onClick={signOut}>
+            <LogOut size={18} strokeWidth={1.75} aria-hidden /> Esci
+          </button>
+        </SettingsCard>
       </div>
     </>
   );

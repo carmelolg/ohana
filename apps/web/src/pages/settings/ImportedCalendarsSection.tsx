@@ -7,6 +7,7 @@ import { useCalendarImports, useSpace } from '../../lib/data';
 import type { CalendarImport } from '../../lib/data';
 import { useDialog } from '../../lib/dialog';
 import { useToast } from '../../lib/toast';
+import { SettingsCard } from '../../components/SettingsCard';
 import { ImportCalendarForm } from './ImportCalendarForm';
 
 const lastSync = (c: CalendarImport): string => {
@@ -66,7 +67,7 @@ function ImportRow({
   }
 
   return (
-    <div className="stack" style={{ padding: '10px 0' }}>
+    <div className="stack import-row">
       <div className="kv">
         <span>{item.name}</span>
         <span className="muted">{spaceName}</span>
@@ -104,14 +105,19 @@ export function ImportedCalendarsSection() {
   const { spaceById, canWrite } = useSpace();
   const { data: imports = [] } = useCalendarImports();
   return (
-    <>
-      <div className="label section-label">Importa un calendario</div>
-      <p className="muted" style={{ fontSize: 14 }}>
-        Porta in Ohana gli impegni di un calendario che già usi. In Google Calendar apri le impostazioni del
-        calendario, poi «Integra calendario» e copia l’«Indirizzo segreto in formato iCal». In Apple
-        Calendario condividi il calendario come pubblico e copia il link. Gli impegni importati si aggiornano
-        da soli e non si modificano qui: cambiali nel calendario d’origine.
-      </p>
+    <SettingsCard
+      id="importa"
+      title="Importa un calendario"
+      hint="Porta in Ohana gli impegni di un calendario che già usi. Si aggiornano da soli e non si modificano qui."
+    >
+      <details className="set-details">
+        <summary>Dove trovo l’indirizzo</summary>
+        <p className="muted">
+          In Google Calendar apri le impostazioni del calendario, poi «Integra calendario» e copia
+          l’«Indirizzo segreto in formato iCal». In Apple Calendario condividi il calendario come pubblico e
+          copia il link. Per cambiare un impegno importato, modificalo nel calendario d’origine.
+        </p>
+      </details>
       {imports.map((c) => (
         <ImportRow
           key={c.id}
@@ -121,6 +127,6 @@ export function ImportedCalendarsSection() {
         />
       ))}
       <ImportCalendarForm userId={session!.user.id} />
-    </>
+    </SettingsCard>
   );
 }

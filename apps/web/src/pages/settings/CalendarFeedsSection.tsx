@@ -4,6 +4,7 @@ import { useAuth } from '../../lib/auth';
 import { WORKER_URL } from '../../lib/config';
 import { useSpace } from '../../lib/data';
 import { useToast } from '../../lib/toast';
+import { SettingsCard } from '../../components/SettingsCard';
 
 const feedUrl = (token: string) => `${WORKER_URL}/ics/${token}.ics`;
 /** Apple Calendario si iscrive con `webcal://`: stessa pagina, ma si apre direttamente nell'app. */
@@ -37,20 +38,26 @@ export function CalendarFeedsSection() {
   }
 
   return (
-    <>
-      <div className="label section-label">Calendario (Google / Apple)</div>
-      <p className="muted" style={{ fontSize: 14 }}>
-        Mostra gli impegni di Ohana nel tuo calendario. È in sola lettura e si aggiorna da solo (Google ogni
-        8-24 ore). Gli impegni di Cura compaiono solo come «Impegno di cura», senza titolo né note.
-      </p>
-      <p className="muted" style={{ fontSize: 14 }}>
-        <b>Google Calendar</b> (dal computer): accanto a «Altri calendari» scegli «Da URL» e incolla il link.{' '}
-        <b>Apple Calendario</b>: File › Nuova sottoscrizione calendario, e incolla il link per Apple.
-      </p>
+    <SettingsCard
+      id="calendari"
+      title="Ohana nel tuo calendario"
+      hint="Un link in sola lettura per Google o Apple Calendario: gli impegni di Ohana compaiono lì."
+    >
+      <details className="set-details">
+        <summary>Come si usa</summary>
+        <p className="muted">
+          Si aggiorna da solo (Google ogni 8-24 ore). Gli impegni di Cura compaiono solo come «Impegno di
+          cura», senza titolo né note.
+        </p>
+        <p className="muted">
+          <b>Google Calendar</b> (dal computer): accanto a «Altri calendari» scegli «Da URL» e incolla il
+          link. <b>Apple Calendario</b>: File › Nuova sottoscrizione calendario, e incolla il link per Apple.
+        </p>
+      </details>
       {feeds.map((f) => (
-        <div key={f.id} className="kv">
+        <div key={f.id} className="set-row set-row-wrap">
           <span>{f.space_id ? spaces.find((s) => s.id === f.space_id)?.name : 'Tutti gli spazi'}</span>
-          <span>
+          <span className="set-actions">
             <button className="btn ghost small" onClick={() => copy(feedUrl(f.token))}>
               Copia link
             </button>
@@ -63,7 +70,7 @@ export function CalendarFeedsSection() {
           </span>
         </div>
       ))}
-      <div className="hstack" style={{ marginTop: 10, flexWrap: 'wrap' }}>
+      <div className="set-actions set-add">
         {!feeds.some((f) => !f.space_id) && (
           <button className="btn ghost small" onClick={() => add(null)}>
             + Tutti gli spazi
@@ -77,6 +84,6 @@ export function CalendarFeedsSection() {
             </button>
           ))}
       </div>
-    </>
+    </SettingsCard>
   );
 }
