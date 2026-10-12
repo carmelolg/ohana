@@ -16,7 +16,16 @@ export interface PersonProps {
   setNick: (v: string) => void;
 }
 
-export function ProfileStep({ person, onNext }: { person: PersonProps; onNext: () => void }) {
+export function ProfileStep({
+  person,
+  onNext,
+  requireLast = false,
+}: {
+  person: PersonProps;
+  onNext: () => void;
+  /** Chi arriva da un invito deve indicare anche il cognome. */
+  requireLast?: boolean;
+}) {
   return (
     <form
       className="hero"
@@ -37,6 +46,7 @@ export function ProfileStep({ person, onNext }: { person: PersonProps; onNext: (
       />
       <input
         className="input"
+        required={requireLast}
         placeholder="Cognome"
         aria-label="Cognome"
         value={person.last}

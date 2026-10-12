@@ -1,5 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
-import { createFromText, joinSpace, login, newContext, onboard, uniqueEmail } from './helpers';
+import {
+  createFromText,
+  fillInviteProfile,
+  joinSpace,
+  login,
+  newContext,
+  onboard,
+  uniqueEmail,
+} from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -166,6 +174,7 @@ test('Cura: chi ha il ruolo «Solo Cura» vede la Cura ma non le Spese', async (
   const { ctx, page: guest } = await newContext(browser);
   try {
     await login(guest, guestEmail, `/invito/${token}`);
+    await fillInviteProfile(guest);
     await guest.getByRole('button', { name: /Entra in / }).click();
     await expect(guest).toHaveURL(/\/oggi/);
 

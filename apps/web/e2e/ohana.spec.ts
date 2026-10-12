@@ -1,5 +1,14 @@
 import { expect, test } from '@playwright/test';
-import { joinSpace, newContext, onboard, openNew, openSpaces, uniqueEmail, login } from './helpers';
+import {
+  fillInviteProfile,
+  joinSpace,
+  newContext,
+  onboard,
+  openNew,
+  openSpaces,
+  uniqueEmail,
+  login,
+} from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -41,6 +50,7 @@ test("isolamento tra spazi: l'invitato vede solo lo spazio a cui è invitato", a
   expect(token).toBeTruthy();
 
   await login(guest.page, guestEmail, `/invito/${token}`);
+  await fillInviteProfile(guest.page);
   await guest.page.getByRole('button', { name: /Entra in Mamma e papà/ }).click();
   await expect(guest.page).toHaveURL(/\/oggi/);
   await openSpaces(guest.page);
@@ -508,4 +518,32 @@ test('desktop: le sottovoci di Casa e Famiglia partono chiuse e si aprono con la
   // entrando in un'area il suo gruppo si apre da solo
   await page.goto('/casa');
   await expect(side.getByRole('link', { name: 'Scadenze' })).toBeVisible();
+});
+
+test('proprietario: corregge nome e cognome di un membro dalle Persone dello spazio', async ({
+  page,
+  browser,
+}) => {
+  await onboard(page, uniqueEmail('own'), 'Luca', 'Casa mia');
+  const { ctx, page: guest } = await newContext(browser);
+  try {
+    await joinSpace(page, guest, uniqueEmail('mem'));
+    // l'elenco delle persone può arrivare dalla cache: si ricarica finché compare il nuovo membro
+    await expect(async () => {
+      await page.goto('/famiglia');
+      await page.getByRole('link', { name: /Spazi e inviti/ }).click();
+      await expect(page.getByRole('button', { name: 'Modifica i dati di Ospite Invitato' })).toBeVisible({
+        timeout: 2_000,
+      });
+    }).toPass({ timeout: 40_000 });
+    await page.getByRole('button', { name: 'Modifica i dati di Ospite Invitato' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Dati di Ospite Invitato' });
+    await sheet.getByLabel('Nome', { exact: true }).fill('Marco');
+    await sheet.getByLabel('Cognome').fill('Bianchi');
+    await sheet.getByRole('button', { name: 'Salva' }).click();
+    await expect(page.getByText('Marco Bianchi')).toBeVisible();
+    await expect(sheet).toHaveCount(0);
+  } finally {
+    await ctx.close();
+  }
 });

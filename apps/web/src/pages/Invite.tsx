@@ -7,10 +7,14 @@ import { useAuth } from '../lib/auth';
 import { useSpace } from '../lib/data';
 import { spaceColor } from '../lib/color';
 import { LoginForm } from './Login';
+import { JoinProfile } from './invite/JoinProfile';
+
+const hasFullName = (p: { first_name: string; last_name: string } | null) =>
+  !!p?.first_name.trim() && !!p.last_name.trim();
 
 export function InvitePage() {
   const { token = '' } = useParams();
-  const { session, loading } = useAuth();
+  const { session, profile, loading } = useAuth();
   const { setSelected } = useSpace();
   const nav = useNavigate();
   const qc = useQueryClient();
@@ -32,7 +36,8 @@ export function InvitePage() {
     }
   }
 
-  if (pv === undefined || loading) {
+  // dopo l'accesso il profilo arriva un attimo più tardi: senza non si può sapere se nome e cognome ci sono già
+  if (pv === undefined || loading || (session && !profile)) {
     return (
       <div className="empty" role="status" aria-busy="true">
         Caricamento…
@@ -48,6 +53,9 @@ export function InvitePage() {
         </div>
       </div>
     );
+  }
+  if (session && !hasFullName(profile)) {
+    return <JoinProfile />;
   }
   return (
     <div className="login" role="main">

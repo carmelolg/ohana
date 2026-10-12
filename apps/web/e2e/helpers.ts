@@ -92,6 +92,18 @@ export async function openSpaces(page: Page) {
   } else {
     await page.locator('header.navbar .space-title').click();
   }
+/** Chi arriva da un invito deve prima indicare nome e cognome: senza, «Entra in …» non compare. */
+export async function fillInviteProfile(page: Page, first = 'Ospite', last = 'Invitato') {
+  await expect(page.getByRole('heading', { name: 'Benvenuto' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Entra in / })).toHaveCount(0);
+  await page.getByLabel('Cognome').fill('');
+  await page.getByLabel('Nome', { exact: true }).fill(first);
+  await page.getByRole('button', { name: 'Continua' }).click();
+  await expect(page.getByLabel('Cognome')).toBeVisible(); // il cognome è obbligatorio: la pagina non avanza
+  await page.getByLabel('Cognome').fill(last);
+  await page.getByRole('button', { name: 'Continua' }).click();
+}
+
   await expect(page.getByRole('dialog', { name: 'I tuoi spazi' })).toBeVisible();
 }
 
@@ -99,6 +111,7 @@ export async function openSpaces(page: Page) {
 export async function joinSpace(owner: Page, guest: Page, guestEmail: string) {
   await openSpaces(owner);
   await owner.getByRole('button', { name: 'Invita persone' }).click();
+  await fillInviteProfile(guest);
   await owner.getByLabel('Email da invitare').fill(guestEmail);
   await owner.getByRole('button', { name: 'Crea link d’invito' }).click();
   const token = (await owner.getByTestId('invite-link').first().innerText()).split('/invito/')[1];
