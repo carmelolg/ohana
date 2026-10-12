@@ -14,7 +14,7 @@ export function BoardBell() {
   const count = unread.length;
   const label = count ? `Bacheca, ${count} ${count === 1 ? 'nuova' : 'nuove'}` : 'Bacheca';
   return (
-    <div className="avatar-menu" ref={wrap}>
+    <div className="avatar-menu bell-wrap" ref={wrap}>
       <button
         className="icon-btn bell"
         aria-label={label}
