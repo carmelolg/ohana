@@ -424,7 +424,7 @@ test("navigazione: menu dell'avatar, ricerca anche su mobile, indietro sicuro", 
   await trigger.click();
   const menu = page.getByRole('menu', { name: 'Profilo' });
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole('menuitem')).toHaveText([/Profilo e impostazioni/, /Spazi e inviti/, /Esci/]);
+  await expect(menu.getByRole('menuitem')).toHaveText([/Il mio profilo/, /Spazi e inviti/, /Esci/]);
   await page.keyboard.press('Escape');
   await expect(menu).toBeHidden();
   await expect(trigger).toBeFocused();
@@ -438,7 +438,7 @@ test("navigazione: menu dell'avatar, ricerca anche su mobile, indietro sicuro", 
   await page.keyboard.press('Escape');
 
   await trigger.click();
-  await menu.getByRole('menuitem', { name: 'Profilo e impostazioni' }).click();
+  await menu.getByRole('menuitem', { name: 'Il mio profilo' }).click();
   await expect(page).toHaveURL(/\/impostazioni/);
   if (mobile) {
     await page.getByRole('button', { name: 'Indietro' }).click();

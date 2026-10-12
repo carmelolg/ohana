@@ -159,7 +159,7 @@ test('Cura: chi ha il ruolo «Solo Cura» vede la Cura ma non le Spese', async (
   // invito con ruolo «Solo Cura»
   const guestEmail = uniqueEmail('bad');
   await page
-    .getByRole('button', { name: /Mamma e papà|Gestisci spazi/ })
+    .getByRole('button', { name: /Mamma e papà/ })
     .first()
     .click()
     .catch(() => undefined);

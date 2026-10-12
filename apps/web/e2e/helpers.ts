@@ -85,13 +85,13 @@ export async function createFromText(page: Page, text: string) {
   await page.keyboard.press('Enter');
 }
 
-/** Apre l'elenco spazi: titolo in alto su mobile, «Gestisci spazi» nella sidebar su desktop. */
+/** Apre l'elenco spazi dal selettore nella barra superiore. */
 export async function openSpaces(page: Page) {
-  if ((page.viewportSize()?.width ?? 0) >= 1024) {
-    await page.getByRole('button', { name: 'Gestisci spazi' }).click();
-  } else {
-    await page.locator('header.navbar .space-title').click();
-  }
+  await page.locator('header.navbar .space-title').click();
+  await expect(page.getByRole('dialog', { name: 'I tuoi spazi' })).toBeVisible();
+}
+
+/** Il proprietario (già in un'app con uno spazio) invita `guestEmail`; l'ospite accetta nello stesso spazio. */
 /** Chi arriva da un invito deve prima indicare nome e cognome: senza, «Entra in …» non compare. */
 export async function fillInviteProfile(page: Page, first = 'Ospite', last = 'Invitato') {
   await expect(page.getByRole('heading', { name: 'Benvenuto' })).toBeVisible();
@@ -104,18 +104,14 @@ export async function fillInviteProfile(page: Page, first = 'Ospite', last = 'In
   await page.getByRole('button', { name: 'Continua' }).click();
 }
 
-  await expect(page.getByRole('dialog', { name: 'I tuoi spazi' })).toBeVisible();
-}
-
-/** Il proprietario (già in un'app con uno spazio) invita `guestEmail`; l'ospite accetta nello stesso spazio. */
 export async function joinSpace(owner: Page, guest: Page, guestEmail: string) {
   await openSpaces(owner);
   await owner.getByRole('button', { name: 'Invita persone' }).click();
-  await fillInviteProfile(guest);
   await owner.getByLabel('Email da invitare').fill(guestEmail);
   await owner.getByRole('button', { name: 'Crea link d’invito' }).click();
   const token = (await owner.getByTestId('invite-link').first().innerText()).split('/invito/')[1];
   await login(guest, guestEmail, `/invito/${token}`);
+  await fillInviteProfile(guest);
   await guest.getByRole('button', { name: /Entra in / }).click();
   await expect(guest).toHaveURL(/\/oggi/);
 }
