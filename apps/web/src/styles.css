@@ -2955,15 +2955,350 @@ a.chip[aria-pressed='true'] {
   overflow-y: auto;
 }
 .board-menu-head {
-  padding: 8px 10px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
   font-size: 17px;
   font-weight: 600;
-}
-.board-menu .note-row {
-  padding: 10px;
 }
 .board-menu-all {
   margin-top: 4px;
   color: var(--accent-ink);
   font-weight: 600;
+}
+
+/* ------- spazio attivo vs profilo personale */
+.navbar {
+  border-top: 3px solid var(--space, transparent);
+}
+.space-title-label {
+  display: none;
+  font: 700 11px var(--font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.sheet-hint {
+  padding: 0 4px 8px;
+  font-size: 13px;
+}
+.space-banner {
+  margin-top: 12px;
+  padding: 4px 16px 14px;
+  border-radius: 18px;
+  border-left: 6px solid var(--space, var(--line));
+  background: color-mix(in srgb, var(--space, var(--line)) 12%, var(--surface));
+}
+.space-banner h2.page-title {
+  padding-top: 4px;
+}
+.scope-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--text-2);
+}
+@media (min-width: 1024px) {
+  .space-title-label {
+    display: inline;
+  }
+}
+
+/* ------- pagina «Il mio profilo» */
+.set-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+.set-card {
+  scroll-margin-top: 72px;
+  padding: 18px 18px 8px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.set-card-head h3 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.set-card-head p {
+  margin-top: 2px;
+  font-size: 14px;
+}
+.set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 56px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  font-size: 15px;
+}
+.set-card-head + .set-row,
+.set-card-head + .profile-id {
+  margin-top: 12px;
+}
+.set-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.set-hint {
+  font-size: 13px;
+}
+.set-row-stack {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.set-row-stack .seg,
+.set-row-stack .swatches {
+  margin-top: 0;
+}
+.set-row-wrap {
+  flex-wrap: wrap;
+}
+.set-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.set-add {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.set-details {
+  padding: 8px 0;
+  font-size: 14px;
+}
+.set-details summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+}
+.set-details p {
+  margin-bottom: 8px;
+}
+.import-row {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.profile-id {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0 16px;
+}
+.profile-id-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  padding-bottom: 12px;
+}
+.set-signout {
+  margin: 12px 0;
+}
+@media (min-width: 720px) {
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .form-wide {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 1024px) {
+  .set-card {
+    padding: 22px 24px 10px;
+  }
+}
+
+/* selettore di spazio: l'unico, nella barra superiore, col colore dello spazio */
+.navbar .space-title {
+  border: 1.5px solid color-mix(in srgb, var(--space, var(--line)) 55%, var(--line));
+  background: color-mix(in srgb, var(--space, var(--line)) 14%, var(--surface));
+  padding: 0 12px;
+  border-radius: 22px;
+}
+.navbar .space-title .dot {
+  background: var(--space);
+}
+
+/* ------- pagina /spazio/:id */
+.set-field {
+  padding: 12px 0 4px;
+}
+.set-sublabel {
+  padding: 12px 0 0;
+  border-top: 1px solid var(--line);
+}
+.set-invite {
+  padding-top: 12px;
+}
+.invite-url {
+  font-size: 11px;
+  word-break: break-all;
+}
+.cat-row {
+  display: grid;
+  gap: 6px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.cat-row .input + .input,
+.cat-row input[aria-label^='Parole'] {
+  min-height: 40px;
+  font-size: 14px;
+}
+.set-card .card {
+  margin: 12px 0;
+}
+.set-card form.stack {
+  padding: 12px 0;
+}
+
+/* ------- riga persona: su mobile identità e azioni in alto, ruolo a tutta larghezza sotto */
+.member-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'id tools' 'role role';
+  align-items: center;
+  gap: 4px 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.member-id {
+  grid-area: id;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.member-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.member-role {
+  grid-area: role;
+  width: 100%;
+}
+.member-tools {
+  grid-area: tools;
+  display: flex;
+  gap: 4px;
+}
+.tool-btn {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text-2);
+}
+.tool-btn:hover {
+  color: var(--text);
+}
+.tool-danger:hover {
+  color: var(--danger, #c0392b);
+  border-color: currentColor;
+}
+@media (min-width: 720px) {
+  .member-row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: 'id role tools';
+    gap: 12px;
+  }
+  .member-role {
+    width: auto;
+  }
+}
+.side-sep {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.side-link {
+  white-space: nowrap;
+}
+.select.member-role,
+.inline-select.member-role {
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  padding: 0 14px;
+  text-align: left;
+  text-align-last: left;
+  max-width: none;
+}
+
+/* ------- notifiche della campanella: colonna con il segnale «nuova», autore e data sulla stessa riga, testo sotto */
+.board-menu .note-new {
+  margin-left: 0;
+}
+.pop-note {
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+}
+/* segnale «nuova» dentro la riga autore: il testo resta sempre sulla stessa colonna del titolo */
+.pop-note-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  align-self: center;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.pop-note-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+}
+.pop-note-meta .muted {
+  margin-left: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pop-note-text {
+  margin-top: 2px;
+  font-size: 15px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+@media (max-width: 719px) {
+  /* su mobile la campanella non è all'estremo destro: la finestra si aggancia alla barra, non al pulsante */
+  .bell-wrap {
+    position: static;
+  }
+  .board-menu {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+  }
+}
+
+.board-menu .board-empty {
+  padding: 12px;
 }
