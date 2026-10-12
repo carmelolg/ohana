@@ -168,7 +168,7 @@ test('Cura: chi ha il ruolo «Solo Cura» vede la Cura ma non le Spese', async (
   await page.getByRole('link', { name: /Spazi e inviti/ }).click();
   await page.getByLabel('Email da invitare').fill(guestEmail);
   await page.getByLabel('Ruolo').selectOption({ label: 'Solo Cura' });
-  await page.getByRole('button', { name: 'Crea link d’invito' }).click();
+  await page.getByRole('button', { name: 'Invia invito' }).click();
   const token = (await page.getByTestId('invite-link').first().innerText()).split('/invito/')[1];
 
   const { ctx, page: guest } = await newContext(browser);

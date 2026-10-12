@@ -44,7 +44,7 @@ test("isolamento tra spazi: l'invitato vede solo lo spazio a cui è invitato", a
   await openSpaces(owner.page);
   await owner.page.getByRole('button', { name: 'Invita persone' }).click();
   await owner.page.getByLabel('Email da invitare').fill(guestEmail);
-  await owner.page.getByRole('button', { name: 'Crea link d’invito' }).click();
+  await owner.page.getByRole('button', { name: 'Invia invito' }).click();
   const link = await owner.page.getByTestId('invite-link').first().innerText();
   const token = link.split('/invito/')[1];
   expect(token).toBeTruthy();

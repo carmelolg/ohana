@@ -108,7 +108,7 @@ export async function joinSpace(owner: Page, guest: Page, guestEmail: string) {
   await openSpaces(owner);
   await owner.getByRole('button', { name: 'Invita persone' }).click();
   await owner.getByLabel('Email da invitare').fill(guestEmail);
-  await owner.getByRole('button', { name: 'Crea link d’invito' }).click();
+  await owner.getByRole('button', { name: 'Invia invito' }).click();
   const token = (await owner.getByTestId('invite-link').first().innerText()).split('/invito/')[1];
   await login(guest, guestEmail, `/invito/${token}`);
   await fillInviteProfile(guest);

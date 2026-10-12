@@ -10,20 +10,20 @@ import {
 } from '../../lib/api/spaces';
 import { SettingsCard } from '../../components/SettingsCard';
 import { useAuth } from '../../lib/auth';
-import { shareInviteLink } from '../../lib/shareInvite';
-import { useToast } from '../../lib/toast';
 import type { Space } from '../../lib/types';
+import { useInviteDelivery } from './useInviteDelivery';
 import { useSpaceAction } from './useSpaceAction';
 
 const INVITABLE_ROLES: SpaceRole[] = ['admin', 'member', 'viewer', 'care_viewer'];
 
 interface RowProps {
   invite: SpaceInvite;
+  onEmail: () => void;
   onShare: () => void;
   onCancel: () => void;
 }
 
-function InviteRow({ invite: i, onShare, onCancel }: RowProps) {
+function InviteRow({ invite: i, onEmail, onShare, onCancel }: RowProps) {
   const expired = new Date(i.expires_at) < new Date();
   return (
     <div className="set-row set-row-wrap">
@@ -37,6 +37,9 @@ function InviteRow({ invite: i, onShare, onCancel }: RowProps) {
         </span>
       </div>
       <span className="set-actions">
+        <button className="btn ghost small" onClick={onEmail}>
+          Invia email
+        </button>
         <button className="btn ghost small" onClick={onShare}>
           Copia link
         </button>
@@ -51,20 +54,13 @@ function InviteRow({ invite: i, onShare, onCancel }: RowProps) {
 /** Inviti: crea il link (valido 7 giorni, solo con l'email indicata), lo condivide o lo copia, elenca quelli in attesa. */
 export function InvitesSection({ space }: { space: Space }) {
   const { session } = useAuth();
-  const toast = useToast();
   const qc = useQueryClient();
   const { run } = useSpaceAction();
+  const { deliver, emailInvite, shareLink } = useInviteDelivery(space.name);
   const { data: invites = [] } = usePendingInvites(space.id, true);
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<SpaceRole>('member');
   const reload = () => qc.invalidateQueries({ queryKey: ['invites', space.id] });
-
-  async function share(invite: SpaceInvite) {
-    const outcome = await shareInviteLink(space.name, inviteLink(invite));
-    if (outcome === 'copied') {
-      toast('Link d’invito copiato · valido 7 giorni');
-    }
-  }
 
   async function invite(e: React.FormEvent) {
     e.preventDefault();
@@ -80,7 +76,7 @@ export function InvitesSection({ space }: { space: Space }) {
     }
     setEmail('');
     void reload();
-    await share(created);
+    await deliver(created);
   }
 
   async function cancel(id: string) {
@@ -92,7 +88,7 @@ export function InvitesSection({ space }: { space: Space }) {
     <SettingsCard
       id="inviti"
       title="Invita persone"
-      hint="Chi inviti vedrà solo questo spazio. Il link vale 7 giorni e funziona solo con l’email indicata."
+      hint="Chi inviti vedrà solo questo spazio. Gli mandiamo un’email col link, che vale 7 giorni e funziona solo con quell’indirizzo."
     >
       <form className="form-grid set-invite" onSubmit={invite}>
         <label className="field">
@@ -123,12 +119,18 @@ export function InvitesSection({ space }: { space: Space }) {
           </select>
         </label>
         <button className="btn accent form-wide" type="submit">
-          Crea link d’invito
+          Invia invito
         </button>
       </form>
       {invites.length > 0 && <div className="label set-sublabel">In attesa</div>}
       {invites.map((i) => (
-        <InviteRow key={i.id} invite={i} onShare={() => share(i)} onCancel={() => cancel(i.id)} />
+        <InviteRow
+          key={i.id}
+          invite={i}
+          onEmail={() => void emailInvite(i)}
+          onShare={() => shareLink(i)}
+          onCancel={() => cancel(i.id)}
+        />
       ))}
     </SettingsCard>
   );

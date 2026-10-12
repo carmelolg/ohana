@@ -1,5 +1,6 @@
 import type { SpaceRole } from '@ohana/shared';
 import { useAuthedQuery } from '../data/query';
+import { WORKER_URL } from '../config';
 import { supabase } from '../supabase';
 import { unwrap } from './result';
 
@@ -120,4 +121,37 @@ export async function previewInvite(token: string): Promise<InvitePreview | null
 export async function acceptInvite(token: string): Promise<string> {
   const { data } = unwrap(await supabase.rpc('accept_invite', { invite_token: token }));
   return data as string;
+}
+
+/** Cosa dire all'utente quando il Worker non riesce a mandare l'email d'invito. */
+export function inviteEmailFailure(status: number): string {
+  if (status === 409) {
+    return 'L’invito è già stato accettato';
+  }
+  if (status === 410) {
+    return 'L’invito è scaduto: creane uno nuovo';
+  }
+  return 'Non sono riuscito a mandare l’email. Puoi copiare il link e inviarlo tu.';
+}
+
+/** Chiede al Worker di mandare per email il link d'invito all'indirizzo invitato. Richiede la rete. */
+export async function sendInviteEmail(inviteId: string): Promise<void> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) {
+    throw new Error(inviteEmailFailure(401));
+  }
+  let res: Response;
+  try {
+    res = await fetch(`${WORKER_URL}/invites/send`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: inviteId }),
+    });
+  } catch {
+    throw new Error(inviteEmailFailure(0)); // offline o Worker irraggiungibile
+  }
+  if (!res.ok) {
+    throw new Error(inviteEmailFailure(res.status));
+  }
 }
