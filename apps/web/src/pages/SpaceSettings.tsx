@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { ROLE_LABEL } from '@ohana/shared';
 import { BackLink } from '../components/BackLink';
+import { SettingsCard } from '../components/SettingsCard';
 import { CategoriesSection } from '../components/CategoriesSection';
 import { deleteSpace } from '../lib/api/spaces';
 import { spaceColor } from '../lib/color';
@@ -13,7 +14,7 @@ import { MembersSection } from './space-settings/MembersSection';
 import { useFollowSelectedSpace } from './space-settings/useFollowSelectedSpace';
 import { useSpaceAction } from './space-settings/useSpaceAction';
 
-/** Gestione di uno spazio: aspetto, persone, categorie, inviti, eliminazione. */
+/** Impostazioni di uno spazio (condivise coi membri): aspetto, persone, categorie, inviti, eliminazione. Il profilo personale è un'altra pagina. */
 export function SpaceSettingsPage() {
   const { id = '' } = useParams();
   const { spaceById, myRole, setSelected } = useSpace();
@@ -47,22 +48,29 @@ export function SpaceSettingsPage() {
     // key = id: cambiando spazio le sezioni si rimontano, così nomi e interruttori non restano quelli del precedente
     <div key={id} style={{ ['--space' as string]: spaceColor(space.color_hue) }}>
       <BackLink to="/oggi" label="Indietro" history />
-      <h2 className="page-title">{space.name}</h2>
-      <p className="muted">Il tuo ruolo: {role ? ROLE_LABEL[role] : '—'}</p>
-
-      {isAdmin && <LookSection space={space} />}
-      {isAdmin && <FeaturesSection space={space} />}
-      <MembersSection space={space} role={role} />
-      <CategoriesSection spaceId={id} />
-      {isAdmin && <InvitesSection space={space} />}
-
-      {role === 'owner' && (
-        <div style={{ marginTop: 32 }}>
-          <button className="btn danger" onClick={remove}>
-            Elimina spazio
-          </button>
-        </div>
-      )}
+      <div className="space-banner">
+        <span className="label">Impostazioni dello spazio</span>
+        <h2 className="page-title">{space.name}</h2>
+        <p className="muted">Valgono per tutti i membri · il tuo ruolo: {role ? ROLE_LABEL[role] : '—'}</p>
+      </div>
+      <div className="set-page">
+        <MembersSection space={space} role={role} />
+        {isAdmin && <InvitesSection space={space} />}
+        {isAdmin && <LookSection space={space} />}
+        {isAdmin && <FeaturesSection space={space} />}
+        <CategoriesSection spaceId={id} />
+        {role === 'owner' && (
+          <SettingsCard
+            id="elimina"
+            title="Elimina spazio"
+            hint="Spariscono impegni, lista della spesa e spese di tutti i membri. Non si può annullare."
+          >
+            <button className="btn danger set-signout" onClick={remove}>
+              Elimina spazio
+            </button>
+          </SettingsCard>
+        )}
+      </div>
     </div>
   );
 }

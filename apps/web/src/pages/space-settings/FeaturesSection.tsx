@@ -1,4 +1,5 @@
-import { Switch } from '../../components/Switch';
+import { SettingsCard } from '../../components/SettingsCard';
+import { ToggleRow } from '../../components/ToggleRow';
 import { useState } from 'react';
 import { SPACE_FEATURES, featureOnIn, toggleFeature, type SpaceFeature } from '@ohana/shared';
 import { updateSpace } from '../../lib/api/spaces';
@@ -22,31 +23,21 @@ export function FeaturesSection({ space }: { space: Space }) {
   }
 
   return (
-    <>
-      <div className="label section-label">Funzioni</div>
-      <p className="muted" style={{ fontSize: 14 }}>
-        Spegni ciò che in questo spazio non serve: sparisce dai menu. I dati restano e tornano riaccendendo la
-        funzione.
-      </p>
-      <div className="group">
-        {SPACE_FEATURES.map(({ key, label, hint }) => (
-          <div key={key} className="kv">
-            <span style={{ color: 'inherit' }}>
-              {label}
-              <br />
-              <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>
-                {hint}
-              </span>
-            </span>
-            <Switch
-              label={label}
-              checked={featureOnIn(space, key)}
-              disabled={busy}
-              onChange={(on) => void change(key, on)}
-            />
-          </div>
-        ))}
-      </div>
-    </>
+    <SettingsCard
+      id="funzioni"
+      title="Funzioni"
+      hint="Spegni ciò che in questo spazio non serve: sparisce dai menu. I dati restano e tornano riaccendendo la funzione."
+    >
+      {SPACE_FEATURES.map(({ key, label, hint }) => (
+        <ToggleRow
+          key={key}
+          label={label}
+          hint={hint}
+          checked={featureOnIn(space, key)}
+          disabled={busy}
+          onChange={(on) => void change(key, on)}
+        />
+      ))}
+    </SettingsCard>
   );
 }

@@ -13,7 +13,7 @@ interface Props {
 /** Una categoria: nome (rinominabile), parole chiave per l'aggiunta rapida, eliminazione per quelle personalizzate. */
 export function CategoryRow({ category: c, writable, onRename, onKeywords, onDelete }: Props) {
   return (
-    <div style={{ padding: '10px 0', borderBottom: '1px solid var(--line)', display: 'grid', gap: 6 }}>
+    <div className="cat-row">
       <div className="hstack">
         <input
           className="input"

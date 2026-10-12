@@ -7,6 +7,7 @@ import { useDialog } from '../lib/dialog';
 import { newId } from '../lib/outbox';
 import { useToast } from '../lib/toast';
 import type { Category } from '../lib/types';
+import { SettingsCard } from './SettingsCard';
 import { CategoryRow } from './categories/CategoryRow';
 import { LearningCard } from './categories/LearningCard';
 import { NewCategoryForm } from './categories/NewCategoryForm';
@@ -88,30 +89,27 @@ export function CategoriesSection({ spaceId }: { spaceId: string }) {
   const role = myRole(spaceId);
 
   return (
-    <>
-      <div className="label section-label">Categorie degli impegni</div>
-      <p className="muted" style={{ fontSize: 14 }}>
-        Le parole chiave servono all’aggiunta rapida: scrivendo «dal veterinario» l’impegno va in «Animali» se
-        ha la parola «veterinario».
-      </p>
-      <div className="group">
-        {list.map((c) => (
-          <CategoryRow
-            key={c.id}
-            category={c}
-            writable={writable}
-            onRename={(name) => void actions.update(c, { name })}
-            onKeywords={(keywords) => void actions.update(c, { keywords })}
-            onDelete={() => void actions.remove(c)}
-          />
-        ))}
-      </div>
+    <SettingsCard
+      id="categorie"
+      title="Categorie degli impegni"
+      hint="Le parole chiave servono all’aggiunta rapida: scrivendo «dal veterinario» l’impegno va in «Animali» se ha la parola «veterinario»."
+    >
+      {list.map((c) => (
+        <CategoryRow
+          key={c.id}
+          category={c}
+          writable={writable}
+          onRename={(name) => void actions.update(c, { name })}
+          onKeywords={(keywords) => void actions.update(c, { keywords })}
+          onDelete={() => void actions.remove(c)}
+        />
+      ))}
       <LearningCard
         examples={feedback.length}
         canReset={role === 'owner' || role === 'admin'}
         onReset={() => void actions.resetLearning()}
       />
       {writable && <NewCategoryForm onAdd={(name, keywords) => void actions.add(name, keywords)} />}
-    </>
+    </SettingsCard>
   );
 }

@@ -8,6 +8,7 @@ import {
   usePendingInvites,
   type SpaceInvite,
 } from '../../lib/api/spaces';
+import { SettingsCard } from '../../components/SettingsCard';
 import { useAuth } from '../../lib/auth';
 import { shareInviteLink } from '../../lib/shareInvite';
 import { useToast } from '../../lib/toast';
@@ -23,25 +24,19 @@ interface RowProps {
 }
 
 function InviteRow({ invite: i, onShare, onCancel }: RowProps) {
+  const expired = new Date(i.expires_at) < new Date();
   return (
-    <div className="kv">
-      <span style={{ color: 'inherit' }}>
-        {i.email}
-        <br />
-        <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>
-          {ROLE_LABEL[i.role]}
-          {new Date(i.expires_at) < new Date() ? ' · scaduto' : ''}
+    <div className="set-row set-row-wrap">
+      <div className="set-row-text">
+        <span>{i.email}</span>
+        <span className="muted set-hint">
+          {ROLE_LABEL[i.role]} · {expired ? 'scaduto' : 'in attesa'}
         </span>
-        <br />
-        <span
-          data-testid="invite-link"
-          className="mono muted"
-          style={{ fontSize: 11, wordBreak: 'break-all', fontWeight: 400 }}
-        >
+        <span data-testid="invite-link" className="mono muted invite-url">
           {inviteLink(i)}
         </span>
-      </span>
-      <span className="hstack">
+      </div>
+      <span className="set-actions">
         <button className="btn ghost small" onClick={onShare}>
           Copia link
         </button>
@@ -94,40 +89,47 @@ export function InvitesSection({ space }: { space: Space }) {
   }
 
   return (
-    <>
-      <div className="label section-label">Invita</div>
-      <p className="muted" style={{ fontSize: 14 }}>
-        Chi inviti vedrà solo questo spazio. Il link vale 7 giorni e funziona solo con l’email indicata.
-      </p>
-      <form className="stack" style={{ marginTop: 10 }} onSubmit={invite}>
-        <input
-          className="input"
-          type="email"
-          required
-          placeholder="Email della persona"
-          aria-label="Email da invitare"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <select
-          className="input"
-          aria-label="Ruolo"
-          value={role}
-          onChange={(e) => setRole(e.target.value as SpaceRole)}
-        >
-          {INVITABLE_ROLES.map((r) => (
-            <option key={r} value={r}>
-              {ROLE_LABEL[r]}
-            </option>
-          ))}
-        </select>
-        <button className="btn accent" type="submit">
+    <SettingsCard
+      id="inviti"
+      title="Invita persone"
+      hint="Chi inviti vedrà solo questo spazio. Il link vale 7 giorni e funziona solo con l’email indicata."
+    >
+      <form className="form-grid set-invite" onSubmit={invite}>
+        <label className="field">
+          <span className="label">Email</span>
+          <input
+            className="input"
+            type="email"
+            required
+            placeholder="Email della persona"
+            aria-label="Email da invitare"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span className="label">Ruolo</span>
+          <select
+            className="input"
+            aria-label="Ruolo"
+            value={role}
+            onChange={(e) => setRole(e.target.value as SpaceRole)}
+          >
+            {INVITABLE_ROLES.map((r) => (
+              <option key={r} value={r}>
+                {ROLE_LABEL[r]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button className="btn accent form-wide" type="submit">
           Crea link d’invito
         </button>
       </form>
+      {invites.length > 0 && <div className="label set-sublabel">In attesa</div>}
       {invites.map((i) => (
         <InviteRow key={i.id} invite={i} onShare={() => share(i)} onCancel={() => cancel(i.id)} />
       ))}
-    </>
+    </SettingsCard>
   );
 }
