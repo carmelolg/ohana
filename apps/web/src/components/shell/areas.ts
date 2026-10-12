@@ -4,7 +4,7 @@ export type Area = 'oggi' | 'agenda' | 'casa' | 'famiglia' | 'impostazioni';
 const AREA_PATHS: Record<Exclude<Area, 'oggi'>, string[]> = {
   agenda: ['/calendario', '/agenda'],
   casa: ['/casa', '/spesa', '/spese', '/scadenze', '/manutenzioni', '/pratiche', '/documenti', '/scansiona'],
-  famiglia: ['/famiglia', '/altro', '/rubrica', '/emergenza', '/cura', '/bacheca', '/spazio'],
+  famiglia: ['/famiglia', '/altro', '/rubrica', '/emergenza', '/cura', '/bacheca'],
   impostazioni: ['/impostazioni'],
 };
 

@@ -9,8 +9,8 @@ import {
   Home,
   House,
   Pin,
-  Plus,
   Settings as Cog,
+  UserRound,
   ShoppingBasket,
   Siren,
   Users,
@@ -19,7 +19,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { SpaceFeature } from '@ohana/shared';
-import { spaceColor } from '../../lib/color';
 import { useFeatures, useScopedRecipients, useSpace } from '../../lib/data';
 import { careName } from '@ohana/shared';
 import { SideGroup } from './SideGroup';
@@ -56,14 +55,27 @@ const GROUPS: { head: SideLink; items: SideLink[] }[] = [
       { to: '/emergenza', label: 'Emergenza', Icon: Siren },
     ],
   },
-  { head: { to: '/impostazioni', label: 'Impostazioni', Icon: Cog }, items: [] },
 ];
 
-const ACTIVE = { background: 'var(--surface)', fontWeight: 600 };
+/** Collegamento alle impostazioni dello spazio attivo; lo spazio si cambia solo dalla barra superiore. */
+function SpaceSettingsLink() {
+  const { current } = useSpace();
+  if (!current) {
+    return null;
+  }
+  return (
+    <>
+      <div className="label side-sep">Spazio «{current.name}»</div>
+      <NavLink className="side-link" to={`/spazio/${current.id}`} title="Impostazioni dello spazio">
+        <Cog size={20} strokeWidth={1.75} />
+        Impostazioni
+      </NavLink>
+    </>
+  );
+}
 
-/** Navigazione laterale desktop: sezioni e spazi. */
-export function Sidebar({ onSpaces }: { onSpaces: () => void }) {
-  const { spaces, selected, setSelected } = useSpace();
+/** Navigazione laterale desktop: le sezioni, le impostazioni dello spazio attivo, poi ciò che riguarda solo «me». */
+export function Sidebar() {
   const isOn = useFeatures();
   const people = useScopedRecipients();
   const { isOpen, toggle } = useSideOpen();
@@ -89,31 +101,12 @@ export function Sidebar({ onSpaces }: { onSpaces: () => void }) {
           ))}
         </>
       )}
-      <div className="label side-sep">Spazi</div>
-      <button
-        className="side-link"
-        aria-pressed={selected === 'all'}
-        onClick={() => setSelected('all')}
-        style={selected === 'all' ? ACTIVE : undefined}
-      >
-        <span className="dot" style={{ background: 'var(--text)' }} />
-        Tutti gli spazi
-      </button>
-      {spaces.map((s) => (
-        <button
-          key={s.id}
-          className="side-link"
-          onClick={() => setSelected(s.id)}
-          style={selected === s.id ? ACTIVE : undefined}
-        >
-          <span className="dot" style={{ background: spaceColor(s.color_hue) }} />
-          {s.name}
-        </button>
-      ))}
-      <button className="side-link muted" onClick={onSpaces}>
-        <Plus size={20} strokeWidth={1.75} />
-        Gestisci spazi
-      </button>
+      <SpaceSettingsLink />
+      <div className="label side-sep">Solo per me</div>
+      <NavLink className="side-link" to="/impostazioni">
+        <UserRound size={20} strokeWidth={1.75} />
+        Il mio profilo
+      </NavLink>
     </aside>
   );
 }

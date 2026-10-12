@@ -22,9 +22,9 @@ export function useSpaces() {
 interface SpaceCtx {
   spaces: Space[];
   loading: boolean;
-  selected: string; // 'all' oppure id
+  selected: string; // id dello spazio attivo ('all' solo se l'utente non ha spazi)
   setSelected: (id: string) => void;
-  current: Space | null; // null se "Tutti"
+  current: Space | null; // null solo se l'utente non ha spazi
   /** Spazio di default per nuove voci */
   defaultSpace: Space | null;
   memberName: (id: string | null | undefined) => string;
@@ -50,9 +50,9 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
   const uid = session?.user.id;
 
   const value = useMemo<SpaceCtx>(() => {
-    const valid = selected === 'all' || spaces.some((s) => s.id === selected);
-    const sel = valid ? selected : 'all';
-    const current = sel === 'all' ? null : (spaces.find((s) => s.id === sel) ?? null);
+    // si vede sempre uno spazio solo: una scelta salvata «tutti» o non più valida ricade sul primo spazio
+    const current = spaces.find((s) => s.id === selected) ?? spaces[0] ?? null;
+    const sel = current?.id ?? 'all';
     const names = new Map<string, string>();
     const profiles = new Map<string, Member['profiles']>();
     for (const s of spaces) {

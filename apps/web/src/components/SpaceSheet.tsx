@@ -6,7 +6,7 @@ import { NewSpaceForm } from './space-sheet/NewSpaceForm';
 import { SpaceRow } from './space-sheet/SpaceRow';
 import { Sheet } from './ui';
 
-/** Elenco degli spazi dell'utente: scelta dello spazio attivo, gestione, creazione e inviti. */
+/** Elenco degli spazi dell'utente: scelta dell'unico spazio attivo, gestione, creazione e inviti. */
 export function SpaceSheet({ onClose }: { onClose: () => void }) {
   const { spaces, selected, setSelected } = useSpace();
   const nav = useNavigate();
@@ -47,20 +47,7 @@ export function SpaceSheet({ onClose }: { onClose: () => void }) {
         <span style={{ fontSize: 20, fontWeight: 600 }}>I tuoi spazi</span>
         <span className="label">{spaces.length} spazi</span>
       </div>
-      <button
-        className="sheet-row"
-        style={{ background: selected === 'all' ? 'var(--bg)' : undefined }}
-        onClick={() => pick('all')}
-      >
-        <span className="dotl" />
-        <span style={{ flex: 1 }}>
-          <b style={{ fontSize: 16 }}>Tutti gli spazi</b>
-          <br />
-          <span className="muted" style={{ fontSize: 13 }}>
-            Vista unica, solo per te
-          </span>
-        </span>
-      </button>
+      <p className="muted sheet-hint">Vedi uno spazio per volta: scegli quale aprire.</p>
       {spaces.map((s) => (
         <SpaceRow
           key={s.id}

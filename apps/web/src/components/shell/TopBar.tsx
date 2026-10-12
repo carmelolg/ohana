@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
-import { spaceColor } from '../../lib/color';
 import { useSpace } from '../../lib/data';
 import { AvatarMenu } from '../AvatarMenu';
 import { BoardBell } from './BoardBell';
@@ -27,39 +26,18 @@ function Brand() {
   );
 }
 
-function SpaceChips() {
-  const { spaces, selected, setSelected } = useSpace();
-  return (
-    <div className="chips space-chips" role="group" aria-label="Filtra per spazio">
-      <button className="chip" aria-pressed={selected === 'all'} onClick={() => setSelected('all')}>
-        Tutti
-      </button>
-      {spaces.map((s) => (
-        <button
-          key={s.id}
-          className="chip"
-          aria-pressed={selected === s.id}
-          onClick={() => setSelected(s.id)}
-        >
-          <span className="dot" style={{ background: spaceColor(s.color_hue) }} />
-          {s.name}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 /** Barra superiore: indipendente dal contenuto, a tutta larghezza, separata dal corpo da un filetto. */
 export function TopBar({ editor, onSpaces, onSearch, onCreate }: Props) {
   const { current } = useSpace();
-  const title = current?.name ?? 'Tutti gli spazi';
+  const title = current?.name ?? 'Nessuno spazio';
   return (
     <header className={'navbar' + (editor ? ' navbar-editor' : '')}>
       <div className="navbar-row">
         <div className="navbar-left">
           <Brand />
           <button className="space-title" onClick={onSpaces} aria-haspopup="dialog" title={title}>
-            {current && <span className="dot" />}
+            <span className="dot" />
+            <span className="space-title-label">Spazio</span>
             <span className="space-title-text">{title}</span>
             <span aria-hidden>▾</span>
           </button>
@@ -80,7 +58,6 @@ export function TopBar({ editor, onSpaces, onSearch, onCreate }: Props) {
           <AvatarMenu onManageSpaces={onSpaces} />
         </div>
       </div>
-      <SpaceChips />
     </header>
   );
 }

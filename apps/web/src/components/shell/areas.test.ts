@@ -11,11 +11,12 @@ describe('areaOf', () => {
     expect(areaOf('/altro')).toBe('famiglia');
     expect(areaOf('/bacheca')).toBe('famiglia');
     expect(areaOf('/impostazioni')).toBe('impostazioni');
-    expect(areaOf('/spazio/1')).toBe('famiglia');
   });
   it('non evidenzia nulla fuori dalle aree', () => {
     expect(areaOf('/nuovo')).toBeNull();
     expect(areaOf('/evento/1')).toBeNull();
     expect(areaOf('/spesaX')).toBeNull();
+    // le impostazioni dello spazio non sono dentro Famiglia: aprirle non deve espandere quel gruppo
+    expect(areaOf('/spazio/1')).toBeNull();
   });
 });

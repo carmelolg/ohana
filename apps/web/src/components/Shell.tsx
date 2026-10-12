@@ -42,7 +42,7 @@ export function Shell() {
       />
       <ConnectionBar />
       <div className="app-body">
-        <Sidebar onSpaces={() => setOverlay('spaces')} />
+        <Sidebar />
         <div className="center">
           <main className={'main' + (wide ? ' wide' : '')}>
             <Suspense

@@ -87,7 +87,7 @@ export function AvatarMenu({ onManageSpaces }: { onManageSpaces: () => void }) {
             </div>
           </div>
           <button role="menuitem" className="menu-item" onClick={go(() => nav('/impostazioni'))}>
-            <UserRound size={18} strokeWidth={1.75} /> Profilo e impostazioni
+            <UserRound size={18} strokeWidth={1.75} /> Il mio profilo
           </button>
           <button role="menuitem" className="menu-item" onClick={go(onManageSpaces)}>
             <Layers size={18} strokeWidth={1.75} /> Spazi e inviti
