@@ -10,6 +10,7 @@ import { careColor } from '../../lib/color';
 import { useCareEntries, useCareEvents, useMeasurements, useSpace } from '../../lib/data';
 import type { CareEntry, CareThread, Medication } from '../../lib/types';
 import { AddEntrySheet } from './AddEntrySheet';
+import { useReportAttach } from './useReportAttach';
 import { useRecipientData } from './useRecipientData';
 
 const FILTERS = [
@@ -20,6 +21,9 @@ const FILTERS = [
   { key: 'episodi', label: 'Episodi', types: ['episodio'] },
 ] as const;
 type FilterKey = (typeof FILTERS)[number]['key'];
+
+const countOf = (entries: CareEntry[], types: readonly string[] | null) =>
+  types ? entries.filter((e) => types.includes(e.type)).length : entries.length;
 
 const YEAR = new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', year: 'numeric' });
 const DAY_MONTH = new Intl.DateTimeFormat('it-IT', {
@@ -136,6 +140,7 @@ export function CareThreadPage() {
   const { own, shown } = useThreadEntries(rid, tid, filter);
   const scheduled = useThreadEvents(tid, filter);
   const thread = data.threads.find((t) => t.id === tid);
+  const report = useReportAttach(thread, data.canWrite);
 
   // il registro degli accessi sa chi ha consultato il filone
   useEffect(() => {
@@ -167,31 +172,6 @@ export function CareThreadPage() {
         therapy={data.meds.find((m) => m.active && m.thread_id === thread.id)}
         action={<ShareLink recipientId={recipient.id} threadId={thread.id} />}
       />
-      <div className="chips" role="group" aria-label="Filtra i tasselli" style={{ marginTop: 8 }}>
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            className="chip"
-            aria-pressed={filter === f.key}
-            onClick={() => setFilter(f.key)}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-      {shown.length === 0 && scheduled.length === 0 ? (
-        <div className="empty">
-          Ancora nessun tassello. Si aggiungono chiudendo una visita o con «+ Aggiungi».
-        </div>
-      ) : (
-        <Timeline
-          entries={shown}
-          upcoming={scheduled}
-          hue={thread.color_hue}
-          authorName={(id) => memberName(id).split(' ')[0]}
-          year={new Date().getFullYear()}
-        />
-      )}
       {data.canWrite && (
         <div className="hstack thread-actions">
           <button className="btn ghost small" onClick={() => setAdding(true)}>
@@ -205,6 +185,36 @@ export function CareThreadPage() {
           </Link>
         </div>
       )}
+      <div className="proc-tabs" role="group" aria-label="Filtra i tasselli">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            className="proc-tab"
+            aria-pressed={filter === f.key}
+            onClick={() => setFilter(f.key)}
+          >
+            {f.label}
+            {countOf(own, f.types) > 0 && f.types && (
+              <span className="proc-tab-count">{countOf(own, f.types)}</span>
+            )}
+          </button>
+        ))}
+      </div>
+      {shown.length === 0 && scheduled.length === 0 ? (
+        <div className="empty">
+          Ancora nessun tassello. Si aggiungono chiudendo una visita o con «+ Aggiungi».
+        </div>
+      ) : (
+        <Timeline
+          entries={shown}
+          upcoming={scheduled}
+          actions={report.actions}
+          hue={thread.color_hue}
+          authorName={(id) => memberName(id).split(' ')[0]}
+          year={new Date().getFullYear()}
+        />
+      )}
+      {report.picker}
       {adding && <AddEntrySheet thread={thread} onClose={() => setAdding(false)} />}
       <p className="care-disclaimer">
         Ohana raccoglie e mette in ordine ciò che dicono i medici: non dà indicazioni mediche.

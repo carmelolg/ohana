@@ -83,6 +83,21 @@ function MobileBody({
   const active = data.threads.filter((t) => t.status === 'attivo');
   return (
     <>
+      <nav className="care-shortcuts" aria-label="Sezioni di cura">
+        {SECTIONS.map(([path, label]) => (
+          <Link key={path} to={`/cura/${recipient.id}/${path}`}>
+            {label}
+          </Link>
+        ))}
+      </nav>
+      {view.todos.length > 0 && (
+        <>
+          <div className="care-section-head">
+            <span className="label">Da fare</span>
+          </div>
+          <TodoList todos={view.todos} to={`/cura/${recipient.id}/terapie`} />
+        </>
+      )}
       <div className="care-section-head">
         <span className="label">Oggi</span>
       </div>
@@ -102,21 +117,6 @@ function MobileBody({
         <Link className="btn ghost small" style={{ marginTop: 10 }} to={`/cura/${recipient.id}/filone/nuovo`}>
           + Nuovo filone
         </Link>
-      )}
-      <nav className="care-shortcuts" aria-label="Sezioni di cura">
-        {SECTIONS.map(([path, label]) => (
-          <Link key={path} to={`/cura/${recipient.id}/${path}`}>
-            {label}
-          </Link>
-        ))}
-      </nav>
-      {view.todos.length > 0 && (
-        <>
-          <div className="care-section-head">
-            <span className="label">Da fare</span>
-          </div>
-          <TodoList todos={view.todos} to={`/cura/${recipient.id}/terapie`} />
-        </>
       )}
     </>
   );

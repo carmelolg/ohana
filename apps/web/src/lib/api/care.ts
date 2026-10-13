@@ -111,6 +111,8 @@ export interface NoteToSave {
   title: string;
   text: string;
   readings?: Record<string, unknown>;
+  /** Impegno a cui il tassello dà l'esito (un esame già in calendario). */
+  eventId?: string;
 }
 
 /** Nota o esame aggiunti a mano al filone. */
@@ -128,6 +130,7 @@ export const addEntry = (mutate: Mutate, n: NoteToSave) =>
       title: n.title.trim(),
       text: n.text.trim() || null,
       readings: n.readings ?? {},
+      ...(n.eventId ? { event_id: n.eventId } : {}),
     },
   });
 

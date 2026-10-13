@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { openCareFile } from '../../lib/api/careFiles';
 import { openAttachment } from '../../lib/files';
 import type { CareReminderEvent } from '../../lib/data';
-import { careRows } from '../../lib/timeline';
+import { careRows, type TimelineAction } from '../../lib/timeline';
 import type { CareEntry } from '../../lib/types';
 import { TimelineList } from '../timeline/TimelineList';
 
@@ -18,18 +18,24 @@ interface Props {
   year: number;
   /** Mostra solo le prime righe (colonna del desktop). */
   limit?: number;
+  /** Azioni sulle righe (allegare un referto): solo per chi può scrivere. */
+  actions?: {
+    entry: (entry: CareEntry) => TimelineAction;
+    event: (event: CareReminderEvent) => TimelineAction;
+  };
 }
 
 /** Linea del tempo verticale di un filone (4b): tasselli e impegni in programma insieme. */
-export function Timeline({ entries, upcoming = NO_EVENTS, hue, authorName, year, limit }: Props) {
+export function Timeline({ entries, upcoming = NO_EVENTS, hue, authorName, year, limit, actions }: Props) {
   const rows = useMemo(
     () =>
       careRows(entries, upcoming, {
         authorName,
         openFile: (path) => void openCareFile(path),
         openAttachment: (path) => void openAttachment(path),
+        actions,
       }),
-    [entries, upcoming, authorName],
+    [entries, upcoming, authorName, actions],
   );
   return <TimelineList rows={rows} hue={hue} year={year} limit={limit} />;
 }

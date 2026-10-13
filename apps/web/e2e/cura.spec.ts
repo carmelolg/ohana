@@ -145,8 +145,11 @@ test('Cura: una domanda aggiunta da un secondo utente compare nella preparazione
     await guest.getByRole('button', { name: 'Aggiungi', exact: true }).first().click();
     await expect(guest.getByText('Serve ripetere la colonscopia?')).toBeVisible();
 
-    await page.goto(new URL(prepUrl).pathname);
-    await expect(page.getByText('Serve ripetere la colonscopia?')).toBeVisible();
+    // la scrittura dell'altro utente è ottimistica e parte dalla coda: si ricarica finché arriva al server
+    await expect(async () => {
+      await page.goto(new URL(prepUrl).pathname);
+      await expect(page.getByText('Serve ripetere la colonscopia?')).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 20000 });
   } finally {
     await ctx.close();
   }
@@ -209,6 +212,29 @@ test('Cura: «+ Impegno» dal filone crea un impegno già collegato alla cura', 
   await expect(page.getByRole('main').getByRole('link', { name: /^Cura/ })).toContainText(/controllo/i);
 });
 
+test('Cura: referto allegato a un esame già censito e a un impegno in calendario', async ({ page }) => {
+  await onboard(page, uniqueEmail('ref'), 'Luca', 'Mamma e papà');
+  await createCarePerson(page);
+  const pdf = { name: 'referto.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') };
+
+  // tassello esistente
+  await page.getByRole('button', { name: '+ Aggiungi' }).click();
+  await page.getByLabel('Titolo').fill('ECG');
+  await page.getByRole('button', { name: 'Salva' }).click();
+  await page.getByRole('button', { name: 'Allega referto a ECG' }).click();
+  await page.getByLabel('Scegli il referto da allegare').setInputFiles(pdf);
+  await expect(page.getByRole('button', { name: /referto\.pdf/ })).toBeVisible();
+
+  // impegno in programma del filone
+  await page.getByRole('link', { name: '+ Impegno' }).click();
+  await page.getByLabel('Descrivi l’impegno').fill('Esami del sangue domani alle 8');
+  await page.getByRole('button', { name: 'Salva' }).click();
+  await expect(page).toHaveURL(/\/filone\//);
+  await expect(
+    page.getByRole('button', { name: /^(Allega referto a|Registra l'esito di) Esami/ }),
+  ).toBeVisible();
+});
+
 test("Cura: con più persone assistite l'impegno dice sempre a chi appartiene la cura", async ({ page }) => {
   await onboard(page, uniqueEmail('due'), 'Luca', 'Mamma e papà');
   await createCarePerson(page);
@@ -220,10 +246,12 @@ test("Cura: con più persone assistite l'impegno dice sempre a chi appartiene la
   });
 
   await page.goto('/nuovo');
+  await page.getByLabel('Descrivi l’impegno').fill('Controllo glicemia domani alle 9');
+  // «Cura» compare solo per le visite: la categoria si sceglie a mano
+  await page.getByLabel('Categoria').selectOption({ label: 'Visita' });
   const cura = page.getByLabel('Cura', { exact: true });
   await expect(cura.locator('option')).toContainText(['Nessuna', 'Papà · Morbo di Crohn', 'Mamma · Diabete']);
   await cura.selectOption({ label: 'Mamma · Diabete' });
-  await page.getByLabel('Descrivi l’impegno').fill('Controllo glicemia domani alle 9');
   await page.getByRole('button', { name: 'Salva' }).click();
   await expect(page).toHaveURL(/\/oggi/);
 
