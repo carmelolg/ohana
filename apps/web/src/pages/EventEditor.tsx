@@ -5,7 +5,7 @@ import { formatDay, formatTime } from '@ohana/shared';
 import { FormError } from '../components/FormError';
 import { LocationField } from '../components/LocationField';
 import { VisitDiary } from '../components/VisitDiary';
-import { VisitCareLink, VisitCareOutcome } from '../components/care/VisitCarePanel';
+import { VisitCareOutcome } from '../components/care/VisitCarePanel';
 import { spaceColor } from '../lib/color';
 import { useEventExpenses, useSpace, useSpaceRecipients } from '../lib/data';
 import { useDialog } from '../lib/dialog';
@@ -17,6 +17,7 @@ import { LinkedExpenses } from './event-editor/LinkedExpenses';
 import { QuickText } from './event-editor/QuickText';
 import { TITLE_REQUIRED } from './event-editor/validation';
 import { AmountField, EditorHeader, KindSwitch, NotesField } from './event-editor/sections';
+import { ImportedNotice } from './event-editor/ImportedNotice';
 import { StatusBar } from './event-editor/StatusBar';
 import { useEventForm, type EventForm } from './event-editor/useEventForm';
 import { ExpenseForm } from './expenses/ExpenseForm';
@@ -51,20 +52,12 @@ function EventEditorScreen() {
   return (
     <div style={{ ['--space' as string]: spaceColor(space?.color_hue) }}>
       <EditorHeader form={form} />
-      {existing && writable && <StatusBar form={form} />}
       <FormError message={form.error} />
       {existing?.categories?.slug === 'visita' && existing.status === 'done' && (
         <CompletedVisit form={form} />
       )}
-      {existing?.categories?.slug === 'visita' && <VisitCareLink ev={existing} />}
-      {form.isImported && (
-        <p className="banner warn">
-          Impegno importato da un calendario esterno: per cambiarlo modificalo lì, si aggiornerà da solo.
-        </p>
-      )}
-      {!writable && !form.isImported && (
-        <p className="banner warn">Hai accesso in sola lettura a questo spazio.</p>
-      )}
+      {form.isImported && <ImportedNotice form={form} />}
+      {!writable && <p className="banner warn">Hai accesso in sola lettura a questo spazio.</p>}
       <EditorBody form={form} />
       {existing && writable && <DeleteAction form={form} />}
     </div>
@@ -73,7 +66,7 @@ function EventEditorScreen() {
 
 /** Testo libero, campi, note, allegati ed extra: tutto ciò che si compila. */
 function EditorBody({ form }: { form: EventForm }) {
-  const { isNew, isChore, existing } = form;
+  const { isNew, isChore, existing, writable } = form;
   return (
     <>
       {isNew && <KindSwitch form={form} />}
@@ -82,10 +75,12 @@ function EditorBody({ form }: { form: EventForm }) {
         tokens={form.parsed?.tokens ?? null}
         isNew={isNew}
         isChore={isChore}
-        readOnly={!form.writable}
+        readOnly={!form.writable || form.originLocked}
+        lockedNote={form.originLocked ? 'Dal calendario' : undefined}
         invalid={form.error === TITLE_REQUIRED}
         onChange={form.setText}
       />
+      {existing && writable && <StatusBar form={form} />}
       {isNew && (
         <div className="label" style={{ marginTop: 22 }}>
           Ho capito

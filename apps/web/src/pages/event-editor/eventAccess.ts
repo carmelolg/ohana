@@ -1,19 +1,13 @@
-import type { EventRow } from '../../lib/types';
-
 interface Access {
-  existing: Pick<EventRow, 'import_id'> | null;
   isNew: boolean;
   canWriteSpace: boolean;
   hasDefaultSpace: boolean;
 }
 
 /**
- * Si può modificare l'impegno? Uno importato da un calendario esterno no: la prossima sincronizzazione riscriverebbe le
- * modifiche, quindi si cambia nel calendario d'origine. Un impegno nuovo si può sempre iniziare se c'è uno spazio dove salvarlo.
+ * Si può modificare l'impegno? Anche uno importato da un calendario esterno: di quello restano bloccati titolo e orario
+ * (`originLocked`), il resto è nostro. Un impegno nuovo si può sempre iniziare se c'è uno spazio dove salvarlo.
  */
-export function canEditEvent({ existing, isNew, canWriteSpace, hasDefaultSpace }: Access): boolean {
-  if (existing?.import_id) {
-    return false;
-  }
+export function canEditEvent({ isNew, canWriteSpace, hasDefaultSpace }: Access): boolean {
   return canWriteSpace || (isNew && hasDefaultSpace);
 }

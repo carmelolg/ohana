@@ -12,13 +12,13 @@ const headerLabel = ({ isNew, isChore }: EventForm) =>
 export function EditorHeader({ form }: { form: EventForm }) {
   return (
     <div className="editor-head">
-      <button className="icon-btn" style={{ width: 'auto', padding: '0 4px' }} onClick={() => form.back()}>
+      <button type="button" className="btn ghost small editor-cancel" onClick={() => form.back()}>
         Annulla
       </button>
-      <span className="label">{headerLabel(form)}</span>
+      <span className="label editor-head-title">{headerLabel(form)}</span>
       <button
-        className="icon-btn"
-        style={{ width: 'auto', padding: '0 4px', fontWeight: 600, color: 'var(--accent-ink)' }}
+        type="button"
+        className="btn accent small editor-save"
         onClick={form.save}
         disabled={form.busy || !form.writable}
       >

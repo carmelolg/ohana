@@ -198,12 +198,13 @@ export function useEventForm(eventId: string | undefined) {
     isLoading: src.isLoading,
     existing,
     writable: canEditEvent({
-      existing,
       isNew,
       canWriteSpace: src.canWrite(spaceId),
       hasDefaultSpace: !!defaultSpace,
     }),
     isImported: !!existing?.import_id,
+    // titolo, orario e ripetizione di un impegno importato sono del calendario d'origine
+    originLocked: !!existing?.import_id,
     busy,
     error,
     back,

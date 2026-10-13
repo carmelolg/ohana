@@ -156,4 +156,50 @@ describe('saveEvent: collegamento a pratiche e manutenzioni', () => {
       linked_maintenance_id: null,
     });
   });
+
+  describe('impegno importato da un calendario esterno', () => {
+    const imported = {
+      id: 'ev1',
+      import_id: 'imp1',
+      location: 'Via Roma 1',
+      notes: null,
+      local_overrides: [],
+    } as unknown as EventRow; // solo i campi che saveEvent legge
+
+    it('non scrive titolo, orario né ripetizione; scrive i campi nostri e segna cosa è cambiato', async () => {
+      const { mutate, payloadOf } = fakeMutate();
+      await saveEvent(mutate, {
+        ...base,
+        existing: imported,
+        title: 'Titolo cambiato',
+        location: { text: 'Studio dott. Rossi', lat: null, lng: null },
+        notes: '',
+        linkKey: 'procedure:p1',
+      });
+      const payload = payloadOf('events', 'update')!.payload as Record<string, unknown>;
+      expect(payload).not.toHaveProperty('title');
+      expect(payload).not.toHaveProperty('starts_at');
+      expect(payload).not.toHaveProperty('all_day');
+      expect(payload).not.toHaveProperty('rrule');
+      expect(payload).not.toHaveProperty('kind');
+      expect(payload).toMatchObject({
+        location: 'Studio dott. Rossi',
+        notes: null,
+        local_overrides: ['location'],
+        category_id: 'c1',
+        linked_procedure_id: 'p1',
+      });
+    });
+
+    it('un campo già cambiato a mano resta tale anche se non lo si tocca', async () => {
+      const { mutate, payloadOf } = fakeMutate();
+      await saveEvent(mutate, {
+        ...base,
+        existing: { ...imported, notes: 'mie note', local_overrides: ['notes'] },
+        location: { text: 'Via Roma 1', lat: 1, lng: 2 },
+        notes: 'mie note',
+      });
+      expect(payloadOf('events', 'update')!.payload).toMatchObject({ local_overrides: ['notes'] });
+    });
+  });
 });

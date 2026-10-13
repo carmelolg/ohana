@@ -1,4 +1,4 @@
-import { parseMoneyInput } from '@ohana/shared';
+import { overridesAfterEdit, parseMoneyInput } from '@ohana/shared';
 import { uploadAttachmentToEvent } from '../../lib/files';
 import type { Mutate } from '../../lib/data';
 import { newId } from '../../lib/outbox';
@@ -37,6 +37,32 @@ export interface SaveResult {
   eventId: string;
   /** Allegati che non è stato possibile caricare (offline). */
   failedUploads: string[];
+}
+
+/**
+ * Un impegno importato: titolo, orario e ripetizione sono del calendario d'origine e non si scrivono. Luogo e note sì, ma
+ * si segnano in `local_overrides` perché la prossima sincronizzazione non li riscriva.
+ */
+function importedRow(e: EventToSave, existing: EventRow) {
+  const place = e.location.text.trim();
+  const notes = e.notes.trim();
+  return {
+    ...(e.categoryId ? { category_id: e.categoryId } : {}),
+    location: place || null,
+    location_lat: place ? e.location.lat : null,
+    location_lng: place ? e.location.lng : null,
+    notes: notes || null,
+    local_overrides: overridesAfterEdit(
+      existing.local_overrides ?? [],
+      { location: existing.location, notes: existing.notes },
+      { location: place || null, notes: notes || null },
+    ),
+    assignee_id: e.assigneeId,
+    contact_id: e.contactId,
+    care_thread_id: e.careThreadId,
+    ...linkColumns(e.linkKey),
+    amount: parseMoneyInput(e.amount),
+  };
 }
 
 function eventRow(e: EventToSave, id: string) {
@@ -107,20 +133,32 @@ async function saveAttachments(mutate: Mutate, eventId: string, e: EventToSave):
   return failed;
 }
 
+/** Scrive la riga dell'impegno: gli importati solo nei campi nostri, gli altri per intero. */
+async function writeEventRow(mutate: Mutate, e: EventToSave, eventId: string): Promise<void> {
+  if (e.existing?.import_id) {
+    const payload = importedRow(e, e.existing);
+    await mutate({ table: 'events', action: 'update', payload, match: { id: eventId } });
+    return;
+  }
+  const row = eventRow(e, eventId);
+  if (!e.existing) {
+    await mutate({ table: 'events', action: 'upsert', payload: row });
+    return;
+  }
+  const { id: _id, ...changes } = row;
+  await mutate({ table: 'events', action: 'update', payload: changes, match: { id: eventId } });
+}
+
 /**
  * Salva l'impegno con promemoria, checklist e allegati.
  * In modifica promemoria e checklist vengono riscritti da zero. Gli errori della scrittura principale si propagano.
  */
 export async function saveEvent(mutate: Mutate, e: EventToSave): Promise<SaveResult> {
   const eventId = e.existing?.id ?? newId();
-  const row = eventRow(e, eventId);
+  await writeEventRow(mutate, e, eventId);
   if (e.existing) {
-    const { id: _id, ...changes } = row;
-    await mutate({ table: 'events', action: 'update', payload: changes, match: { id: eventId } });
     await mutate({ table: 'event_reminders', action: 'delete', match: { event_id: eventId } });
     await mutate({ table: 'event_checklist_items', action: 'delete', match: { event_id: eventId } });
-  } else {
-    await mutate({ table: 'events', action: 'upsert', payload: row });
   }
   await saveReminders(mutate, eventId, e);
   await saveChecklist(mutate, eventId, e.checklist);

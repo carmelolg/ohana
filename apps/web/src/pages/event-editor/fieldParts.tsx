@@ -71,6 +71,7 @@ export function WhenField({ form }: FieldProps) {
             type="datetime-local"
             className="inline-select datetime-field"
             aria-label="Data e ora"
+            disabled={form.originLocked}
             value={toDateTimeInput(startsAt)}
             onChange={(e) => override('startsAt', fromDateTimeInput(e.target.value))}
           />
@@ -178,6 +179,7 @@ export function RepeatField({ form }: FieldProps) {
       <select
         className="inline-select"
         aria-label="Ripeti"
+        disabled={form.originLocked}
         value={knownRule ? rrule : '__custom'}
         onChange={(e) => form.override('rrule', e.target.value)}
       >
