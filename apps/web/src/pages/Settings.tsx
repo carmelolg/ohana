@@ -7,6 +7,7 @@ import { ImportedCalendarsSection } from './settings/ImportedCalendarsSection';
 import { NotificationSection } from './settings/NotificationSection';
 import { ProfileSection } from './settings/ProfileSection';
 import { ScanSection } from './settings/ScanSection';
+import { TourSection } from './settings/TourSection';
 import { SettingsCard } from '../components/SettingsCard';
 
 /** Il mio profilo: solo ciò che riguarda me, in ogni spazio. Le impostazioni di uno spazio stanno nella sua pagina. */
@@ -29,6 +30,7 @@ export function SettingsPage() {
         <CalendarFeedsSection />
         <ImportedCalendarsSection />
         <ScanSection profile={profile} />
+        <TourSection />
         <SettingsCard id="account" title="Account">
           <button className="btn ghost set-signout" onClick={signOut}>
             <LogOut size={18} strokeWidth={1.75} aria-hidden /> Esci

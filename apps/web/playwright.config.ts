@@ -3,6 +3,16 @@ import { defineConfig, devices } from '@playwright/test';
 // Richiede Supabase locale attivo (`supabase start`) e le variabili in apps/web/.env.local.
 // I test dei progetti «chromium» e «desktop» girano sul server di sviluppo (5173);
 // il progetto «prod» gira sulla build di produzione (4173), l'unica in cui c'è il service worker: serve al test offline di Emergenza.
+// La guida iniziale è già «vista»: altrimenti coprirebbe la schermata in tutti i test. Lo scenario dedicato la riattiva.
+const TOUR_DONE = [{ name: 'ohana-tour-done', value: '1' }];
+const storageState = {
+  cookies: [],
+  origins: ['http://localhost:5173', 'http://localhost:4173'].map((origin) => ({
+    origin,
+    localStorage: TOUR_DONE,
+  })),
+};
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 60_000,
@@ -14,6 +24,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
     locale: 'it-IT',
     timezoneId: 'Europe/Rome',
+    storageState,
   },
   webServer: [
     { command: 'pnpm dev', url: 'http://localhost:5173', reuseExistingServer: true, timeout: 60_000 },

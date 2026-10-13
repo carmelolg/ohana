@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useCallback, useMemo, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { spaceColor } from '../lib/color';
 import { useRealtimeSync, useSpace } from '../lib/data';
@@ -10,6 +10,9 @@ import { SpaceSheet } from './SpaceSheet';
 import { ConnectionBar } from './shell/ConnectionBar';
 import { Sidebar } from './shell/Sidebar';
 import { TabBar } from './shell/TabBar';
+import { Tour } from './tour/Tour';
+import { TourContext } from './tour/TourContext';
+import { isTourDone, markTourDone } from '../lib/tour';
 import { TopBar } from './shell/TopBar';
 import { isFullScreenFlow } from './shell/isFullScreenFlow';
 
@@ -21,6 +24,13 @@ export function Shell() {
   const { pathname } = useLocation();
   const [overlay, setOverlay] = useState<Overlay>(null);
   const close = () => setOverlay(null);
+  // la guida si apre da sola al primo ingresso (non nei flussi a schermo intero) e su richiesta dal profilo
+  const [touring, setTouring] = useState(() => !isTourDone());
+  const tourControl = useMemo(() => ({ start: () => setTouring(true) }), []);
+  const endTour = useCallback(() => {
+    markTourDone();
+    setTouring(false);
+  }, []);
   useRealtimeSync();
   useShortcuts({ onNew: () => setOverlay('new'), onSearch: () => setOverlay('search') });
 
@@ -33,35 +43,38 @@ export function Shell() {
   const wide = pathname.startsWith('/cura');
 
   return (
-    <div className="app" style={spaceStyle}>
-      <TopBar
-        editor={fullScreen}
-        onSpaces={() => setOverlay('spaces')}
-        onSearch={() => setOverlay('search')}
-        onCreate={() => setOverlay('new')}
-      />
-      <ConnectionBar />
-      <div className="app-body">
-        <Sidebar />
-        <div className="center">
-          <main className={'main' + (wide ? ' wide' : '')}>
-            <Suspense
-              fallback={
-                <div className="empty" role="status">
-                  Caricamento…
-                </div>
-              }
-            >
-              <Outlet />
-            </Suspense>
-          </main>
+    <TourContext.Provider value={tourControl}>
+      <div className="app" style={spaceStyle}>
+        <TopBar
+          editor={fullScreen}
+          onSpaces={() => setOverlay('spaces')}
+          onSearch={() => setOverlay('search')}
+          onCreate={() => setOverlay('new')}
+        />
+        <ConnectionBar />
+        <div className="app-body">
+          <Sidebar />
+          <div className="center">
+            <main className={'main' + (wide ? ' wide' : '')}>
+              <Suspense
+                fallback={
+                  <div className="empty" role="status">
+                    Caricamento…
+                  </div>
+                }
+              >
+                <Outlet />
+              </Suspense>
+            </main>
+          </div>
+          {!wide && <RightColumn />}
         </div>
-        {!wide && <RightColumn />}
+        {!fullScreen && <TabBar onCreate={() => setOverlay('new')} />}
+        {overlay === 'new' && <NewSheet onClose={close} />}
+        {overlay === 'spaces' && <SpaceSheet onClose={close} />}
+        {overlay === 'search' && <SearchSheet onClose={close} />}
+        {touring && !fullScreen && <Tour onClose={endTour} onOverlay={setOverlay} />}
       </div>
-      {!fullScreen && <TabBar onCreate={() => setOverlay('new')} />}
-      {overlay === 'new' && <NewSheet onClose={close} />}
-      {overlay === 'spaces' && <SpaceSheet onClose={close} />}
-      {overlay === 'search' && <SearchSheet onClose={close} />}
-    </div>
+    </TourContext.Provider>
   );
 }
