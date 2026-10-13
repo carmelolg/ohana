@@ -662,6 +662,28 @@ select t.as_user('00000000-0000-0000-0000-00000000000d');
 select t.expect_error($$select update_member_profile('ffffffff-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000e', 'Hack', 'X', null)$$, 'un estraneo non modifica i dati dei membri');
 select t.as_su();
 
+-- ---- registrazione chiusa: allowlist + inviti validi (l'hook gira in Auth, qui si prova la funzione)
+select t.as_su();
+insert into allowed_emails (email, note) values ('capo@test.it', 'bootstrap');
+insert into invites (space_id, email, invited_by) values
+  ('ffffffff-0000-0000-0000-000000000001', 'Nuovo@Test.it', '00000000-0000-0000-0000-00000000000b');
+insert into invites (space_id, email, invited_by, accepted_at) values
+  ('ffffffff-0000-0000-0000-000000000001', 'accettato@test.it', '00000000-0000-0000-0000-00000000000b', now());
+insert into invites (space_id, email, invited_by, expires_at) values
+  ('ffffffff-0000-0000-0000-000000000001', 'scaduto@test.it', '00000000-0000-0000-0000-00000000000b', now() - interval '1 day');
+select t.expect_count($$select 1 where before_user_created_hook('{"user":{"email":" CAPO@test.it "}}') = '{}'::jsonb$$, 1, 'allowlist: via libera, maiuscole e spazi ignorati');
+select t.expect_count($$select 1 where before_user_created_hook('{"user":{"email":"nuovo@test.it"}}') = '{}'::jsonb$$, 1, 'invito valido: via libera');
+select t.expect_count($$select 1 where before_user_created_hook('{"user":{"email":"accettato@test.it"}}') ? 'error'$$, 1, 'invito già accettato: rifiutato');
+select t.expect_count($$select 1 where before_user_created_hook('{"user":{"email":"scaduto@test.it"}}') ? 'error'$$, 1, 'invito scaduto: rifiutato');
+select t.expect_count($$select 1 where before_user_created_hook('{"user":{"email":"sconosciuto@test.it"}}') ? 'error'$$, 1, 'sconosciuto: rifiutato');
+select t.expect_count($$select 1 where before_user_created_hook('{"user":{}}') ? 'error'$$, 1, 'senza email: rifiutato');
+select t.as_user('00000000-0000-0000-0000-00000000000d');
+select t.expect_error('select * from allowed_emails', 'authenticated non legge l''allowlist');
+select t.expect_error($$insert into allowed_emails (email) values ('dario@test.it')$$, 'authenticated non scrive nell''allowlist');
+select t.expect_error($$select before_user_created_hook('{"user":{"email":"x@test.it"}}')$$, 'authenticated non chiama l''hook');
+select t.expect_error($$select is_email_admitted('capo@test.it')$$, 'authenticated non interroga l''allowlist');
+select t.as_su();
+
 -- ---- cascata: eliminare lo spazio elimina la Cura
 delete from spaces where id = 'ffffffff-0000-0000-0000-000000000001';
 select t.as_su();

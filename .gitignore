@@ -11,3 +11,4 @@ playwright-report
 
 # file temporanei e segreti generati dalla CLI di Supabase
 supabase/.temp
+.dev.vars

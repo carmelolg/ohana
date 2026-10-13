@@ -1,6 +1,7 @@
 -- Simula lo schema `auth` di Supabase su un Postgres vuoto (solo per i test locali).
 create role anon nologin;
 create role authenticated nologin;
+create role supabase_auth_admin nologin;
 create schema auth;
 create table auth.users (
   id uuid primary key,

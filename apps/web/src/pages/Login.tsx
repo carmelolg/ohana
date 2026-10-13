@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { sendMagicLink, signInWithGoogle } from '../lib/api/auth';
+import { oauthErrorMessage, sendLinkErrorMessage } from '../lib/loginError';
 import { LoginCodeForm } from './login/LoginCodeForm';
 
 export function LoginForm({ redirectTo, defaultEmail = '' }: { redirectTo?: string; defaultEmail?: string }) {
   const [email, setEmail] = useState(defaultEmail);
   const [sent, setSent] = useState(false);
-  const [err, setErr] = useState('');
+  // Il rifiuto di Google arriva nell'indirizzo al ritorno dal provider, non come eccezione.
+  const [err, setErr] = useState(() => oauthErrorMessage(window.location.search, window.location.hash) ?? '');
   const [busy, setBusy] = useState(false);
   const target = redirectTo ?? window.location.origin + '/oggi';
 
@@ -17,7 +19,7 @@ export function LoginForm({ redirectTo, defaultEmail = '' }: { redirectTo?: stri
       await sendMagicLink(email, target);
       setSent(true);
     } catch (e) {
-      setErr('Non riesco a inviare il link: ' + (e as Error).message);
+      setErr(sendLinkErrorMessage(e));
     } finally {
       setBusy(false);
     }
