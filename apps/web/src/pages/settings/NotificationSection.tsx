@@ -92,7 +92,7 @@ export function NotificationSection({ profile }: { profile: Profile }) {
       />
       <ToggleRow
         label={`Brief del mattino ${profile.morning_brief_time.slice(0, 5)}`}
-        hint="Cosa c'è oggi, ogni mattina."
+        hint="Cosa c'è oggi, ogni mattina. Sostituisce le email dei singoli promemoria; le push restano."
         checked={profile.morning_brief}
         onChange={(morning_brief) => patch({ morning_brief })}
       />
