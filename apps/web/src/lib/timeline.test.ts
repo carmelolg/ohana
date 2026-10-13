@@ -184,6 +184,18 @@ const step = (over: Partial<ProcedureStep>): ProcedureStep => ({
 });
 
 describe('procedureRows', () => {
+  it('gli allegati dell’impegno compaiono sulla riga del passaggio e su quella degli impegni collegati', () => {
+    const chip = (id: string) => [{ id, label: id, onOpen: () => undefined }];
+    const rows = procedureRows(
+      [step({ event_id: 'ev' })],
+      new Map([['ev', '2026-05-04T07:00:00Z']]),
+      [{ id: 'ev2', title: 'Sopralluogo', starts_at: '2026-05-05T07:00:00Z', status: 'open' }],
+      { eventChipsOf: (id) => chip('a-' + id) },
+    );
+    expect(rows.find((r) => r.id === 'ev2')?.chips.map((c) => c.id)).toEqual(['a-ev2']);
+    expect(rows.find((r) => r.id !== 'ev2')?.chips.map((c) => c.id)).toEqual(['a-ev']);
+  });
+
   it('i passaggi aperti stanno sopra, nell’ordine inverso dell’iter; il primo da fare tocca l’ultimo fatto', () => {
     const rows = procedureRows(
       [

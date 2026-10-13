@@ -21,6 +21,13 @@ export interface TimelineChip {
   onOpen: () => void;
 }
 
+/** Azione sulla riga (es. «Allega referto»): un pulsante accanto ai chip dei file. */
+export interface TimelineAction {
+  label: string;
+  ariaLabel: string;
+  onClick: () => void;
+}
+
 /** Una riga della linea del tempo, già pronta da mostrare: Cura, Manutenzioni e Pratiche la producono allo stesso modo. */
 export interface TimelineRow {
   id: string;
@@ -41,6 +48,7 @@ export interface TimelineRow {
   /** Valori misurati e prossimi passi del tassello, una riga ciascuno: si leggono senza aprire la visita. */
   facts?: string[];
   chips: TimelineChip[];
+  action?: TimelineAction;
 }
 
 /** In programma in cima (dal più lontano al più vicino), poi i fatti dal più recente: una sola linea, in ordine di tempo. */
@@ -62,6 +70,11 @@ interface CareContext {
   openFile: (path: string) => void;
   /** Allegati degli impegni: stanno nel bucket generico, non in quello della Cura. */
   openAttachment: (path: string) => void;
+  /** Azioni per chi può scrivere (allegare un referto); senza, le righe restano di sola lettura. */
+  actions?: {
+    entry: (entry: CareEntry) => TimelineAction;
+    event: (event: CareReminderEvent) => TimelineAction;
+  };
 }
 
 /** Impegno del filone: in programma se è aperto, tra i fatti come «Impegno svolto» quando è segnato fatto. */
@@ -83,6 +96,7 @@ function careEventRow(event: CareReminderEvent, ctx: CareContext): TimelineRow {
       label: `📎 ${a.name}`,
       onOpen: () => ctx.openAttachment(a.path),
     })),
+    action: ctx.actions?.event(event),
   };
 }
 
@@ -125,6 +139,7 @@ export function careRows(entries: CareEntry[], events: CareReminderEvent[], ctx:
         label: `📎 ${f.name}`,
         onOpen: () => ctx.openFile(f.path),
       })),
+      action: ctx.actions?.entry(entry),
     };
   });
   return sortTimeline([...planned, ...done]);
@@ -138,7 +153,7 @@ function logSummary(entry: MaintenanceLog, contactName: string | undefined): str
 }
 
 /** Impegno collegato a mano: in programma finché è aperto, poi tra i fatti come «Impegno svolto». */
-function linkedRow(e: LinkedEvent): TimelineRow {
+function linkedRow(e: LinkedEvent, chips: TimelineChip[] = []): TimelineRow {
   const at = Date.parse(e.starts_at);
   const planned = e.status === 'open';
   return {
@@ -151,7 +166,7 @@ function linkedRow(e: LinkedEvent): TimelineRow {
     type: planned ? plannedLabel(at) : 'Impegno svolto',
     title: e.title,
     href: `/evento/${e.id}`,
-    chips: [],
+    chips,
   };
 }
 
@@ -194,13 +209,15 @@ export function maintenanceRows(
       chips: [],
     };
   });
-  return sortTimeline([...planned, ...done, ...linked.map(linkedRow)]);
+  return sortTimeline([...planned, ...done, ...linked.map((e) => linkedRow(e))]);
 }
 
 /** Cosa sa la riga di un passaggio oltre al titolo: ditta e chip degli allegati. */
 export interface StepDetails {
   contactName?: (id: string) => string | undefined;
   chipsOf?: (stepId: string) => TimelineChip[];
+  /** Allegati di un impegno (preventivi, conferme…): compaiono sulla riga dell'impegno o del passaggio che lo usa. */
+  eventChipsOf?: (eventId: string) => TimelineChip[];
 }
 
 /** «Nota · Clima Sud · 2.850 €» — le parti presenti di un passaggio a fasi. */
@@ -225,7 +242,9 @@ export function procedureRows(
 ): TimelineRow[] {
   // l'impegno di un passaggio è già nella riga del passaggio: non si ripete
   const ofSteps = new Set(steps.map((s) => s.event_id).filter(Boolean));
-  const extra = linked.filter((e) => !ofSteps.has(e.id)).map(linkedRow);
+  const extra = linked
+    .filter((e) => !ofSteps.has(e.id))
+    .map((e) => linkedRow(e, details.eventChipsOf?.(e.id)));
   return sortTimeline([
     ...extra,
     ...steps.map((s) => {
@@ -242,7 +261,10 @@ export function procedureRows(
         title: s.title,
         text: stepText(s, details.contactName),
         href: !s.done_at && s.event_id ? `/evento/${s.event_id}` : undefined,
-        chips: details.chipsOf?.(s.id) ?? [],
+        chips: [
+          ...(details.chipsOf?.(s.id) ?? []),
+          ...(s.event_id ? (details.eventChipsOf?.(s.event_id) ?? []) : []),
+        ],
       };
     }),
   ]);

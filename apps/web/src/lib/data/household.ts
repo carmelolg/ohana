@@ -99,6 +99,14 @@ export const useAttachmentsByIds = (ids: string[]) =>
     ids.length > 0,
   );
 
+/** Allegati degli impegni indicati (preventivi, conferme d'ordine…), per mostrarli nella cronologia. */
+export const useEventAttachments = (eventIds: string[]) =>
+  useAuthedQuery<{ id: string; event_id: string; path: string; name: string }[]>(
+    ['procedures', 'event-atts', eventIds.join(',')],
+    () => supabase.from('attachments').select('id, event_id, path, name').in('event_id', eventIds),
+    eventIds.length > 0,
+  );
+
 export interface VisitHistoryItem {
   id: string;
   title: string;

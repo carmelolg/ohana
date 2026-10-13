@@ -61,13 +61,23 @@ function Row({ row, hue, year, last }: { row: TimelineRow; hue: number; year: nu
             ))}
           </ul>
         )}
-        {row.chips.length > 0 && (
+        {(row.chips.length > 0 || row.action) && (
           <div className="tl-chips">
             {row.chips.map((chip) => (
               <button key={chip.id} type="button" className="file-chip" onClick={chip.onOpen}>
                 {chip.label}
               </button>
             ))}
+            {row.action && (
+              <button
+                type="button"
+                className="file-chip add"
+                aria-label={row.action.ariaLabel}
+                onClick={row.action.onClick}
+              >
+                {row.action.label}
+              </button>
+            )}
           </div>
         )}
       </div>
