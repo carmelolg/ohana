@@ -1,7 +1,7 @@
 import { HOUR_MS, shortName } from '@ohana/shared';
 import { createDb, type Db } from '../db';
 import type { Env } from '../env';
-import { pushToUser } from '../notify';
+import { deliverPush, subscriptionsOf, type PushOutcome } from '../notify';
 
 const MAX_BODY_LENGTH = 160;
 
@@ -25,7 +25,12 @@ async function claimNote(db: Db, id: string, now: Date): Promise<boolean> {
   return !!data?.length;
 }
 
-async function notifyMembers(env: Env, db: Db, note: BoardNote): Promise<number> {
+/** Rilascia la prenotazione: l'invio non è partito, il giro successivo deve poter riprovare. */
+async function releaseNote(db: Db, id: string): Promise<void> {
+  await db.from('board_notes').update({ notified_at: null }).eq('id', id);
+}
+
+async function notifyMembers(env: Env, db: Db, note: BoardNote): Promise<PushOutcome> {
   const [{ data: members }, { data: author }] = await Promise.all([
     db.from('space_members').select('user_id').eq('space_id', note.space_id).neq('role', 'care_viewer'), // chi consulta solo la Cura non vede la bacheca
     db.from('profiles').select('first_name, nickname').eq('id', note.author_id).maybeSingle(),
@@ -39,13 +44,16 @@ async function notifyMembers(env: Env, db: Db, note: BoardNote): Promise<number>
     actions: [],
     data: {},
   };
-  let sent = 0;
+  const total: PushOutcome = { delivered: 0, errors: [] };
   for (const m of members ?? []) {
     if (m.user_id !== note.author_id) {
-      sent += await pushToUser(env, db, m.user_id as string, msg);
+      const subs = await subscriptionsOf(db, m.user_id as string);
+      const { delivered, errors } = await deliverPush(env, db, subs, msg);
+      total.delivered += delivered;
+      total.errors.push(...errors);
     }
   }
-  return sent;
+  return total;
 }
 
 /** Note in bacheca con avviso push richiesto dall'autore (nelle ultime 24 ore, non ancora notificate né scadute). */
@@ -66,7 +74,16 @@ export async function sendBoardPushes(env: Env, now = new Date()): Promise<numbe
     if (note.expires_at && new Date(note.expires_at) < now) {
       continue;
     }
-    sent += await notifyMembers(env, db, note);
+    const { delivered, errors } = await notifyMembers(env, db, note);
+    for (const e of errors) {
+      console.error('push bacheca fallito', e);
+    }
+    // Se almeno un dispositivo ha ricevuto l'avviso la prenotazione resta (niente doppioni); se tutti gli invii sono
+    // falliti la rilascio. Nessun dispositivo iscritto non è un errore: non c'è nulla da riprovare.
+    if (delivered === 0 && errors.length > 0) {
+      await releaseNote(db, note.id);
+    }
+    sent += delivered;
   }
   return sent;
 }
