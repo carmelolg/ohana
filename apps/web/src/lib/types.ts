@@ -100,8 +100,10 @@ export interface EventRow {
   linked_procedure_id: string | null;
   /** Collegamento scelto dall'utente a una manutenzione (non è la scadenza generata, `maintenance_id`). */
   linked_maintenance_id: string | null;
-  /** Calendario esterno da cui l'impegno è stato importato: in app è in sola lettura. */
+  /** Calendario esterno da cui l'impegno è stato importato: titolo e orario restano suoi. */
   import_id: string | null;
+  /** Campi di un impegno importato cambiati in Ohana (`location`, `notes`): la sincronizzazione non li riscrive. */
+  local_overrides: string[];
   created_by: string;
   event_reminders: Reminder[];
   event_checklist_items: ChecklistItem[];

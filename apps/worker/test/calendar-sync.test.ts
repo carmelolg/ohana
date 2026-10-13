@@ -82,6 +82,21 @@ describe('syncImport', () => {
     });
   });
 
+  it('luogo e note cambiati in Ohana sopravvivono alla sincronizzazione; ripristinando torna quello del calendario', async () => {
+    const db = new FakeDb({ calendar_imports: [{ ...imp }] });
+    const withPlace = [...cena, 'LOCATION:Via Roma 1'];
+    await syncImport(db.asDb(), imp, NOW, stub(ICS(withPlace)));
+    db.rows('events').forEach((e, i) => (e.id = `ev${i}`));
+    Object.assign(eventsOf(db)[0], { location: 'Studio dott. Rossi', local_overrides: ['location'] });
+
+    await syncImport(db.asDb(), imp, NOW, stub(ICS([...withPlace, 'DESCRIPTION:Nuove note'])));
+    expect(eventsOf(db)[0]).toMatchObject({ location: 'Studio dott. Rossi', notes: 'Nuove note' });
+
+    eventsOf(db)[0].local_overrides = [];
+    await syncImport(db.asDb(), imp, NOW, stub(ICS(withPlace)));
+    expect(eventsOf(db)[0].location).toBe('Via Roma 1');
+  });
+
   it('non tocca gli impegni di altri calendari né quelli creati a mano', async () => {
     const db = new FakeDb({
       calendar_imports: [{ ...imp }],

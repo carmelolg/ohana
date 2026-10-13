@@ -217,6 +217,33 @@ describe('planSync', () => {
     );
     expect(plan.removeIds).toEqual(['dentro']);
   });
+
+  it('un campo cambiato in Ohana non viene riscritto dal calendario, gli altri sì', () => {
+    const plan = planSync(
+      [stored({ location: 'Studio dott. Rossi', local_overrides: ['location'] })],
+      [ev({ location: 'Via Roma 1', title: 'Cena da Luca' })],
+      WIN,
+    );
+    expect(plan.upserts).toEqual([ev({ location: 'Studio dott. Rossi', title: 'Cena da Luca' })]);
+  });
+
+  it('solo il campo a mano cambia nel calendario: niente da scrivere', () => {
+    const plan = planSync(
+      [stored({ notes: 'Mie note', local_overrides: ['notes'] })],
+      [ev({ notes: 'Note di Google' })],
+      WIN,
+    );
+    expect(plan.upserts).toEqual([]);
+  });
+
+  it('svuotare gli override (ripristina) fa riscrivere il valore del calendario', () => {
+    const plan = planSync(
+      [stored({ location: 'Studio', local_overrides: [] })],
+      [ev({ location: 'Via Roma 1' })],
+      WIN,
+    );
+    expect(plan.upserts.map((u) => u.location)).toEqual(['Via Roma 1']);
+  });
 });
 
 describe('importIsDue', () => {

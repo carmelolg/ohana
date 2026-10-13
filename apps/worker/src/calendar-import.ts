@@ -1,4 +1,4 @@
-import { DAY_MS, expandOccurrences, MINUTE_MS, startOfDayRome } from '@ohana/shared';
+import { DAY_MS, expandOccurrences, IMPORT_OVERRIDABLE, MINUTE_MS, startOfDayRome } from '@ohana/shared';
 import type { ParsedEvent } from './ics-parse';
 
 /** Quanto indietro e avanti si importano gli impegni; fuori da questa finestra non si tocca nulla. */
@@ -119,6 +119,8 @@ export function importedEvents(parsed: ParsedEvent[], win: ImportWindow): Import
 /** Un impegno già importato, com'è nel database. */
 export interface StoredImport extends ImportedEvent {
   id: string;
+  /** Campi cambiati in Ohana: la sincronizzazione li lascia com'sono. */
+  local_overrides?: string[];
 }
 
 export interface SyncPlan {
@@ -131,7 +133,22 @@ export interface SyncPlan {
 const sameInstant = (a: string | null, b: string | null) =>
   (a === null ? null : new Date(a).getTime()) === (b === null ? null : new Date(b).getTime());
 
-const isUnchanged = (a: ImportedEvent, b: ImportedEvent) =>
+const isOverridden = (s: StoredImport, field: (typeof IMPORT_OVERRIDABLE)[number]) =>
+  !!s.local_overrides?.includes(field);
+
+/** L'impegno in arrivo, con i campi cambiati a mano al posto di quelli del calendario. */
+function keepLocalEdits(incoming: ImportedEvent, stored: StoredImport | undefined): ImportedEvent {
+  if (!stored) {
+    return incoming;
+  }
+  return {
+    ...incoming,
+    location: isOverridden(stored, 'location') ? stored.location : incoming.location,
+    notes: isOverridden(stored, 'notes') ? stored.notes : incoming.notes,
+  };
+}
+
+const isUnchanged = (a: StoredImport, b: ImportedEvent) =>
   a.title === b.title &&
   a.all_day === b.all_day &&
   a.location === b.location &&
@@ -147,10 +164,12 @@ export function planSync(stored: StoredImport[], incoming: ImportedEvent[], win:
   const byId = new Map(stored.map((s) => [s.external_id, s]));
   const present = new Set(incoming.map((i) => i.external_id));
   return {
-    upserts: incoming.filter((i) => {
-      const old = byId.get(i.external_id);
-      return !old || !isUnchanged(old, i);
-    }),
+    upserts: incoming
+      .map((i) => keepLocalEdits(i, byId.get(i.external_id)))
+      .filter((i) => {
+        const old = byId.get(i.external_id);
+        return !old || !isUnchanged(old, i);
+      }),
     removeIds: stored
       .filter((s) => !present.has(s.external_id) && new Date(s.starts_at) >= win.from)
       .map((s) => s.id),

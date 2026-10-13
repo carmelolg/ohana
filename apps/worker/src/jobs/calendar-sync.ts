@@ -5,7 +5,8 @@ import { fetchIcsText, ImportError, type FetchText } from '../ics-fetch';
 import { parseIcs } from '../ics-parse';
 
 const IMPORT_COLUMNS = 'id, space_id, user_id, url, last_synced_at';
-const STORED_COLUMNS = 'id, external_id, title, starts_at, ends_at, all_day, location, notes';
+const STORED_COLUMNS =
+  'id, external_id, title, starts_at, ends_at, all_day, location, notes, local_overrides';
 const WRITE_BATCH = 200;
 
 export interface CalendarImport {

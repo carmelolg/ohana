@@ -19,7 +19,7 @@ export function useConnectCalendar({ userId, defaultSpaceId }: Params) {
   const [error, setError] = useState('');
   const space = spaceId || defaultSpaceId;
 
-  async function submit() {
+  async function submit(): Promise<boolean> {
     setError('');
     setBusy(true);
     try {
@@ -34,8 +34,10 @@ export function useConnectCalendar({ userId, defaultSpaceId }: Params) {
           ? `Calendario collegato · ${outcome.written ?? 0} impegni`
           : (outcome.error ?? 'Collegato'),
       );
+      return true;
     } catch (e) {
       setError((e as Error).message);
+      return false;
     } finally {
       setBusy(false);
     }

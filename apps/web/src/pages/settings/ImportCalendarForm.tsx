@@ -3,17 +3,22 @@ import { importVisibilityNote } from './importNotice';
 import { useConnectCalendar } from './useConnectCalendar';
 
 /** Modulo per collegare un calendario esterno a uno spazio. Compare solo a chi può scrivere in almeno uno spazio. */
-export function ImportCalendarForm({ userId }: { userId: string }) {
+export function ImportCalendarForm({ userId, onClose }: { userId: string; onClose?: () => void }) {
   const { spaces, canWrite } = useSpace();
   const writable = spaces.filter((s) => canWrite(s.id));
   const form = useConnectCalendar({ userId, defaultSpaceId: writable[0]?.id ?? '' });
   if (writable.length === 0) {
     return null;
   }
+  async function save() {
+    if (await form.submit()) {
+      onClose?.();
+    }
+  }
   const target = writable.find((s) => s.id === form.spaceId);
   const note = target ? importVisibilityNote(target.name, target.space_members.length) : null;
   return (
-    <div className="stack" style={{ marginTop: 12 }}>
+    <div className="stack import-new">
       <label className="field">
         <span className="label">Nome</span>
         <input
@@ -54,7 +59,7 @@ export function ImportCalendarForm({ userId }: { userId: string }) {
         </label>
       )}
       {note && (
-        <p className="muted" role="note" style={{ fontSize: 13 }}>
+        <p className="muted import-meta" role="note">
           {note}
         </p>
       )}
@@ -63,9 +68,16 @@ export function ImportCalendarForm({ userId }: { userId: string }) {
           {form.error}
         </p>
       )}
-      <button className="btn accent" onClick={() => void form.submit()} disabled={form.busy}>
-        {form.busy ? 'Collego…' : 'Collega calendario'}
-      </button>
+      <div className="hstack">
+        <button className="btn accent" onClick={() => void save()} disabled={form.busy}>
+          {form.busy ? 'Collego…' : 'Collega calendario'}
+        </button>
+        {onClose && (
+          <button className="btn ghost" onClick={onClose}>
+            Annulla
+          </button>
+        )}
+      </div>
     </div>
   );
 }

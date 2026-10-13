@@ -16,4 +16,5 @@ export * from './categorize';
 export * from './features';
 export * from './care';
 export * from './ics-url';
+export * from './import-overrides';
 export * from './palettes';

@@ -77,9 +77,7 @@ function ImportRow({
           {item.last_error}
         </p>
       ) : (
-        <span className="muted" style={{ fontSize: 13 }}>
-          {lastSync(item)}
-        </span>
+        <span className="muted import-meta">{lastSync(item)}</span>
       )}
       {writable && (
         <div className="hstack">
@@ -104,6 +102,9 @@ export function ImportedCalendarsSection() {
   const { session } = useAuth();
   const { spaceById, canWrite } = useSpace();
   const { data: imports = [] } = useCalendarImports();
+  const [adding, setAdding] = useState(false);
+  // Senza calendari collegati il modulo è l'unica cosa da fare, quindi sta già aperto.
+  const showForm = adding || imports.length === 0;
   return (
     <SettingsCard
       id="importa"
@@ -126,7 +127,16 @@ export function ImportedCalendarsSection() {
           writable={canWrite(c.space_id)}
         />
       ))}
-      <ImportCalendarForm userId={session!.user.id} />
+      {showForm ? (
+        <ImportCalendarForm
+          userId={session!.user.id}
+          onClose={imports.length > 0 ? () => setAdding(false) : undefined}
+        />
+      ) : (
+        <button className="btn ghost import-add" onClick={() => setAdding(true)}>
+          + Collega un altro calendario
+        </button>
+      )}
     </SettingsCard>
   );
 }

@@ -9,6 +9,7 @@ test('calendari: link per Google e Apple, e controlli sull’indirizzo da import
   await page.getByRole('button', { name: '+ Tutti gli spazi' }).click();
   await expect(page.getByRole('button', { name: 'Copia link' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Link per Apple' })).toBeVisible();
+  await page.getByText('Come si usa').click(); // la spiegazione sta in un riquadro chiuso
   await expect(page.getByText('Gli impegni di Cura compaiono solo come «Impegno di cura»')).toBeVisible();
 
   // import: indirizzi che non sono un sito pubblico vengono respinti prima di toccare la rete
