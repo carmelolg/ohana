@@ -104,6 +104,22 @@ export async function attachToStep(
   );
 }
 
+/** Lega un documento a una fase (o lo slega con `null`): così compare sulla riga della fase nella cronologia. */
+export async function setDocStep(
+  mutate: Mutate,
+  p: Procedure,
+  docId: string,
+  stepId: string | null,
+): Promise<void> {
+  await mutate(
+    { table: 'procedure_docs', action: 'update', payload: { step_id: stepId }, match: { id: docId } },
+    patchProcedure(p.id, (x) => ({
+      ...x,
+      procedure_docs: x.procedure_docs.map((d) => (d.id === docId ? { ...d, step_id: stepId } : d)),
+    })),
+  );
+}
+
 export async function updateStep(
   mutate: Mutate,
   p: Procedure,

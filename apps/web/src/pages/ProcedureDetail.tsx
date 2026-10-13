@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BackLink } from '../components/BackLink';
 import { spaceColor } from '../lib/color';
-import { useMutate, useProcedureEvents, useProcedures, useSpace } from '../lib/data';
+import { useMutate, type Mutate, useProcedureEvents, useProcedures, useSpace } from '../lib/data';
 import { useDialog } from '../lib/dialog';
 import { useToast } from '../lib/toast';
 import type { Procedure, ProcedureStep } from '../lib/types';
-import { AdvanceButton } from './procedure/AdvanceButton';
+import { ProcedureTabs, type ProcedureTab } from './procedure/ProcedureTabs';
 import { PhaseSummary } from './procedure/PhaseSummary';
 import { AddStepForm } from './procedure/AddStepForm';
-import { DocChips } from './procedure/DocChips';
+import { DocsSection } from './procedure/DocsSection';
 import { ProcedureHeader } from './procedure/ProcedureHeader';
 import { ProcedureTimeline } from './procedure/ProcedureTimeline';
 import { EditProcedureSheet } from './procedure/EditProcedureSheet';
@@ -43,30 +43,6 @@ export default function ProcedureDetailPage() {
   return <ProcedureView procedure={procedure} onDeleted={() => nav('/pratiche')} />;
 }
 
-function DocsHeader({
-  procedure: p,
-  writable,
-  onAdd,
-}: {
-  procedure: Procedure;
-  writable: boolean;
-  onAdd: () => void;
-}) {
-  const uploaded = p.procedure_docs.filter((d) => d.attachment_id).length;
-  return (
-    <div className="hstack" style={{ justifyContent: 'space-between', margin: '18px 8px 8px' }}>
-      <span className="label">
-        Documenti{p.procedure_docs.length ? ` · ${uploaded} di ${p.procedure_docs.length} caricati` : ''}
-      </span>
-      {writable && (
-        <button className="pill" onClick={onAdd}>
-          + Documento
-        </button>
-      )}
-    </div>
-  );
-}
-
 function TopBar({ writable, onEdit }: { writable: boolean; onEdit: () => void }) {
   return (
     <div className="hstack" style={{ justifyContent: 'space-between' }}>
@@ -80,6 +56,21 @@ function TopBar({ writable, onEdit }: { writable: boolean; onEdit: () => void })
   );
 }
 
+/** Chiede il nome di un documento richiesto e lo aggiunge alla pratica. */
+async function askRequiredDocument(dialog: ReturnType<typeof useDialog>, mutate: Mutate, p: Procedure) {
+  const name = (
+    await dialog.prompt({
+      title: 'Documento richiesto',
+      label: 'Nome',
+      placeholder: 'Es. Certificato di residenza',
+      confirmLabel: 'Aggiungi',
+    })
+  )?.trim();
+  if (name) {
+    await addRequiredDocument(mutate, p, name);
+  }
+}
+
 function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDeleted: () => void }) {
   const { spaceById, memberName, canWrite } = useSpace();
   const mutate = useMutate();
@@ -87,6 +78,7 @@ function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDe
   const dialog = useDialog();
   const [openStep, setOpenStep] = useState<ProcedureStep | null>(null);
   const [editing, setEditing] = useState(false);
+  const [tab, setTab] = useState<ProcedureTab>('passaggi');
 
   const steps = sortedSteps(p);
   const { data: events = [] } = useProcedureEvents(
@@ -106,20 +98,6 @@ function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDe
     }
   }
 
-  async function onAddDocument() {
-    const name = (
-      await dialog.prompt({
-        title: 'Documento richiesto',
-        label: 'Nome',
-        placeholder: 'Es. Certificato di residenza',
-        confirmLabel: 'Aggiungi',
-      })
-    )?.trim();
-    if (name) {
-      await addRequiredDocument(mutate, p, name);
-    }
-  }
-
   return (
     <div style={{ ['--space' as string]: spaceColor(space?.color_hue) }}>
       <TopBar writable={writable} onEdit={() => setEditing(true)} />
@@ -131,31 +109,44 @@ function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDe
         total={steps.length}
       />
 
-      {writable && p.status === 'in_corso' && (
-        <AdvanceButton steps={steps} onAdvance={(s) => void onToggle(s)} />
+      <ProcedureTabs
+        tab={tab}
+        onTab={setTab}
+        missingDocs={p.procedure_docs.filter((d) => !d.attachment_id).length}
+      />
+
+      {tab === 'passaggi' && (
+        <>
+          <PhaseSummary steps={steps} />
+
+          <StepList
+            steps={steps}
+            eventDates={eventDates}
+            writable={writable}
+            onToggle={onToggle}
+            onOpen={setOpenStep}
+          />
+          {writable && <AddStepForm onAdd={(title) => void addStep(mutate, p, title)} />}
+        </>
       )}
-      <PhaseSummary steps={steps} />
 
-      <StepList
+      {tab === 'cronologia' && (
+        <ProcedureTimeline
+          procedureId={p.id}
+          spaceId={p.space_id}
+          steps={steps}
+          eventDates={eventDates}
+          hue={space?.color_hue ?? 42}
+          docs={p.procedure_docs}
+        />
+      )}
+
+      <DocsSection
+        procedure={p}
         steps={steps}
-        eventDates={eventDates}
         writable={writable}
-        onToggle={onToggle}
-        onOpen={setOpenStep}
+        onAdd={() => void askRequiredDocument(dialog, mutate, p)}
       />
-      {writable && <AddStepForm onAdd={(title) => void addStep(mutate, p, title)} />}
-
-      <ProcedureTimeline
-        procedureId={p.id}
-        spaceId={p.space_id}
-        steps={steps}
-        eventDates={eventDates}
-        hue={space?.color_hue ?? 42}
-        docs={p.procedure_docs}
-      />
-
-      <DocsHeader procedure={p} writable={writable} onAdd={onAddDocument} />
-      <DocChips procedure={p} writable={writable} />
 
       {openStep && (
         <StepSheet

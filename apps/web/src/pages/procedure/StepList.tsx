@@ -60,6 +60,7 @@ export function StepList({ steps, eventDates, writable, onToggle, onOpen }: Prop
               >
                 {s.title}
               </span>
+              {i === current && <span className="step-next">Prossimo passo</span>}
               {(startsAt || s.note) && (
                 <span
                   style={{

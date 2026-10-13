@@ -196,10 +196,12 @@ test('pratica ISEE da modello: passaggi, documenti, avanzamento e completamento'
   await expect(page).toHaveURL(/\/pratiche\/[0-9a-f-]+/);
   await expect(page.getByRole('heading', { name: 'ISEE mamma' })).toBeVisible();
   await expect(page.getByText('0 di 5 passaggi')).toBeVisible();
+  await page.getByRole('tab', { name: /^Documenti/ }).click();
   for (const d of ['Carta identità', 'Codice fiscale', 'Saldo c/c 31/12', 'Contratto affitto']) {
     await expect(page.getByRole('button', { name: `Carica ${d}` })).toBeVisible();
   }
 
+  await page.getByRole('tab', { name: 'Passaggi' }).click();
   await page.getByRole('checkbox', { name: 'Raccogliere documenti' }).click();
   await page.getByRole('checkbox', { name: 'Prenotare al CAF' }).click();
   await expect(page.getByText('2 di 5 passaggi')).toBeVisible();
@@ -219,6 +221,7 @@ test('pratica ISEE da modello: passaggi, documenti, avanzamento e completamento'
   await expect(page.locator('.badge', { hasText: 'COMPLETATA' })).toBeVisible();
 
   // la cronologia mostra tutti i passaggi chiusi, nessuno ancora da fare
+  await page.getByRole('tab', { name: 'Cronologia' }).click();
   const cronologia = page.getByRole('region', { name: 'Cronologia della pratica' });
   await expect(cronologia.getByText('Completato')).toHaveCount(5);
   await expect(cronologia.getByText('Da fare')).toHaveCount(0);
@@ -237,17 +240,17 @@ test('impegno legato a una pratica: sezione «Collega a» e voce nella cronologi
     .click();
   await expect(page).toHaveURL(/\/pratiche\/[0-9a-f-]+/);
 
-  // da «+ Impegno» l'editor nasce già collegato alla pratica
+  // da «+ Impegno» (nella cronologia) l'editor nasce già collegato alla pratica
+  await page.getByRole('tab', { name: 'Cronologia' }).click();
   await page.getByRole('link', { name: 'Aggiungi un impegno a questa pratica' }).click();
   await page.getByLabel('Descrivi l’impegno').fill('Colloquio al CAF domani alle 10');
   await expect(page.getByLabel('Collega a pratica o manutenzione')).toContainText('ISEE mamma');
   await expect(page.getByLabel('Cura')).toHaveCount(0); // «Cura» è solo per le visite
   await page.getByRole('button', { name: 'Salva' }).click();
 
-  await page
-    .getByRole('link', { name: /ISEE mamma/ })
-    .first()
-    .click();
+  // «Salva» riporta alla pratica da cui si era partiti
+  await expect(page).toHaveURL(/\/pratiche\/[0-9a-f-]+/);
+  await page.getByRole('tab', { name: 'Cronologia' }).click();
   const cronologia = page.getByRole('region', { name: 'Cronologia della pratica' });
   await expect(cronologia).toContainText('Colloquio al CAF');
   await expect(cronologia).toContainText('In programma');

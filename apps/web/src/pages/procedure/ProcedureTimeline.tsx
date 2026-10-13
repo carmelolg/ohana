@@ -1,7 +1,13 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { TimelineList } from '../../components/timeline/TimelineList';
-import { useAttachmentsByIds, useContacts, useLinkedEvents, useSpace } from '../../lib/data';
+import {
+  useAttachmentsByIds,
+  useContacts,
+  useEventAttachments,
+  useLinkedEvents,
+  useSpace,
+} from '../../lib/data';
 import { procedureRows } from '../../lib/timeline';
 import { openAttachment } from '../../lib/files';
 import type { Procedure, ProcedureStep } from '../../lib/types';
@@ -25,10 +31,19 @@ export function ProcedureTimeline({ procedureId, spaceId, steps, eventDates, hue
   const { data: atts = [] } = useAttachmentsByIds(
     docs.filter((d) => d.step_id && d.attachment_id).map((d) => d.attachment_id as string),
   );
+  const eventIds = useMemo(
+    () => [...steps.map((s) => s.event_id), ...linked.map((e) => e.id)].filter((id): id is string => !!id),
+    [steps, linked],
+  );
+  const { data: eventAtts = [] } = useEventAttachments(eventIds);
   const rows = useMemo(
     () =>
       procedureRows(steps, eventDates, linked, {
         contactName: (id) => contacts.find((c) => c.id === id)?.name,
+        eventChipsOf: (eventId) =>
+          eventAtts
+            .filter((a) => a.event_id === eventId)
+            .map((a) => ({ id: a.id, label: `📎 ${a.name}`, onOpen: () => void openAttachment(a.path) })),
         chipsOf: (stepId) =>
           docs
             .filter((d) => d.step_id === stepId)
@@ -37,7 +52,7 @@ export function ProcedureTimeline({ procedureId, spaceId, steps, eventDates, hue
               return { id: d.id, label: `📎 ${d.name}`, onOpen: () => path && void openAttachment(path) };
             }),
       }),
-    [steps, eventDates, linked, contacts, docs, atts],
+    [steps, eventDates, linked, contacts, docs, atts, eventAtts],
   );
   return (
     <section aria-label="Cronologia della pratica">
