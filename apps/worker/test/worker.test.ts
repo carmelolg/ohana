@@ -39,9 +39,11 @@ describe('coda promemoria', () => {
     expect(
       buildQueueRows([base], users({ notify_email: false }), NOW).filter((r) => r.user_id === 'u1'),
     ).toHaveLength(1);
-    expect(
-      buildQueueRows([base], users({ morning_brief: true }), NOW).filter((r) => r.user_id === 'u1'),
-    ).toHaveLength(0);
+    // il brief sostituisce le email dei singoli promemoria, non le push immediate
+    const withBrief = buildQueueRows([base], users({ morning_brief: true }), NOW).filter(
+      (r) => r.user_id === 'u1',
+    );
+    expect(withBrief.map((r) => r.channel)).toEqual(['push']);
   });
   it('assegnatario: solo lui', () => {
     const rows = buildQueueRows([{ ...base, assignee_id: 'u2' }], users(), NOW);

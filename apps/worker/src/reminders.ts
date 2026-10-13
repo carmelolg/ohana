@@ -39,12 +39,14 @@ function recipientsOf(ev: QEvent, members: QRecipient[]): QRecipient[] {
   return ev.assignee_id ? members.filter((m) => m.id === ev.assignee_id) : members;
 }
 
-/** Canali su cui questa persona vuole davvero essere avvisata. Chi ha il brief del mattino non riceve i singoli promemoria. */
+/**
+ * Canali su cui questa persona vuole davvero essere avvisata. Il brief del mattino sostituisce le email dei singoli
+ * promemoria (evita una casella piena), ma non le push: sono immediate e il brief non le sostituisce.
+ */
 function channelsFor(user: QRecipient, reminder: Reminder): Reminder['channels'] {
-  if (user.morning_brief) {
-    return [];
-  }
-  return reminder.channels.filter((ch) => (ch === 'email' ? user.notify_email : user.hasPush));
+  return reminder.channels.filter((ch) =>
+    ch === 'email' ? user.notify_email && !user.morning_brief : user.hasPush,
+  );
 }
 
 /** Occorrenze il cui invio cade nella finestra [now - 1 giorno, now + 60 giorni], con il momento di invio. */
