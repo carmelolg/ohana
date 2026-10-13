@@ -1,4 +1,4 @@
-import type { ReminderChannel, SpaceRole } from '@ohana/shared';
+import type { Palette, ReminderChannel, SpaceRole } from '@ohana/shared';
 
 export interface Profile {
   id: string;
@@ -9,6 +9,7 @@ export interface Profile {
   avatar_url: string | null;
   theme: 'light' | 'dark' | 'auto';
   accent: string;
+  palette: Palette;
   default_reminder_minutes: number;
   morning_brief: boolean;
   morning_brief_time: string;
