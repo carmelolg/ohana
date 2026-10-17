@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BackLink } from '../components/BackLink';
 import { spaceColor } from '../lib/color';
-import { useMutate, type Mutate, useProcedureEvents, useProcedures, useSpace } from '../lib/data';
+import {
+  useLinkedEvents,
+  useMutate,
+  type Mutate,
+  useProcedureEvents,
+  useProcedures,
+  useSpace,
+} from '../lib/data';
 import { useDialog } from '../lib/dialog';
 import { useToast } from '../lib/toast';
 import type { Procedure, ProcedureStep } from '../lib/types';
@@ -13,7 +20,13 @@ import { DocsSection } from './procedure/DocsSection';
 import { ProcedureHeader } from './procedure/ProcedureHeader';
 import { ProcedureTimeline } from './procedure/ProcedureTimeline';
 import { EditProcedureSheet } from './procedure/EditProcedureSheet';
-import { addRequiredDocument, addStep, sortedSteps, toggleStep } from './procedure/procedureCommands';
+import {
+  addRequiredDocument,
+  addStep,
+  moveStep,
+  sortedSteps,
+  toggleStep,
+} from './procedure/procedureCommands';
 import { StepList } from './procedure/StepList';
 import { StepSheet } from './procedure/StepSheet';
 
@@ -71,6 +84,19 @@ async function askRequiredDocument(dialog: ReturnType<typeof useDialog>, mutate:
   }
 }
 
+/** Date degli impegni dei passaggi e impegni (dei passaggi o collegati) a cui si possono allegare file. */
+function useProcedureEventInfo(p: Procedure, steps: ProcedureStep[]) {
+  const { data: events = [] } = useProcedureEvents(
+    steps.map((s) => s.event_id).filter((eid): eid is string => !!eid),
+  );
+  const { data: linked = [] } = useLinkedEvents('procedure', p.id);
+  const eventDates = new Map(events.map((e) => [e.id, e.starts_at]));
+  const docEvents = [
+    ...new Map([...events, ...linked].map((e) => [e.id, { id: e.id, title: e.title }])).values(),
+  ];
+  return { eventDates, docEvents };
+}
+
 function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDeleted: () => void }) {
   const { spaceById, memberName, canWrite } = useSpace();
   const mutate = useMutate();
@@ -81,10 +107,7 @@ function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDe
   const [tab, setTab] = useState<ProcedureTab>('passaggi');
 
   const steps = sortedSteps(p);
-  const { data: events = [] } = useProcedureEvents(
-    steps.map((s) => s.event_id).filter((eid): eid is string => !!eid),
-  );
-  const eventDates = new Map(events.map((e) => [e.id, e.starts_at]));
+  const { eventDates, docEvents } = useProcedureEventInfo(p, steps);
   const done = steps.filter((s) => s.done_at).length;
   const writable = canWrite(p.space_id);
   const space = spaceById(p.space_id);
@@ -125,6 +148,7 @@ function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDe
             writable={writable}
             onToggle={onToggle}
             onOpen={setOpenStep}
+            onMove={(step, delta) => void moveStep(mutate, p, step.id, delta)}
           />
           {writable && <AddStepForm onAdd={(title) => void addStep(mutate, p, title)} />}
         </>
@@ -144,6 +168,7 @@ function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDe
       <DocsSection
         procedure={p}
         steps={steps}
+        events={docEvents}
         writable={writable}
         onAdd={() => void askRequiredDocument(dialog, mutate, p)}
       />

@@ -83,11 +83,11 @@ export const useFollowUps = (eventId: string | undefined) =>
     !!eventId,
   );
 
-/** Date degli impegni collegati ai passaggi di una pratica. */
+/** Titolo e data degli impegni collegati ai passaggi di una pratica. */
 export const useProcedureEvents = (eventIds: string[]) =>
-  useAuthedQuery<{ id: string; starts_at: string }[]>(
+  useAuthedQuery<{ id: string; title: string; starts_at: string }[]>(
     ['procedure-events', eventIds.join(',')],
-    () => supabase.from('events').select('id, starts_at').in('id', eventIds),
+    () => supabase.from('events').select('id, title, starts_at').in('id', eventIds),
     eventIds.length > 0,
   );
 

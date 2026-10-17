@@ -17,6 +17,32 @@ export function patchProcedure(procedureId: string, change: (p: Procedure) => Pr
 export const sortedSteps = (p: Procedure): ProcedureStep[] =>
   [...p.procedure_steps].sort((a, b) => a.position - b.position);
 
+/** Sposta il passaggio di `delta` posti (-1 su, +1 giù); fuori dai bordi l'ordine resta com'è. */
+export function movedOrder(steps: ProcedureStep[], stepId: string, delta: number): ProcedureStep[] {
+  const from = steps.findIndex((s) => s.id === stepId);
+  const to = from + delta;
+  if (from < 0 || to < 0 || to >= steps.length) {
+    return steps;
+  }
+  const next = [...steps];
+  next.splice(to, 0, next.splice(from, 1)[0]);
+  return next;
+}
+
+/** Riordina i passaggi: le posizioni diventano 0..n-1 nell'ordine dato, in una sola scrittura. */
+export async function moveStep(mutate: Mutate, p: Procedure, stepId: string, delta: number): Promise<void> {
+  const current = sortedSteps(p);
+  const ordered = movedOrder(current, stepId, delta);
+  if (ordered === current) {
+    return;
+  }
+  const renumbered = ordered.map((s, position) => ({ ...s, position }));
+  await mutate(
+    { table: 'procedure_steps', action: 'upsert', payload: renumbered },
+    patchProcedure(p.id, (x) => ({ ...x, procedure_steps: renumbered })),
+  );
+}
+
 export async function setProcedureStatus(
   mutate: Mutate,
   p: Procedure,
@@ -118,6 +144,56 @@ export async function setDocStep(
       procedure_docs: x.procedure_docs.map((d) => (d.id === docId ? { ...d, step_id: stepId } : d)),
     })),
   );
+}
+
+/** A cosa è legato un documento: una fase, un impegno o niente (generale). */
+export type DocTarget = { kind: 'step' | 'event'; id: string } | null;
+
+interface FileToAssign {
+  attachmentId: string;
+  name: string;
+  /** Riga `procedure_docs` del file, se ce n'è già una (altrimenti è un allegato nato su un impegno). */
+  docId: string | null;
+}
+
+/**
+ * Lega un file a una fase, a un impegno o a nessuno dei due. Un file sta in un posto solo:
+ * la fase vive su `procedure_docs.step_id`, l'impegno su `attachments.event_id`, quindi l'altro lato si svuota.
+ */
+export async function assignDoc(
+  mutate: Mutate,
+  p: Procedure,
+  file: FileToAssign,
+  target: DocTarget,
+): Promise<void> {
+  const eventId = target?.kind === 'event' ? target.id : null;
+  const stepId = target?.kind === 'step' ? target.id : null;
+  await mutate(
+    {
+      table: 'attachments',
+      action: 'update',
+      payload: { event_id: eventId },
+      match: { id: file.attachmentId },
+    },
+    [],
+  );
+  if (file.docId) {
+    await setDocStep(mutate, p, file.docId, stepId);
+    return;
+  }
+  if (!eventId) {
+    const doc = {
+      id: newId(),
+      procedure_id: p.id,
+      name: file.name,
+      attachment_id: file.attachmentId,
+      step_id: stepId,
+    };
+    await mutate(
+      { table: 'procedure_docs', action: 'upsert', payload: doc },
+      patchProcedure(p.id, (x) => ({ ...x, procedure_docs: [...x.procedure_docs, doc] })),
+    );
+  }
 }
 
 export async function updateStep(

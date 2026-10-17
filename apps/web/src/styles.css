@@ -2900,6 +2900,20 @@ a.chip[aria-pressed='true'] {
   flex: 1;
   min-width: 0;
 }
+.step-move {
+  display: flex;
+  flex-direction: column;
+}
+.step-move button {
+  min-width: 44px;
+  min-height: 22px;
+  display: grid;
+  place-items: center;
+  color: var(--text-2);
+}
+.step-move button:disabled {
+  opacity: 0.3;
+}
 .doc-step {
   width: 45%;
   min-height: 44px;

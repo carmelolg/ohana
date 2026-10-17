@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { fakeMutate } from '../../test-utils/fakeMutate';
 import type { Procedure, ProcedureStep } from '../../lib/types';
-import { addStep, createProcedure, patchProcedure, toggleStep } from './procedureCommands';
+import {
+  addStep,
+  assignDoc,
+  createProcedure,
+  moveStep,
+  patchProcedure,
+  toggleStep,
+} from './procedureCommands';
 import { findProcedureTemplate } from '@ohana/shared';
 
 const step = (id: string, position: number, done: boolean): ProcedureStep => ({
@@ -112,5 +119,53 @@ describe('createProcedure', () => {
       template,
     });
     expect(steps()).toEqual(['upsert:procedures']);
+  });
+});
+
+describe('moveStep', () => {
+  it('sposta il passaggio e rinumera le posizioni in una sola scrittura', async () => {
+    const { mutate, steps, payloadAt } = fakeMutate();
+    const p = procedure([step('a', 0, false), step('b', 1, false), step('c', 2, false)]);
+    await moveStep(mutate, p, 'c', -1);
+    expect(steps()).toEqual(['upsert:procedure_steps']);
+    expect(payloadAt<ProcedureStep[]>(0).map((s) => [s.id, s.position])).toEqual([
+      ['a', 0],
+      ['c', 1],
+      ['b', 2],
+    ]);
+  });
+
+  it('ai bordi non scrive nulla', async () => {
+    const { mutate, calls } = fakeMutate();
+    const p = procedure([step('a', 0, false), step('b', 1, false)]);
+    await moveStep(mutate, p, 'a', -1);
+    await moveStep(mutate, p, 'b', 1);
+    expect(calls).toHaveLength(0);
+  });
+});
+
+describe('assignDoc', () => {
+  const file = { attachmentId: 'f1', name: 'preventivo.pdf', docId: 'd1' };
+
+  it('legare un documento a un impegno svuota la fase', async () => {
+    const { mutate, steps, payloadAt } = fakeMutate();
+    await assignDoc(mutate, procedure([]), file, { kind: 'event', id: 'e1' });
+    expect(steps()).toEqual(['update:attachments', 'update:procedure_docs']);
+    expect(payloadAt(0)).toEqual({ event_id: 'e1' });
+    expect(payloadAt(1)).toEqual({ step_id: null });
+  });
+
+  it('un allegato nato su un impegno e legato a una fase diventa un documento della pratica', async () => {
+    const { mutate, steps, payloadAt } = fakeMutate();
+    await assignDoc(mutate, procedure([]), { ...file, docId: null }, { kind: 'step', id: 'a' });
+    expect(steps()).toEqual(['update:attachments', 'upsert:procedure_docs']);
+    expect(payloadAt(0)).toEqual({ event_id: null });
+    expect(payloadAt<{ step_id: string }>(1).step_id).toBe('a');
+  });
+
+  it("spostare un allegato da impegno a impegno cambia solo l'allegato", async () => {
+    const { mutate, steps } = fakeMutate();
+    await assignDoc(mutate, procedure([]), { ...file, docId: null }, { kind: 'event', id: 'e2' });
+    expect(steps()).toEqual(['update:attachments']);
   });
 });

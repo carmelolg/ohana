@@ -1,3 +1,4 @@
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDay, formatTime } from '@ohana/shared';
 import { CheckButton } from '../../components/CheckButton';
 import type { ProcedureStep } from '../../lib/types';
@@ -9,10 +10,12 @@ interface Props {
   writable: boolean;
   onToggle: (step: ProcedureStep) => void;
   onOpen: (step: ProcedureStep) => void;
+  /** Sposta un passaggio di un posto (-1 su, +1 giù). */
+  onMove: (step: ProcedureStep, delta: number) => void;
 }
 
 /** Passaggi della pratica: casella per completarli, tocco sul titolo per i dettagli. */
-export function StepList({ steps, eventDates, writable, onToggle, onOpen }: Props) {
+export function StepList({ steps, eventDates, writable, onToggle, onOpen, onMove }: Props) {
   const current = steps.findIndex((s) => !s.done_at);
   return (
     <div className="card" style={{ marginTop: 18, padding: '4px 16px' }}>
@@ -74,6 +77,20 @@ export function StepList({ steps, eventDates, writable, onToggle, onOpen }: Prop
                 </span>
               )}
             </button>
+            {writable && steps.length > 1 && (
+              <div className="step-move">
+                <button aria-label={`Sposta su: ${s.title}`} disabled={i === 0} onClick={() => onMove(s, -1)}>
+                  <ChevronUp size={18} />
+                </button>
+                <button
+                  aria-label={`Sposta giù: ${s.title}`}
+                  disabled={i === steps.length - 1}
+                  onClick={() => onMove(s, 1)}
+                >
+                  <ChevronDown size={18} />
+                </button>
+              </div>
+            )}
           </div>
         );
       })}
