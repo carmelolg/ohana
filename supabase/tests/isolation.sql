@@ -450,6 +450,20 @@ delete from documents;
 select t.as_user('00000000-0000-0000-0000-00000000000a');
 select t.expect_count('select 1 from documents', 1, 'viewer non elimina documenti');
 
+-- ---- checklist dell'impegno: segue lo spazio dell'impegno
+select t.as_user('00000000-0000-0000-0000-00000000000a');
+insert into event_checklist_items (id, event_id, text) values ('aaaaaaaa-0000-0000-0000-0000000000c2', 'aaaaaaaa-0000-0000-0000-0000000000e2', 'portare gli esami');
+select t.expect_count($$select 1 from event_checklist_items where event_id = 'aaaaaaaa-0000-0000-0000-0000000000e2'$$, 1, 'il proprietario legge la checklist');
+select t.as_user('00000000-0000-0000-0000-00000000000e');
+select t.expect_count($$select 1 from event_checklist_items where event_id = 'aaaaaaaa-0000-0000-0000-0000000000e2'$$, 1, 'chi consulta legge la checklist');
+select t.expect_error($$insert into event_checklist_items (event_id, text) values ('aaaaaaaa-0000-0000-0000-0000000000e2', 'x')$$, 'chi consulta non aggiunge voci alla checklist');
+select t.expect_count($$with u as (update event_checklist_items set checked = true where id = 'aaaaaaaa-0000-0000-0000-0000000000c2' returning 1) select 1 from u$$, 0, 'chi consulta non spunta la checklist');
+select t.as_user('00000000-0000-0000-0000-00000000000d');
+select t.expect_count($$select 1 from event_checklist_items$$, 0, 'un estraneo non legge la checklist');
+select t.expect_error($$insert into event_checklist_items (event_id, text) values ('aaaaaaaa-0000-0000-0000-0000000000e2', 'x')$$, 'un estraneo non scrive nella checklist');
+select t.expect_count($$with d as (delete from event_checklist_items where id = 'aaaaaaaa-0000-0000-0000-0000000000c2' returning 1) select 1 from d$$, 0, 'un estraneo non cancella la checklist');
+select t.as_su();
+
 -- ---- cascate: eliminare lo spazio elimina tutto
 delete from spaces where id = 'aaaaaaaa-0000-0000-0000-000000000001';
 select t.as_su();
@@ -682,6 +696,31 @@ select t.expect_error('select * from allowed_emails', 'authenticated non legge l
 select t.expect_error($$insert into allowed_emails (email) values ('dario@test.it')$$, 'authenticated non scrive nell''allowlist');
 select t.expect_error($$select before_user_created_hook('{"user":{"email":"x@test.it"}}')$$, 'authenticated non chiama l''hook');
 select t.expect_error($$select is_email_admitted('capo@test.it')$$, 'authenticated non interroga l''allowlist');
+select t.as_su();
+
+-- ---- registri del Worker: nessun utente li vede né li scrive
+select t.as_user('00000000-0000-0000-0000-00000000000a');
+select t.expect_error($$select 1 from digest_log$$, 'nessun utente legge il registro dei riepiloghi');
+select t.expect_error($$insert into digest_log (user_id, day, kind) values ('00000000-0000-0000-0000-00000000000a', current_date, 'x')$$, 'nessun utente scrive nel registro dei riepiloghi');
+select t.expect_error($$select 1 from brief_log$$, 'nessun utente legge il registro dei brief');
+select t.expect_error($$insert into brief_log (user_id, day) values ('00000000-0000-0000-0000-00000000000a', current_date)$$, 'nessun utente scrive nel registro dei brief');
+select t.as_su();
+
+-- ---- funzioni security definer: anon non esegue nulla tranne l'anteprima dell'invito
+select t.expect_count($$select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.prosecdef and p.proname <> 'get_invite_preview'
+    and (has_function_privilege('anon', p.oid, 'execute') or has_function_privilege('public', p.oid, 'execute'))$$,
+  0, 'anon e PUBLIC non eseguono funzioni security definer');
+select t.expect_count($$select 1 where has_function_privilege('anon', 'public.get_invite_preview(text)', 'execute')$$, 1, 'anon vede l''anteprima dell''invito');
+select t.expect_count($$select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.prosecdef and p.prorettype = 'trigger'::regtype
+    and has_function_privilege('authenticated', p.oid, 'execute')$$,
+  0, 'authenticated non esegue le funzioni dei trigger');
+select t.expect_count($$select 1 where has_function_privilege('authenticated', 'public.insert_default_categories(uuid)', 'execute')$$, 0, 'authenticated non esegue insert_default_categories');
+set role anon;
+select t.expect_error($$select accept_invite('tok-carla')$$, 'anon non accetta inviti');
+select t.expect_error($$select update_member_profile('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a', 'X', 'Y', null)$$, 'anon non modifica profili');
+select t.expect_error($$select is_member('aaaaaaaa-0000-0000-0000-000000000001')$$, 'anon non interroga l''appartenenza');
 select t.as_su();
 
 -- ---- cascata: eliminare lo spazio elimina la Cura
