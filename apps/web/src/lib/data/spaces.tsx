@@ -22,6 +22,9 @@ export function useSpaces() {
 interface SpaceCtx {
   spaces: Space[];
   loading: boolean;
+  /** La lettura è fallita e non c'è nulla in cache: «nessuno spazio» qui non significa account nuovo. */
+  failed: boolean;
+  retry: () => void;
   selected: string; // id dello spazio attivo ('all' solo se l'utente non ha spazi)
   setSelected: (id: string) => void;
   current: Space | null; // null solo se l'utente non ha spazi
@@ -45,7 +48,7 @@ export function useSpace(): SpaceCtx {
 
 export function SpaceProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
-  const { data: spaces = [], isLoading } = useSpaces();
+  const { data: spaces = [], isPending, isError, refetch } = useSpaces();
   const [selected, setSel] = useState(loadSelectedSpace);
   const uid = session?.user.id;
 
@@ -65,7 +68,10 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     const myRole = (id: string) => spaceById(id)?.space_members.find((m) => m.user_id === uid)?.role;
     return {
       spaces,
-      loading: isLoading && spaces.length === 0,
+      // isPending (non isLoading): resta vero anche mentre la richiesta è in pausa o non è ancora partita
+      loading: isPending && spaces.length === 0,
+      failed: isError && spaces.length === 0,
+      retry: () => void refetch(),
       selected: sel,
       setSelected: (id) => {
         setSel(id);
@@ -79,7 +85,7 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
       myRole,
       canWrite: (id) => !!id && WRITER_ROLES.includes(myRole(id) as SpaceRole),
     };
-  }, [spaces, isLoading, selected, uid]);
+  }, [spaces, isPending, isError, refetch, selected, uid]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './lib/auth';
 import { SpaceProvider, useSpace } from './lib/data';
 import { ToastProvider } from './lib/toast';
 import { DialogProvider } from './lib/dialog';
+import { decideGate } from './lib/gate';
 import { configured } from './lib/supabase';
 import { Shell } from './components/Shell';
 import { LoginPage } from './pages/Login';
@@ -35,43 +36,64 @@ const ScanPage = lazy(() => import('./pages/Scan'));
 const CareRoutes = named(() => import('./pages/care/CareRoutes'), 'CareRoutes');
 const VisitPrepPage = named(() => import('./pages/care/VisitPrepPage'), 'VisitPrepPage');
 
+function MissingConfig() {
+  return (
+    <div className="login" role="main">
+      <div className="hero">
+        <h1>Ohana</h1>
+        <p>
+          Mancano le variabili <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>. Copia{' '}
+          <code>.env.example</code> in <code>.env</code> e riavvia.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SpacesError({ retry }: { retry: () => void }) {
+  return (
+    <div className="empty" role="alert">
+      <p>Non riesco a caricare i tuoi spazi. Controlla la connessione e riprova.</p>
+      <button className="btn" onClick={retry}>
+        Riprova
+      </button>
+    </div>
+  );
+}
+
 function Gate() {
   const { session, loading } = useAuth();
-  const { spaces, loading: spacesLoading } = useSpace();
+  const space = useSpace();
   const loc = useLocation();
-  if (!configured) {
-    return (
-      <div className="login" role="main">
-        <div className="hero">
-          <h1>Ohana</h1>
-          <p>
-            Mancano le variabili <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>. Copia{' '}
-            <code>.env.example</code> in <code>.env</code> e riavvia.
-          </p>
-        </div>
-      </div>
-    );
+  const view = decideGate({
+    configured,
+    authLoading: loading,
+    hasSession: !!session,
+    spacesPending: space.loading,
+    spacesFailed: space.failed,
+    spaceCount: space.spaces.length,
+    path: loc.pathname,
+  });
+  switch (view) {
+    case 'setup':
+      return <MissingConfig />;
+    case 'loading':
+      return <div className="empty">Caricamento…</div>;
+    case 'invite':
+      return (
+        <Routes>
+          <Route path="/invito/:token" element={<InvitePage />} />
+        </Routes>
+      );
+    case 'login':
+      return <LoginPage />;
+    case 'spaces-error':
+      return <SpacesError retry={space.retry} />;
+    case 'onboarding':
+      return <Navigate to="/benvenuto" replace />;
+    case 'app':
+      return <AppRoutes />;
   }
-  if (loading) {
-    return <div className="empty">Caricamento…</div>;
-  }
-  if (loc.pathname.startsWith('/invito/')) {
-    return (
-      <Routes>
-        <Route path="/invito/:token" element={<InvitePage />} />
-      </Routes>
-    );
-  }
-  if (!session) {
-    return <LoginPage />;
-  }
-  if (spacesLoading) {
-    return <div className="empty">Caricamento…</div>;
-  }
-  if (spaces.length === 0 && !loc.pathname.startsWith('/benvenuto')) {
-    return <Navigate to="/benvenuto" replace />;
-  }
-  return <AppRoutes />;
 }
 
 /** Le pagine dell'app: ogni funzione opzionale di uno spazio passa da `FeatureGate`. */

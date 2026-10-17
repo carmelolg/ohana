@@ -22,6 +22,9 @@ const persister = {
 
 registerSW({ immediate: true });
 
+// Chiede al browser di non sfrattare i dati dell'app (sessione, cache) quando Android libera spazio.
+void navigator.storage?.persist?.();
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <PersistQueryClientProvider
