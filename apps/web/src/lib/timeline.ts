@@ -18,7 +18,8 @@ const MORNING_HOUR = 9; // una data senza orario cade al mattino, così non sciv
 export interface TimelineChip {
   id: string;
   label: string;
-  onOpen: () => void;
+  /** Apre il file: la chiamata si attende, così il pulsante può mostrare che sta lavorando. */
+  onOpen: () => Promise<unknown>;
 }
 
 /** Azione sulla riga (es. «Allega referto»): un pulsante accanto ai chip dei file. */
@@ -67,9 +68,9 @@ const plannedLabel = (at: number) => `In programma · ${TIME.format(new Date(at)
 
 interface CareContext {
   authorName: (id: string) => string;
-  openFile: (path: string) => void;
+  openFile: (path: string) => Promise<unknown>;
   /** Allegati degli impegni: stanno nel bucket generico, non in quello della Cura. */
-  openAttachment: (path: string) => void;
+  openAttachment: (path: string) => Promise<unknown>;
   /** Azioni per chi può scrivere (allegare un referto); senza, le righe restano di sola lettura. */
   actions?: {
     entry: (entry: CareEntry) => TimelineAction;

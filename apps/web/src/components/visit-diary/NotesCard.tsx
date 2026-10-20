@@ -7,6 +7,7 @@ import { openAttachment, uploadAttachment } from '../../lib/files';
 import { useToast } from '../../lib/toast';
 import type { EventRow } from '../../lib/types';
 import { addVisitNote, deleteVisitNote, saveTicketAmount } from './visitCommands';
+import { ActionButton } from '../ActionButton';
 
 const ticketText = (amount: number | string | null) => String(amount).replace('.', ',');
 
@@ -81,14 +82,14 @@ function Reports({
   return (
     <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
       {ev.attachments.map((a) => (
-        <button
+        <ActionButton
           key={a.id}
           className="pill"
           style={{ alignSelf: 'flex-start' }}
-          onClick={() => void openAttachment(a.path)}
+          onAction={() => openAttachment(a.path)}
         >
           <Paperclip size={14} /> {a.name}
-        </button>
+        </ActionButton>
       ))}
       {writable && (
         <button

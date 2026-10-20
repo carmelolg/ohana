@@ -14,6 +14,8 @@ interface Props {
   /** Presente solo per chi può correggere nome e cognome (il proprietario, sugli altri). */
   onEditProfile: (() => void) | null;
   onLeaveOrRemove: () => void;
+  /** Cambio di ruolo o rimozione in corso: la riga resta bloccata finché la richiesta non finisce. */
+  busy: boolean;
 }
 
 /** Una persona dello spazio: avatar, nome, ruolo (modificabile se si può) e uscita/rimozione. */
@@ -25,6 +27,7 @@ export function MemberRow({
   onRole,
   onEditProfile,
   onLeaveOrRemove,
+  busy,
 }: Props) {
   const name = fullName(m.profiles);
   const canLeaveOrRemove = isSelf || canEdit;
@@ -49,6 +52,8 @@ export function MemberRow({
           aria-label={`Ruolo di ${name}`}
           value={m.role}
           onChange={(e) => onRole(e.target.value as SpaceRole)}
+          disabled={busy}
+          aria-busy={busy}
         >
           {assignableRoles(myRole).map((r) => (
             <option key={r} value={r}>
@@ -76,6 +81,8 @@ export function MemberRow({
             aria-label={isSelf ? 'Esci' : 'Rimuovi'}
             title={isSelf ? 'Esci dallo spazio' : 'Rimuovi dallo spazio'}
             onClick={onLeaveOrRemove}
+            disabled={busy}
+            aria-busy={busy}
           >
             {isSelf ? <LogOut size={18} strokeWidth={1.75} /> : <UserMinus size={18} strokeWidth={1.75} />}
           </button>

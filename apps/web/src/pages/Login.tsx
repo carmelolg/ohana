@@ -25,10 +25,12 @@ export function LoginForm({ redirectTo, defaultEmail = '' }: { redirectTo?: stri
     }
   }
   async function google() {
+    setBusy(true);
     try {
       await signInWithGoogle(target);
     } catch (e) {
       setErr((e as Error).message);
+      setBusy(false);
     }
   }
 
@@ -61,8 +63,8 @@ export function LoginForm({ redirectTo, defaultEmail = '' }: { redirectTo?: stri
       <button className="btn" type="submit" disabled={busy || !email}>
         Ricevi il link per entrare
       </button>
-      <button className="btn ghost" type="button" onClick={google}>
-        Continua con Google
+      <button className="btn ghost" type="button" onClick={google} disabled={busy} aria-busy={busy}>
+        {busy ? 'Apro Google…' : 'Continua con Google'}
       </button>
       {err && (
         <p className="error" role="alert">

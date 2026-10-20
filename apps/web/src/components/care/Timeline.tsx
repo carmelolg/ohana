@@ -31,8 +31,8 @@ export function Timeline({ entries, upcoming = NO_EVENTS, hue, authorName, year,
     () =>
       careRows(entries, upcoming, {
         authorName,
-        openFile: (path) => void openCareFile(path),
-        openAttachment: (path) => void openAttachment(path),
+        openFile: (path) => openCareFile(path),
+        openAttachment: (path) => openAttachment(path),
         actions,
       }),
     [entries, upcoming, authorName, actions],

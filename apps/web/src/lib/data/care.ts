@@ -34,6 +34,40 @@ export const useCareThreads = () =>
     supabase.from('care_threads').select('*').order('created_at'),
   );
 
+/** Prossimo passo del diario di una visita, con il filone della visita (`events.care_thread_id`). */
+interface VisitStepRow {
+  id: string;
+  title: string;
+  due_date: string | null;
+  due_hint: string | null;
+  created_event_id: string | null;
+  // relazione incorporata many-to-one: PostgREST la restituisce come oggetto, non come array
+  events: { care_thread_id: string };
+}
+
+/** Passi del diario di tutte le visite che stanno in un filone: compaiono come prossimi passi del filone. */
+export const useCareVisitSteps = () => {
+  const query = useAuthedQuery<VisitStepRow[]>(['care', 'visit-steps'], () =>
+    supabase
+      .from('follow_ups')
+      .select('id, title, due_date, due_hint, created_event_id, events!inner(care_thread_id)')
+      .not('events.care_thread_id', 'is', null),
+  );
+  const data = useMemo(
+    () =>
+      (query.data ?? []).map((row) => ({
+        id: row.id,
+        title: row.title,
+        due_date: row.due_date,
+        due_hint: row.due_hint,
+        event_id: row.created_event_id,
+        thread_id: row.events.care_thread_id,
+      })),
+    [query.data],
+  );
+  return { ...query, data };
+};
+
 export const useCareEntries = (recipientId: string | undefined) =>
   useAuthedQuery<CareEntry[]>(
     ['care', 'entries', recipientId],

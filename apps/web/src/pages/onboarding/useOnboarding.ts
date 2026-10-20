@@ -6,6 +6,7 @@ import { createSpace, updateSpace } from '../../lib/api/spaces';
 import { updateProfile } from '../../lib/api/profiles';
 import { useAuth } from '../../lib/auth';
 import { useSpace } from '../../lib/data';
+import { useBusyAction } from '../../lib/useBusyAction';
 
 export type OnboardingStep = 'profile' | 'space' | 'invite' | 'done';
 
@@ -25,11 +26,16 @@ export function useOnboarding() {
   const [disabled, setDisabled] = useState<string[]>([]);
   const [spaceId, setSpaceId] = useState<string | null>(null);
   const [err, setErr] = useState('');
+  const { busy: saving, run } = useBusyAction();
 
   const toggle = (key: SpaceFeature) => setDisabled((d) => toggleFeature(d, key, d.includes(key)));
 
   /** Salva la persona e crea lo spazio: serve prima dell'invito, che ha bisogno dello spazio. */
   async function createFirstSpace() {
+    await run(saveFirstSpace);
+  }
+
+  async function saveFirstSpace() {
     const uid = session!.user.id;
     const id = spaceId ?? crypto.randomUUID();
     try {
@@ -65,6 +71,7 @@ export function useOnboarding() {
     person: { first, setFirst, last, setLast, nick, setNick },
     space: { name, setName, hue, setHue, disabled, toggle },
     createFirstSpace,
+    saving,
     finish,
   };
 }

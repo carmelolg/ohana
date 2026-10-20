@@ -13,7 +13,11 @@ const dueDateLabel = (f: FollowUp) =>
   f.due_hint ?? (f.due_date ? formatDate(new Date(f.due_date + 'T09:00:00')) : '');
 
 /** Testo pre-compilato per «Crea impegno» dal prossimo passo. */
-function eventTextFor(f: FollowUp): string {
+export function eventTextFor(f: {
+  title: string;
+  due_date?: string | null;
+  due_hint?: string | null;
+}): string {
   if (f.due_date) {
     return `${f.title} entro il ${formatDate(new Date(f.due_date + 'T09:00:00'))}`;
   }
@@ -93,6 +97,15 @@ function FollowUpRow({ followUp: f, writable, onCreateEvent, onReminder, onDelet
   );
 }
 
+/** Parametri di «Crea impegno»: il testo, il passo da chiudere e il filone della visita, se ce l'ha. */
+function createEventParams(visit: EventRow, f: FollowUp): URLSearchParams {
+  return new URLSearchParams({
+    text: eventTextFor(f),
+    followup: f.id,
+    ...(visit.care_thread_id ? { filone: visit.care_thread_id } : {}),
+  });
+}
+
 function NewFollowUpForm({ onAdd }: { onAdd: (title: string, hint: string) => void }) {
   const [title, setTitle] = useState('');
   const [hint, setHint] = useState('');
@@ -160,9 +173,7 @@ export function FollowUps({ visit: ev, writable }: { visit: EventRow; writable: 
             key={f.id}
             followUp={f}
             writable={writable}
-            onCreateEvent={() =>
-              nav(`/nuovo?${new URLSearchParams({ text: eventTextFor(f), followup: f.id })}`)
-            }
+            onCreateEvent={() => nav(`/nuovo?${createEventParams(ev, f)}`)}
             onReminder={() => setReminderFor(f)}
             onDelete={() => void deleteFollowUp(mutate, f.id)}
           />

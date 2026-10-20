@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Avatar } from '../../components/ui';
 import { uploadAvatar } from '../../lib/api/profiles';
 import { useAuth } from '../../lib/auth';
@@ -14,15 +14,19 @@ export function ProfileIdentity({ profile }: { profile: Profile }) {
   const patch = useProfileUpdate();
   const toast = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   async function changePhoto(file: File | undefined) {
     if (!file) {
       return;
     }
+    setUploading(true);
     try {
       await patch({ avatar_url: await uploadAvatar(session!.user.id, await cropSquare(file)) });
     } catch (e) {
       toast('Foto non caricata: ' + (e as Error).message);
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -38,8 +42,13 @@ export function ProfileIdentity({ profile }: { profile: Profile }) {
       <div className="profile-id-text">
         <b>{fullName(profile) || 'Il mio profilo'}</b>
         <span className="muted">{profile.email}</span>
-        <button className="btn ghost small" onClick={() => fileRef.current?.click()}>
-          Cambia foto
+        <button
+          className="btn ghost small"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          aria-busy={uploading}
+        >
+          {uploading ? 'Caricamento foto…' : 'Cambia foto'}
         </button>
         <input
           ref={fileRef}

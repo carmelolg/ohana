@@ -4,10 +4,11 @@ import { Link, useParams } from 'react-router-dom';
 import { formatReading, readingInfo, threadValues } from '@ohana/shared';
 import { BackLink } from '../../components/BackLink';
 import { ThreadTag } from '../../components/care/ThreadTag';
+import { ThreadSteps } from '../../components/care/ThreadSteps';
 import { Timeline } from '../../components/care/Timeline';
 import { logCareAccess } from '../../lib/api/care';
 import { careColor } from '../../lib/color';
-import { useCareEntries, useCareEvents, useMeasurements, useSpace } from '../../lib/data';
+import { useCareEntries, useCareEvents, useCareVisitSteps, useMeasurements, useSpace } from '../../lib/data';
 import type { CareEntry, CareThread, Medication } from '../../lib/types';
 import { AddEntrySheet } from './AddEntrySheet';
 import { useReportAttach } from './useReportAttach';
@@ -130,6 +131,12 @@ function useThreadEvents(tid: string | undefined, filter: FilterKey) {
   );
 }
 
+/** Prossimi passi del diario delle visite del filone che non sono ancora impegni. */
+function useThreadSteps(tid: string | undefined) {
+  const { data: visitSteps = [] } = useCareVisitSteps();
+  return useMemo(() => visitSteps.filter((s) => s.thread_id === tid && !s.event_id), [visitSteps, tid]);
+}
+
 /** Filone (4b): ogni visita, esame, cambio di terapia ed episodio è un tassello in ordine di tempo. */
 export function CareThreadPage() {
   const { rid, tid } = useParams();
@@ -139,6 +146,7 @@ export function CareThreadPage() {
   const [adding, setAdding] = useState(false);
   const { own, shown } = useThreadEntries(rid, tid, filter);
   const scheduled = useThreadEvents(tid, filter);
+  const steps = useThreadSteps(tid);
   const thread = data.threads.find((t) => t.id === tid);
   const report = useReportAttach(thread, data.canWrite);
 
@@ -200,6 +208,7 @@ export function CareThreadPage() {
           </button>
         ))}
       </div>
+      <ThreadSteps threadId={thread.id} steps={steps} canWrite={data.canWrite} />
       {shown.length === 0 && scheduled.length === 0 ? (
         <div className="empty">
           Ancora nessun tassello. Si aggiungono chiudendo una visita o con «+ Aggiungi».

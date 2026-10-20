@@ -185,7 +185,7 @@ const step = (over: Partial<ProcedureStep>): ProcedureStep => ({
 
 describe('procedureRows', () => {
   it('gli allegati dell’impegno compaiono sulla riga del passaggio e su quella degli impegni collegati', () => {
-    const chip = (id: string) => [{ id, label: id, onOpen: () => undefined }];
+    const chip = (id: string) => [{ id, label: id, onOpen: () => Promise.resolve() }];
     const rows = procedureRows(
       [step({ event_id: 'ev' })],
       new Map([['ev', '2026-05-04T07:00:00Z']]),

@@ -20,12 +20,14 @@ export function InvitePage() {
   const qc = useQueryClient();
   const [pv, setPv] = useState<InvitePreview | null | undefined>(undefined);
   const [err, setErr] = useState('');
+  const [joining, setJoining] = useState(false);
 
   useEffect(() => {
     void previewInvite(token).then(setPv);
   }, [token]);
 
   async function accept() {
+    setJoining(true);
     try {
       const spaceId = await acceptInvite(token);
       await qc.invalidateQueries({ queryKey: ['spaces'] });
@@ -33,6 +35,7 @@ export function InvitePage() {
       nav('/oggi', { replace: true });
     } catch {
       setErr('Invito non valido per questo account. Accedi con ' + pv?.email);
+      setJoining(false);
     }
   }
 
@@ -73,8 +76,8 @@ export function InvitePage() {
       <div className="actions">
         {session ? (
           <>
-            <button className="btn accent" onClick={accept}>
-              Entra in {pv.space_name}
+            <button className="btn accent" onClick={accept} disabled={joining} aria-busy={joining}>
+              {joining ? 'Entrata in corso…' : `Entra in ${pv.space_name}`}
             </button>
             {err && (
               <p className="error" role="alert">

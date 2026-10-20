@@ -3,6 +3,7 @@ import { WORKER_URL } from '../config';
 import { newId } from '../outbox';
 import { supabase } from '../supabase';
 import { unwrap } from './result';
+import { trackBusy } from '../busy';
 
 export interface ImportInput {
   spaceId: string;
@@ -32,7 +33,7 @@ export function buildImportRow(input: ImportInput) {
 export async function connectCalendar(input: ImportInput): Promise<string> {
   const row = buildImportRow(input);
   try {
-    unwrap(await supabase.from('calendar_imports').insert(row));
+    unwrap(await trackBusy(async () => supabase.from('calendar_imports').insert(row)));
   } catch {
     throw new Error('Non sono riuscito a collegare il calendario. Controlla la connessione e riprova.');
   }
@@ -41,7 +42,7 @@ export async function connectCalendar(input: ImportInput): Promise<string> {
 
 export async function disconnectCalendar(id: string): Promise<void> {
   try {
-    unwrap(await supabase.from('calendar_imports').delete().eq('id', id));
+    unwrap(await trackBusy(async () => supabase.from('calendar_imports').delete().eq('id', id)));
   } catch {
     throw new Error('Non sono riuscito a scollegare il calendario. Controlla la connessione e riprova.');
   }
@@ -75,11 +76,13 @@ export async function syncCalendarNow(id: string): Promise<SyncOutcome> {
   }
   let res: Response;
   try {
-    res = await fetch(`${WORKER_URL}/calendar/sync`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    });
+    res = await trackBusy(() =>
+      fetch(`${WORKER_URL}/calendar/sync`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      }),
+    );
   } catch {
     throw new Error(syncFailureMessage(0)); // offline o Worker irraggiungibile
   }

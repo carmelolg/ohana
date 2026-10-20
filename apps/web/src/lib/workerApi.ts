@@ -1,5 +1,6 @@
 import { WORKER_URL } from './config';
 import { supabase } from './supabase';
+import { trackBusy } from './busy';
 
 export interface LlmFields {
   docType?: string;
@@ -15,11 +16,13 @@ export async function llmParse(text: string): Promise<LlmFields> {
   if (!token) {
     throw new Error('Accesso richiesto');
   }
-  const r = await fetch(`${WORKER_URL}/scan/parse`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: text.slice(0, 6000) }),
-  });
+  const r = await trackBusy(() =>
+    fetch(`${WORKER_URL}/scan/parse`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text.slice(0, 6000) }),
+    }),
+  );
   if (!r.ok) {
     throw new Error(
       r.status === 403

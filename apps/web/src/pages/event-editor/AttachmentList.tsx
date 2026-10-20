@@ -1,6 +1,7 @@
 import { Paperclip, X } from 'lucide-react';
 import { openAttachment } from '../../lib/files';
 import type { Attachment } from '../../lib/types';
+import { ActionButton } from '../../components/ActionButton';
 
 interface Props {
   saved: Attachment[];
@@ -17,13 +18,13 @@ export function AttachmentList({ saved, pending, onRemovePending }: Props) {
           <div className="label">Allegati</div>
           {saved.map((a) => (
             <div key={a.id} className="item">
-              <button
+              <ActionButton
                 className="txt"
                 style={{ textAlign: 'left', minHeight: 44 }}
-                onClick={() => void openAttachment(a.path)}
+                onAction={() => openAttachment(a.path)}
               >
                 <Paperclip size={16} /> {a.name}
-              </button>
+              </ActionButton>
             </div>
           ))}
         </div>

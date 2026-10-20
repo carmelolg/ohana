@@ -8,6 +8,7 @@ import { openAttachment } from '../../lib/files';
 import { useToast } from '../../lib/toast';
 import type { CareFile } from '../../lib/types';
 import { useRecipientData } from './useRecipientData';
+import { ActionButton } from '../../components/ActionButton';
 
 const FULL_DATE = new Intl.DateTimeFormat('it-IT', {
   timeZone: 'Europe/Rome',
@@ -23,19 +24,19 @@ function FileRow({
 }: {
   file: CareFile;
   label: string;
-  onRemove: (() => void) | null;
+  onRemove: (() => Promise<unknown>) | null;
 }) {
   return (
     <div className="kv">
-      <button type="button" className="file-chip" onClick={() => void openCareFile(file.path)}>
+      <ActionButton className="file-chip" onAction={() => openCareFile(file.path)}>
         📎 {file.name}
-      </button>
+      </ActionButton>
       <span className="muted" style={{ fontSize: 13, fontWeight: 400 }}>
         {label} · {FULL_DATE.format(new Date(file.created_at))}
         {onRemove && (
-          <button type="button" className="icon-btn" aria-label={`Elimina ${file.name}`} onClick={onRemove}>
+          <ActionButton className="icon-btn" aria-label={`Elimina ${file.name}`} onAction={onRemove}>
             ×
-          </button>
+          </ActionButton>
         )}
       </span>
     </div>
@@ -53,9 +54,9 @@ function EventAttachments({ events }: { events: CareReminderEvent[] }) {
         {events.flatMap((e) =>
           e.attachments.map((a) => (
             <div className="kv" key={a.id}>
-              <button type="button" className="file-chip" onClick={() => void openAttachment(a.path)}>
+              <ActionButton className="file-chip" onAction={() => openAttachment(a.path)}>
                 📎 {a.name}
-              </button>
+              </ActionButton>
               <span className="muted" style={{ fontSize: 13, fontWeight: 400 }}>
                 {e.title} · {FULL_DATE.format(new Date(e.starts_at))}
               </span>
@@ -142,7 +143,7 @@ export function CareFilesPage() {
             key={f.id}
             file={f}
             label={entries.find((e) => e.id === f.entry_id)?.title ?? 'Senza tassello'}
-            onRemove={data.canWrite ? () => void removeCareFile(f.id, f.path).then(refresh) : null}
+            onRemove={data.canWrite ? () => removeCareFile(f.id, f.path).then(refresh) : null}
           />
         ))}
       </div>

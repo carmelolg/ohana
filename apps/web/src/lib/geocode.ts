@@ -1,5 +1,6 @@
 // Ricerca e geocodifica inversa su dati OpenStreetMap tramite Photon (photon.komoot.io, gratuito).
 // Politica d'uso: richieste moderate (attesa dopo l'ultimo tasto / dopo che la mappa si ferma) e attribuzione «© OpenStreetMap contributors».
+import { trackBusy } from './busy';
 
 export interface Place {
   label: string;
@@ -121,7 +122,7 @@ export async function searchPlaces(
   }
   const urls = buildSearchUrls(query, near, zoom);
   const get = async (u: string): Promise<Place[]> => {
-    const r = await fetch(u, { signal });
+    const r = await trackBusy(() => fetch(u, { signal }));
     if (!r.ok) {
       throw new Error(`Ricerca indirizzi non disponibile (${r.status})`);
     }
@@ -154,9 +155,11 @@ export async function searchPlaces(
 
 /** Indirizzo del punto indicato (geocodifica inversa). */
 export async function reversePlace(at: LatLng, signal?: AbortSignal): Promise<string | null> {
-  const r = await fetch(
-    `${PHOTON}/reverse?${new URLSearchParams({ lat: String(at.lat), lon: String(at.lng), limit: '1' })}`,
-    { signal },
+  const r = await trackBusy(() =>
+    fetch(
+      `${PHOTON}/reverse?${new URLSearchParams({ lat: String(at.lat), lon: String(at.lng), limit: '1' })}`,
+      { signal },
+    ),
   );
   if (!r.ok) {
     throw new Error(`Indirizzo non disponibile (${r.status})`);

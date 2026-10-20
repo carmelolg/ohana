@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { newId } from './outbox';
+import { trackBusy } from './busy';
 
 export const safeName = (n: string) => n.replace(/[^\w.-]+/g, '_');
 
@@ -11,16 +12,18 @@ export async function uploadAttachment(
   opts: { eventId?: string; folder?: string } = {},
 ) {
   const path = `${spaceId}/${opts.folder ?? 'file'}/${Date.now()}-${safeName(name)}`;
-  const up = await supabase.storage
-    .from('attachments')
-    .upload(path, file, { contentType: file.type || undefined });
+  const up = await trackBusy(async () =>
+    supabase.storage.from('attachments').upload(path, file, { contentType: file.type || undefined }),
+  );
   if (up.error) {
     throw new Error(up.error.message);
   }
   const id = newId();
-  const { error } = await supabase
-    .from('attachments')
-    .insert({ id, space_id: spaceId, event_id: opts.eventId ?? null, path, name });
+  const { error } = await trackBusy(async () =>
+    supabase
+      .from('attachments')
+      .insert({ id, space_id: spaceId, event_id: opts.eventId ?? null, path, name }),
+  );
   if (error) {
     throw new Error(error.message);
   }
@@ -28,7 +31,9 @@ export async function uploadAttachment(
 }
 
 export async function openAttachment(path: string) {
-  const { data } = await supabase.storage.from('attachments').createSignedUrl(path, 60);
+  const { data } = await trackBusy(async () =>
+    supabase.storage.from('attachments').createSignedUrl(path, 60),
+  );
   if (data) {
     window.open(data.signedUrl, '_blank', 'noopener');
   }
@@ -37,9 +42,9 @@ export async function openAttachment(path: string) {
 /** Elimina il file dallo storage e la sua riga di allegato. */
 export async function removeAttachment(attachmentId: string, path: string | undefined): Promise<void> {
   if (path) {
-    await supabase.storage.from('attachments').remove([path]);
+    await trackBusy(async () => supabase.storage.from('attachments').remove([path]));
   }
-  await supabase.from('attachments').delete().eq('id', attachmentId);
+  await trackBusy(async () => supabase.from('attachments').delete().eq('id', attachmentId));
 }
 
 /** Carica un file allegato a un impegno (`<spazio>/<impegno>/…`). Lancia se l'upload fallisce (es. offline). */
@@ -49,7 +54,7 @@ export async function uploadAttachmentToEvent(
   file: File,
 ): Promise<{ path: string }> {
   const path = `${spaceId}/${eventId}/${Date.now()}-${safeName(file.name)}`;
-  const { error } = await supabase.storage.from('attachments').upload(path, file);
+  const { error } = await trackBusy(async () => supabase.storage.from('attachments').upload(path, file));
   if (error) {
     throw new Error(error.message);
   }

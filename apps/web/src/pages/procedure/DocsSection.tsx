@@ -5,6 +5,7 @@ import { openAttachment, uploadAttachment } from '../../lib/files';
 import { useToast } from '../../lib/toast';
 import type { Procedure, ProcedureDoc, ProcedureStep } from '../../lib/types';
 import { assignDoc, type DocTarget } from './procedureCommands';
+import { ActionButton } from '../../components/ActionButton';
 
 interface Props {
   procedure: Procedure;
@@ -75,15 +76,15 @@ function targetLabel(t: DocTarget, steps: ProcedureStep[], events: Props['events
 function UploadedRow({ row, steps, events, writable, onAssign }: RowProps) {
   return (
     <div className="doc-row">
-      <button
+      <ActionButton
         className="doc-open"
         aria-label={`Apri ${row.name}`}
         disabled={!row.path}
-        onClick={() => row.path && void openAttachment(row.path)}
+        onAction={() => (row.path ? openAttachment(row.path) : Promise.resolve())}
       >
         <Check size={16} strokeWidth={3} />
         <span>{row.name}</span>
-      </button>
+      </ActionButton>
       {writable ? (
         <TargetSelect row={row} steps={steps} events={events} onAssign={onAssign} />
       ) : (

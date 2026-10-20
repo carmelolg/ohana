@@ -11,6 +11,7 @@ export function Onboarding() {
         <SpaceStep
           space={o.space}
           err={o.err}
+          saving={o.saving}
           onNext={() => void o.createFirstSpace()}
           onBack={() => o.setStep('profile')}
         />

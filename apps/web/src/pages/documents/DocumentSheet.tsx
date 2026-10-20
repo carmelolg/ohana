@@ -2,6 +2,7 @@ import { Sheet } from '../../components/ui';
 import { openAttachment } from '../../lib/files';
 import type { DocumentRow } from '../../lib/types';
 import { DOC_DATE } from './listing';
+import { ActionButton } from '../../components/ActionButton';
 
 interface Props {
   doc: DocumentRow;
@@ -46,9 +47,13 @@ export function DocumentSheet({ doc, canDelete, onDelete, onClose }: Props) {
         )}
         <div className="hstack" style={{ flexWrap: 'wrap' }}>
           {doc.attachments && (
-            <button className="btn" onClick={() => void openAttachment(doc.attachments!.path)}>
+            <ActionButton
+              className="btn"
+              busyLabel="Apro…"
+              onAction={() => openAttachment(doc.attachments!.path)}
+            >
               Apri file
-            </button>
+            </ActionButton>
           )}
           {canDelete && (
             <button className="btn danger small" onClick={onDelete}>

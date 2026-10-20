@@ -556,6 +556,24 @@ describe('scheda del filone', () => {
   ];
   const now = romeToDate(2026, 10, 9, 10);
 
+  it('il prossimo passo del diario di una visita del filone conta, se non è ancora un impegno', () => {
+    const steps = [
+      { id: 's1', thread_id: 'crohn', title: 'Holter 24 h', due_date: '2026-12-31', event_id: null },
+      { id: 's2', thread_id: 'crohn', title: 'Già in calendario', due_date: null, event_id: 'ev9' },
+      { id: 's3', thread_id: 'cardio', title: 'Altro filone', due_date: null, event_id: null },
+    ];
+    expect(threadOverview([], [], 'crohn', now, steps).next).toEqual({
+      kind: 'passo',
+      title: 'Holter 24 h',
+      hint: '2026-12-31',
+    });
+    expect(threadOverview([], [], 'cardio', now, steps).next).toEqual({
+      kind: 'passo',
+      title: 'Altro filone',
+      hint: null,
+    });
+  });
+
   it("conta i tasselli e indica l'ultimo", () => {
     expect(threadOverview(entries, [], 'cardio', now)).toMatchObject({
       count: 4,

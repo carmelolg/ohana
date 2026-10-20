@@ -58,7 +58,7 @@ export async function saveTicketAmount(mutate: Mutate, eventId: string, text: st
 }
 
 interface ReminderTarget {
-  visit: EventRow;
+  visit: Pick<EventRow, 'space_id' | 'contact_id' | 'assignee_id' | 'care_thread_id'>;
   followUp: FollowUp;
   /** `YYYY-MM-DD` scelto dall'utente. */
   date: string;
@@ -88,6 +88,7 @@ export async function createFollowUpReminder(
       starts_at: at.toISOString(),
       contact_id: visit.contact_id,
       assignee_id: visit.assignee_id,
+      care_thread_id: visit.care_thread_id,
       created_by: userId,
     },
   });

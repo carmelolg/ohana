@@ -43,13 +43,17 @@ export function ProcedureTimeline({ procedureId, spaceId, steps, eventDates, hue
         eventChipsOf: (eventId) =>
           eventAtts
             .filter((a) => a.event_id === eventId)
-            .map((a) => ({ id: a.id, label: `📎 ${a.name}`, onOpen: () => void openAttachment(a.path) })),
+            .map((a) => ({ id: a.id, label: `📎 ${a.name}`, onOpen: () => openAttachment(a.path) })),
         chipsOf: (stepId) =>
           docs
             .filter((d) => d.step_id === stepId)
             .map((d) => {
               const path = atts.find((a) => a.id === d.attachment_id)?.path;
-              return { id: d.id, label: `📎 ${d.name}`, onOpen: () => path && void openAttachment(path) };
+              return {
+                id: d.id,
+                label: `📎 ${d.name}`,
+                onOpen: () => (path ? openAttachment(path) : Promise.resolve()),
+              };
             }),
       }),
     [steps, eventDates, linked, contacts, docs, atts, eventAtts],

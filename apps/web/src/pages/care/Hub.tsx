@@ -7,13 +7,20 @@ import {
   type CareTodo,
   type DoseItem,
   type ThreadOverview,
+  type VisitStep,
 } from '@ohana/shared';
 import { BackLink } from '../../components/BackLink';
 import { DoseChecklist } from '../../components/care/DoseChecklist';
 import { PersonChips } from '../../components/care/PersonChips';
 import { TodoList } from '../../components/care/TodoList';
 import { useAuth } from '../../lib/auth';
-import { useCareEntries, useCareEvents, useSpace, type CareReminderEvent } from '../../lib/data';
+import {
+  useCareEntries,
+  useCareEvents,
+  useCareVisitSteps,
+  useSpace,
+  type CareReminderEvent,
+} from '../../lib/data';
 import type { CareEntry, CareRecipient, Medication } from '../../lib/types';
 import { useMediaQuery } from '../../lib/useMediaQuery';
 import { DesktopColumns } from './DesktopColumns';
@@ -37,14 +44,21 @@ interface HubView {
 }
 
 /** Tutto ciò che la scheda mostra, calcolato dai dati: panoramica dei filoni, dosi di oggi, «Da fare», prossima visita. */
-function useHubView(data: RecipientData, entries: CareEntry[], events: CareReminderEvent[]): HubView {
+function useHubView(
+  data: RecipientData,
+  entries: CareEntry[],
+  events: CareReminderEvent[],
+  visitSteps: VisitStep[],
+): HubView {
   const { recipient } = data;
   return useMemo(() => {
     const now = new Date();
     const mine = events.filter((e) => data.threads.some((t) => t.id === e.care_thread_id));
     const taken = data.doses.filter((d) => data.meds.some((m) => m.id === d.medication_id));
     return {
-      overviews: new Map(data.threads.map((t) => [t.id, threadOverview(entries, mine, t.id, now)])),
+      overviews: new Map(
+        data.threads.map((t) => [t.id, threadOverview(entries, mine, t.id, now, visitSteps)]),
+      ),
       todayItems: dosesOfDay(data.meds, taken, now),
       todos: recipient
         ? careTodos({
@@ -62,7 +76,7 @@ function useHubView(data: RecipientData, entries: CareEntry[], events: CareRemin
         .filter((e) => e.status === 'open' && new Date(e.starts_at) >= now)
         .sort((a, b) => a.starts_at.localeCompare(b.starts_at))[0],
     };
-  }, [data.threads, data.meds, data.doses, entries, events, recipient]);
+  }, [data.threads, data.meds, data.doses, entries, events, visitSteps, recipient]);
 }
 
 const tagOf = (data: RecipientData) => (med: Medication) => {
@@ -183,7 +197,8 @@ export function CareHubPage() {
   const desktop = useMediaQuery('(min-width: 1024px)');
   const { data: entries = [] } = useCareEntries(recipient?.id);
   const { data: events = [] } = useCareEvents();
-  const view = useHubView(data, entries, events);
+  const { data: visitSteps = [] } = useCareVisitSteps();
+  const view = useHubView(data, entries, events, visitSteps);
 
   if (data.loading) {
     return (

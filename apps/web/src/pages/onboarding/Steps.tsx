@@ -4,6 +4,7 @@ import { HueSwatches } from '../../components/HueSwatches';
 import { createInvite, inviteLink } from '../../lib/api/spaces';
 import { useAuth } from '../../lib/auth';
 import { shareInviteLink } from '../../lib/shareInvite';
+import { useBusyAction } from '../../lib/useBusyAction';
 
 const NAME_SUGGESTIONS = ['Casa mia', 'Famiglia', 'Mamma e papà'];
 
@@ -20,11 +21,14 @@ export function ProfileStep({
   person,
   onNext,
   requireLast = false,
+  saving = false,
 }: {
   person: PersonProps;
   onNext: () => void;
   /** Chi arriva da un invito deve indicare anche il cognome. */
   requireLast?: boolean;
+  /** Salvataggio in corso: il pulsante resta bloccato finché la persona non è scritta. */
+  saving?: boolean;
 }) {
   return (
     <form
@@ -60,8 +64,8 @@ export function ProfileStep({
         value={person.nick}
         onChange={(e) => person.setNick(e.target.value)}
       />
-      <button className="btn accent" type="submit">
-        Continua
+      <button className="btn accent" type="submit" disabled={saving} aria-busy={saving}>
+        {saving ? 'Salvo…' : 'Continua'}
       </button>
     </form>
   );
@@ -76,8 +80,14 @@ interface SpaceProps {
   toggle: (key: SpaceFeature) => void;
 }
 
-export function SpaceStep(props: { space: SpaceProps; err: string; onNext: () => void; onBack: () => void }) {
-  const { space, err, onNext, onBack } = props;
+export function SpaceStep(props: {
+  space: SpaceProps;
+  err: string;
+  saving: boolean;
+  onNext: () => void;
+  onBack: () => void;
+}) {
+  const { space, err, saving, onNext, onBack } = props;
   return (
     <form
       className="hero"
@@ -133,10 +143,10 @@ export function SpaceStep(props: { space: SpaceProps; err: string; onNext: () =>
           {err}
         </p>
       )}
-      <button className="btn accent" type="submit">
-        Continua
+      <button className="btn accent" type="submit" disabled={saving} aria-busy={saving}>
+        {saving ? 'Creo lo spazio…' : 'Continua'}
       </button>
-      <button className="btn ghost" type="button" onClick={onBack}>
+      <button className="btn ghost" type="button" onClick={onBack} disabled={saving}>
         Indietro
       </button>
     </form>
@@ -153,12 +163,15 @@ export function InviteStep({ spaceId, spaceName, onNext }: InviteProps) {
   const { session } = useAuth();
   const [email, setEmail] = useState('');
   const [msg, setMsg] = useState('');
+  const { busy, run } = useBusyAction();
 
   async function invite(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const created = await createInvite(spaceId, email, 'member', session!.user.id);
-      const outcome = await shareInviteLink(spaceName, inviteLink(created));
+      const outcome = await run(async () => {
+        const created = await createInvite(spaceId, email, 'member', session!.user.id);
+        return shareInviteLink(spaceName, inviteLink(created));
+      });
       setMsg(outcome === 'copied' ? 'Link copiato · valido 7 giorni' : 'Invito condiviso');
       setEmail('');
     } catch (e2) {
@@ -180,8 +193,8 @@ export function InviteStep({ spaceId, spaceName, onNext }: InviteProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <button className="btn ghost" type="submit">
-          Condividi il link
+        <button className="btn ghost" type="submit" disabled={busy} aria-busy={busy}>
+          {busy ? 'Preparo il link…' : 'Condividi il link'}
         </button>
       </form>
       {msg && <p role="status">{msg}</p>}

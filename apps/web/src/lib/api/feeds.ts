@@ -1,6 +1,7 @@
 import { supabase } from '../supabase';
 import { useAuthedQuery } from '../data/query';
 import { unwrap } from './result';
+import { trackBusy } from '../busy';
 
 export interface CalendarFeed {
   id: string;
@@ -15,9 +16,13 @@ export const useCalendarFeeds = (userId: string) =>
   );
 
 export async function createCalendarFeed(userId: string, spaceId: string | null): Promise<void> {
-  unwrap(await supabase.from('calendar_feeds').insert({ user_id: userId, space_id: spaceId }));
+  unwrap(
+    await trackBusy(async () =>
+      supabase.from('calendar_feeds').insert({ user_id: userId, space_id: spaceId }),
+    ),
+  );
 }
 
 export async function deleteCalendarFeed(id: string): Promise<void> {
-  unwrap(await supabase.from('calendar_feeds').delete().eq('id', id));
+  unwrap(await trackBusy(async () => supabase.from('calendar_feeds').delete().eq('id', id)));
 }

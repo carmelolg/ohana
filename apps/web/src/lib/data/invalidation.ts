@@ -16,7 +16,7 @@ export const TABLE_KEYS: Record<string, string[]> = {
   board_notes: ['board'],
   board_reads: ['board-reads'],
   visit_notes: ['visit'],
-  follow_ups: ['visit'],
+  follow_ups: ['visit', 'care'], // i prossimi passi del diario compaiono anche nel filone della visita
   emergency_info: ['emergency'],
   maintenances: ['maintenances', 'events'],
   calendar_imports: ['calendar-imports'],

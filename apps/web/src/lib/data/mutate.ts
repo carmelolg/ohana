@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { trackBusy } from '../busy';
 import { write, type NewOp } from '../outbox';
 import { TABLE_KEYS } from './invalidation';
 
@@ -21,7 +22,7 @@ export function useMutate(): Mutate {
       qc.setQueriesData({ queryKey: o.key }, o.patch);
     }
     try {
-      const result = await write(op);
+      const result = await trackBusy(() => write(op));
       if (result === 'sent') {
         for (const k of TABLE_KEYS[op.table] ?? []) {
           await qc.invalidateQueries({ queryKey: [k] });

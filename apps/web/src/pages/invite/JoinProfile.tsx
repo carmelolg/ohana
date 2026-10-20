@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { updateProfile } from '../../lib/api/profiles';
 import { useAuth } from '../../lib/auth';
+import { useBusyAction } from '../../lib/useBusyAction';
 import { ProfileStep } from '../onboarding/Steps';
 
 /** Chi arriva da un invito deve presentarsi prima di entrare: gli altri membri vedranno nome e cognome. */
@@ -10,15 +11,18 @@ export function JoinProfile() {
   const [last, setLast] = useState(profile?.last_name ?? '');
   const [nick, setNick] = useState(profile?.nickname ?? '');
   const [err, setErr] = useState('');
+  const { busy: saving, run } = useBusyAction();
 
   async function save() {
     try {
-      await updateProfile(session!.user.id, {
-        first_name: first.trim(),
-        last_name: last.trim(),
-        nickname: nick.trim() || null,
+      await run(async () => {
+        await updateProfile(session!.user.id, {
+          first_name: first.trim(),
+          last_name: last.trim(),
+          nickname: nick.trim() || null,
+        });
+        await refreshProfile();
       });
-      await refreshProfile();
     } catch {
       setErr('Non riesco a salvare i tuoi dati. Riprova.');
     }
@@ -29,6 +33,7 @@ export function JoinProfile() {
       <ProfileStep
         person={{ first, setFirst, last, setLast, nick, setNick }}
         requireLast
+        saving={saving}
         onNext={() => void save()}
       />
       {err && (

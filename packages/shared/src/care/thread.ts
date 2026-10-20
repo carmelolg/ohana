@@ -24,12 +24,22 @@ export interface ThreadOverview {
     | null;
 }
 
-/** Riepilogo di un filone per la scheda (4a): quanti tasselli, l'ultimo e il prossimo. */
+/** Prossimo passo scritto nel diario di una visita del filone (tabella dedicata, non un tassello). */
+export interface VisitStep extends FollowUpItem {
+  id: string;
+  thread_id: string;
+}
+
+/**
+ * Riepilogo di un filone per la scheda (4a): quanti tasselli, l'ultimo e il prossimo.
+ * I prossimi passi vengono sia dai tasselli sia dal diario delle visite del filone: quelli già diventati impegni non contano.
+ */
 export function threadOverview(
   entries: ThreadEntry[],
   events: ThreadEvent[],
   threadId: string,
   now: Date,
+  visitSteps: VisitStep[] = [],
 ): ThreadOverview {
   const own = entries.filter((e) => e.thread_id === threadId);
   const newest = [...own].sort((a, b) => b.entry_date.localeCompare(a.entry_date))[0];
@@ -40,8 +50,7 @@ export function threadOverview(
         e.care_thread_id === threadId && e.status === 'open' && new Date(e.starts_at).getTime() >= todayStart,
     )
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at))[0];
-  const step = own
-    .flatMap((e) => e.follow_ups)
+  const step = [...own.flatMap((e) => e.follow_ups), ...visitSteps.filter((s) => s.thread_id === threadId)]
     .filter((f) => !f.event_id)
     .sort((a, b) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999'))[0];
   return {

@@ -23,16 +23,29 @@ export function MembersSection({ space, role }: { space: Space; role: SpaceRole 
   const nav = useNavigate();
   const me = session!.user.id;
   const [editing, setEditing] = useState<Member | null>(null);
+  /** Persona di cui si sta cambiando il ruolo o rimuovendo l'accesso: la sua riga resta bloccata finché la richiesta non finisce. */
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  async function changeRole(userId: string, next: SpaceRole) {
+    setPendingUserId(userId);
+    try {
+      await run(() => setMemberRole(space.id, userId, next));
+    } finally {
+      setPendingUserId(null);
+    }
+  }
 
   async function leaveOrRemove(userId: string) {
     const self = userId === me;
     if (!(await dialog.confirm(leaveDialog(self)))) {
       return;
     }
+    setPendingUserId(userId);
     try {
       await removeMember(space.id, userId);
     } catch (e) {
       return toast(removalError((e as Error).message));
+    } finally {
+      setPendingUserId(null);
     }
     await refresh();
     if (self) {
@@ -54,9 +67,10 @@ export function MembersSection({ space, role }: { space: Space; role: SpaceRole 
           isSelf={m.user_id === me}
           myRole={role}
           canEdit={canEditMember(role, m.role)}
-          onRole={(next) => run(() => setMemberRole(space.id, m.user_id, next))}
+          onRole={(next) => changeRole(m.user_id, next)}
           onEditProfile={canEditProfile(role) && m.user_id !== me ? () => setEditing(m) : null}
           onLeaveOrRemove={() => leaveOrRemove(m.user_id)}
+          busy={pendingUserId === m.user_id}
         />
       ))}
       {editing && (

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { careColor } from '../../lib/color';
 import type { TimelineRow } from '../../lib/timeline';
+import { ActionButton } from '../ActionButton';
 
 const DAY_MONTH = new Intl.DateTimeFormat('it-IT', {
   timeZone: 'Europe/Rome',
@@ -64,9 +65,9 @@ function Row({ row, hue, year, last }: { row: TimelineRow; hue: number; year: nu
         {(row.chips.length > 0 || row.action) && (
           <div className="tl-chips">
             {row.chips.map((chip) => (
-              <button key={chip.id} type="button" className="file-chip" onClick={chip.onOpen}>
+              <ActionButton key={chip.id} className="file-chip" onAction={chip.onOpen}>
                 {chip.label}
-              </button>
+              </ActionButton>
             ))}
             {row.action && (
               <button
