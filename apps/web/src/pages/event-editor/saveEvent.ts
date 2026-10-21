@@ -1,4 +1,5 @@
 import { overridesAfterEdit, parseMoneyInput } from '@ohana/shared';
+import { moveVisitToThread, type VisitRecord } from '../../lib/api/careThreadMove';
 import { uploadAttachmentToEvent } from '../../lib/files';
 import type { Mutate } from '../../lib/data';
 import { newId } from '../../lib/outbox';
@@ -29,6 +30,10 @@ export interface EventToSave {
   followUpId: string | null;
   /** Filone di cura a cui appartiene l'impegno (vuoto = nessuno). */
   careThreadId: string | null;
+  /** Persona assistita del filone scelto: serve se la visita cambia persona. */
+  careRecipientId: string | null;
+  /** Tassello della visita chiusa, se l'impegno è una visita: si sposta con il filone. */
+  visit: VisitRecord | null;
   /** Pratica o manutenzione collegata (`procedure:<id>` / `maintenance:<id>`; vuoto = nessuna). */
   linkKey: string;
 }
@@ -149,6 +154,18 @@ async function writeEventRow(mutate: Mutate, e: EventToSave, eventId: string): P
   await mutate({ table: 'events', action: 'update', payload: changes, match: { id: eventId } });
 }
 
+/** Una visita che cambia filone porta con sé tassello e scadenze: senza, resterebbero nel filone vecchio. */
+async function moveVisitIfThreadChanged(mutate: Mutate, e: EventToSave): Promise<void> {
+  const { visit, existing, careThreadId, careRecipientId } = e;
+  if (!visit || !existing || !careThreadId || !careRecipientId) {
+    return;
+  }
+  if (careThreadId === existing.care_thread_id) {
+    return;
+  }
+  await moveVisitToThread(mutate, visit, { threadId: careThreadId, recipientId: careRecipientId });
+}
+
 /**
  * Salva l'impegno con promemoria, checklist e allegati.
  * In modifica promemoria e checklist vengono riscritti da zero. Gli errori della scrittura principale si propagano.
@@ -156,6 +173,7 @@ async function writeEventRow(mutate: Mutate, e: EventToSave, eventId: string): P
 export async function saveEvent(mutate: Mutate, e: EventToSave): Promise<SaveResult> {
   const eventId = e.existing?.id ?? newId();
   await writeEventRow(mutate, e, eventId);
+  await moveVisitIfThreadChanged(mutate, e);
   if (e.existing) {
     await mutate({ table: 'event_reminders', action: 'delete', match: { event_id: eventId } });
     await mutate({ table: 'event_checklist_items', action: 'delete', match: { event_id: eventId } });

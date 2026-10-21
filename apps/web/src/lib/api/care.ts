@@ -1,6 +1,7 @@
 import type { Mutate } from '../data';
 import { supabase } from '../supabase';
-import type { CareExemption } from '../types';
+import type { CareEntry, CareExemption } from '../types';
+import { removeStoredCareFiles } from './careFiles';
 
 // Persone assistite e filoni di cura. I campi `created_by`/`author_id` non si scrivono mai: li imposta il database
 // con l'utente che scrive, così una modifica fatta da un altro non cambia l'autore originale.
@@ -100,6 +101,12 @@ export const deleteThread = (mutate: Mutate, id: string) =>
 
 export const deleteEntry = (mutate: Mutate, id: string) =>
   mutate({ table: 'care_entries', action: 'delete', match: { id } });
+
+/** Elimina il tassello e i suoi referti: prima i file dal bucket (serve la rete), poi la riga. */
+export async function removeEntryWithFiles(mutate: Mutate, entry: CareEntry): Promise<void> {
+  await removeStoredCareFiles(entry.care_files.map((f) => f.path));
+  await deleteEntry(mutate, entry.id);
+}
 
 export interface NoteToSave {
   id: string;

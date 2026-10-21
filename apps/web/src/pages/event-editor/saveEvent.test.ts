@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeMutate } from '../../test-utils/fakeMutate';
 import type { EventRow } from '../../lib/types';
+import type { VisitRecord } from '../../lib/api/careThreadMove';
 import { saveEvent, type EventToSave } from './saveEvent';
 
 const upload = vi.hoisted(() => vi.fn());
@@ -31,8 +32,18 @@ const base: EventToSave = {
   files: [],
   followUpId: null,
   careThreadId: null,
+  careRecipientId: null,
+  visit: null,
   linkKey: '',
 };
+
+const visitOfThread1: VisitRecord = {
+  entryId: 'entry1',
+  recipientId: 'r1',
+  threadId: 't1',
+  followUpEventIds: ['f1', 'f2'],
+};
+const existingVisit = { id: 'ev1', care_thread_id: 't1' } as unknown as EventRow;
 
 beforeEach(() => upload.mockReset());
 
@@ -125,6 +136,68 @@ describe('saveEvent', () => {
   it('un errore sulla scrittura principale si propaga', async () => {
     const { mutate } = fakeMutate((op) => op.table === 'events');
     await expect(saveEvent(mutate, base)).rejects.toThrow('scrittura rifiutata');
+  });
+});
+
+describe('saveEvent: visita spostata in un altro filone', () => {
+  it("cambia filone: sposta tassello e scadenze insieme all'impegno", async () => {
+    const { mutate, steps, payloadOf, calls } = fakeMutate();
+    await saveEvent(mutate, {
+      ...base,
+      existing: existingVisit,
+      visit: visitOfThread1,
+      careThreadId: 't2',
+      careRecipientId: 'r1',
+    });
+    // dopo la riga dell'impegno: tassello e scadenze, poi promemoria e checklist
+    expect(steps().slice(0, 4)).toEqual([
+      'update:events',
+      'update:care_entries',
+      'update:events',
+      'update:events',
+    ]);
+    expect(payloadOf('care_entries')).toMatchObject({
+      payload: { thread_id: 't2', recipient_id: 'r1' },
+      match: { id: 'entry1' },
+    });
+    expect(calls.slice(2, 4).map((c) => c.op)).toEqual([
+      { table: 'events', action: 'update', payload: { care_thread_id: 't2' }, match: { id: 'f1' } },
+      { table: 'events', action: 'update', payload: { care_thread_id: 't2' }, match: { id: 'f2' } },
+    ]);
+  });
+
+  it('cambia persona: sposta anche i file del referto', async () => {
+    const { mutate, payloadOf } = fakeMutate();
+    await saveEvent(mutate, {
+      ...base,
+      existing: existingVisit,
+      visit: visitOfThread1,
+      careThreadId: 't9',
+      careRecipientId: 'r2',
+    });
+    expect(payloadOf('care_files', 'update')).toMatchObject({
+      payload: { recipient_id: 'r2' },
+      match: { entry_id: 'entry1' },
+    });
+  });
+
+  it('stesso filone: non tocca tassello né scadenze', async () => {
+    const { mutate, steps } = fakeMutate();
+    await saveEvent(mutate, {
+      ...base,
+      existing: existingVisit,
+      visit: visitOfThread1,
+      careThreadId: 't1',
+      careRecipientId: 'r1',
+    });
+    expect(steps()).not.toContain('update:care_entries');
+    expect(steps()).not.toContain('update:care_files');
+  });
+
+  it('impegno nuovo o non visita: nessuno spostamento', async () => {
+    const { mutate, steps } = fakeMutate();
+    await saveEvent(mutate, { ...base, careThreadId: 't2', careRecipientId: 'r1' });
+    expect(steps()).not.toContain('update:care_entries');
   });
 });
 

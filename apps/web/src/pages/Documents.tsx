@@ -9,7 +9,7 @@ import type { DocumentRow } from '../lib/types';
 import { DocumentRowButton } from './documents/DocumentRowButton';
 import { DocumentSheet } from './documents/DocumentSheet';
 import { UploadSheet } from './documents/UploadSheet';
-import { deleteDocument } from './documents/documentCommands';
+import { deleteDocument, renameDocument } from './documents/documentCommands';
 import { foldersOf } from './documents/listing';
 
 function AddButtons({ onFile }: { onFile: (f: File | null) => void }) {
@@ -49,6 +49,8 @@ export default function DocumentsPage() {
   const now = useMemo(() => new Date(), []);
   const writable = canWrite(selected === 'all' ? defaultSpace?.id : selected);
   const scoped = docs.filter((d) => selected === 'all' || d.space_id === selected);
+  // il foglio legge la riga dalla lista: dopo una rinomina mostra il nome nuovo
+  const current = open ? (docs.find((d) => d.id === open.id) ?? open) : null;
 
   async function remove(d: DocumentRow) {
     const confirmed = await dialog.confirm({
@@ -96,11 +98,14 @@ export default function DocumentsPage() {
           Scansiona una bolletta o carica un referto: li ritrovi qui per cartella.
         </div>
       )}
-      {open && (
+      {current && (
         <DocumentSheet
-          doc={open}
-          canDelete={canWrite(open.space_id)}
-          onDelete={() => void remove(open)}
+          doc={current}
+          canDelete={canWrite(current.space_id)}
+          onRename={
+            canWrite(current.space_id) ? (title) => void renameDocument(mutate, current, title) : undefined
+          }
+          onDelete={() => void remove(current)}
           onClose={() => setOpen(null)}
         />
       )}

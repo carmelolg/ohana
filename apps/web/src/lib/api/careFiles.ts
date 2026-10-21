@@ -76,3 +76,14 @@ export async function removeCareFile(id: string, path: string): Promise<void> {
   await trackBusy(async () => supabase.storage.from('care').remove([path]));
   await trackBusy(async () => supabase.from('care_files').delete().eq('id', id));
 }
+
+/** Toglie i referti dal bucket privato: se fallisce non si cancella il tassello, che li tiene agganciati. */
+export async function removeStoredCareFiles(paths: string[]): Promise<void> {
+  if (paths.length === 0) {
+    return;
+  }
+  const { error } = await trackBusy(async () => supabase.storage.from('care').remove(paths));
+  if (error) {
+    throw new Error('Non riesco a eliminare i referti: serve la connessione');
+  }
+}

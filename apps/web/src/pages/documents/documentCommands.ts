@@ -16,6 +16,17 @@ export async function deleteDocument(mutate: Mutate, d: DocumentRow): Promise<vo
   }
 }
 
+/** Cambia il nome mostrato del documento (il file resta com'è). */
+export async function renameDocument(mutate: Mutate, d: DocumentRow, title: string): Promise<void> {
+  await mutate({ table: 'documents', action: 'update', payload: { title }, match: { id: d.id } }, [
+    {
+      key: ['documents'],
+      patch: (old: unknown) =>
+        ((old as DocumentRow[]) ?? []).map((x) => (x.id === d.id ? { ...x, title } : x)),
+    },
+  ]);
+}
+
 export interface UploadInput {
   file: File;
   spaceId: string;

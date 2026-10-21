@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
+import { visitRecordOf } from '../../lib/api/careThreadMove';
 import {
+  useCareEntryForEvent,
   useCareThreads,
   useCategories,
   useContacts,
@@ -63,6 +65,8 @@ function buildEventToSave({ src, draft, values, title, reminders }: ToSaveArgs) 
     files: draft.files,
     followUpId: src.search.get('followup'),
     careThreadId: draft.careThreadId || null,
+    careRecipientId: src.threads.find((t) => t.id === draft.careThreadId)?.recipient_id ?? null,
+    visit: src.visitEntry ? visitRecordOf(src.visitEntry) : null,
     linkKey: draft.linkKey,
   };
 }
@@ -75,6 +79,8 @@ function useEventSources(eventId: string | undefined) {
   const { data: existingEvent, isLoading } = useEvent(eventId);
   const { data: contacts = [] } = useContacts();
   const { data: allCategories = [] } = useCategories();
+  const { data: threads = [] } = useCareThreads();
+  const { data: visitEntry } = useCareEntryForEvent(eventId);
   return {
     search,
     profile,
@@ -84,6 +90,8 @@ function useEventSources(eventId: string | undefined) {
     isLoading,
     contacts,
     allCategories,
+    threads,
+    visitEntry: visitEntry ?? null,
   };
 }
 

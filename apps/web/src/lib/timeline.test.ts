@@ -184,16 +184,11 @@ const step = (over: Partial<ProcedureStep>): ProcedureStep => ({
 });
 
 describe('procedureRows', () => {
-  it('gli allegati dell’impegno compaiono sulla riga del passaggio e su quella degli impegni collegati', () => {
-    const chip = (id: string) => [{ id, label: id, onOpen: () => Promise.resolve() }];
-    const rows = procedureRows(
-      [step({ event_id: 'ev' })],
-      new Map([['ev', '2026-05-04T07:00:00Z']]),
-      [{ id: 'ev2', title: 'Sopralluogo', starts_at: '2026-05-05T07:00:00Z', status: 'open' }],
-      { eventChipsOf: (id) => chip('a-' + id) },
-    );
-    expect(rows.find((r) => r.id === 'ev2')?.chips.map((c) => c.id)).toEqual(['a-ev2']);
-    expect(rows.find((r) => r.id !== 'ev2')?.chips.map((c) => c.id)).toEqual(['a-ev']);
+  it('la cronologia non mostra allegati: i documenti stanno in Documenti e sull’impegno', () => {
+    const rows = procedureRows([step({ event_id: 'ev' })], new Map([['ev', '2026-05-04T07:00:00Z']]), [
+      { id: 'ev2', title: 'Sopralluogo', starts_at: '2026-05-05T07:00:00Z', status: 'open' },
+    ]);
+    expect(rows.every((r) => r.chips.length === 0)).toBe(true);
   });
 
   it('i passaggi aperti stanno sopra, nell’ordine inverso dell’iter; il primo da fare tocca l’ultimo fatto', () => {
@@ -277,5 +272,27 @@ describe('impegni collegati', () => {
   it('pratica: un impegno collegato in programma sta sopra i passaggi da fare', () => {
     const rows = procedureRows([step({ id: 's', position: 0 })], new Map(), [linkedOpen]);
     expect(rows.map((r) => r.id)).toEqual(['l1', 's']);
+  });
+});
+
+describe('careRows: azione «Elimina» sul tassello', () => {
+  it('compare solo se il contesto la concede per quel tassello', () => {
+    const removeEntry = vi.fn((e: CareEntry) => ({
+      label: 'Elimina',
+      ariaLabel: `Elimina ${e.title}`,
+      onClick: vi.fn(),
+    }));
+    const [row] = careRows([entry({ id: 'n', title: 'Nota' })], [], {
+      ...ctx,
+      actions: { entry: vi.fn(), event: vi.fn(), removeEntry },
+    });
+    expect(row.remove?.ariaLabel).toBe('Elimina Nota');
+    const [locked] = careRows([entry({ id: 'n' })], [], {
+      ...ctx,
+      actions: { entry: vi.fn(), event: vi.fn(), removeEntry: () => undefined },
+    });
+    expect(locked.remove).toBeUndefined();
+    const [readOnly] = careRows([entry({ id: 'n' })], [], ctx);
+    expect(readOnly.remove).toBeUndefined();
   });
 });

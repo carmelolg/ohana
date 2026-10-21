@@ -2072,6 +2072,9 @@ select.input {
   border: 0;
   color: inherit;
 }
+.file-chip.danger {
+  color: var(--danger);
+}
 .care-alert {
   background: var(--surface);
   border-radius: 16px;
