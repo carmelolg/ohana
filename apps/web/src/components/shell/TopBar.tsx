@@ -2,7 +2,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
 import { useSpace } from '../../lib/data';
 import { AvatarMenu } from '../AvatarMenu';
-import { ActivityIndicator } from './ActivityIndicator';
 import { BoardBell } from './BoardBell';
 
 interface Props {
@@ -55,7 +54,6 @@ export function TopBar({ editor, onSpaces, onSearch, onCreate }: Props) {
           <button className="icon-btn navbar-search-mobile" onClick={onSearch} aria-label="Cerca">
             <Search size={22} strokeWidth={1.75} />
           </button>
-          <ActivityIndicator />
           <BoardBell />
           <AvatarMenu onManageSpaces={onSpaces} />
         </div>

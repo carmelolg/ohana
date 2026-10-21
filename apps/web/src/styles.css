@@ -992,17 +992,26 @@ select.input {
 .mic.on {
   animation: pulse 1.2s infinite;
 }
-/* rotellina di attività nella barra in alto: sempre visibile mentre l'app lavora */
-.activity-spinner {
+/* rotellina di attività: fissa e centrata sotto la barra in alto, su ogni schermo, sempre sopra il contenuto */
+.activity-indicator {
+  position: fixed;
+  top: calc(var(--navbar-total, 64px) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 16px rgba(38, 33, 28, 0.18);
   color: var(--accent);
-  flex: none;
+  pointer-events: none;
 }
-.activity-spinner svg {
+.activity-indicator svg {
   animation: spin 0.9s linear infinite;
 }
 @keyframes spin {
@@ -1011,7 +1020,7 @@ select.input {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .activity-spinner svg {
+  .activity-indicator svg {
     animation-duration: 2.4s;
   }
 }
