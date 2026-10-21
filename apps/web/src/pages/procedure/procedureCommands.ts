@@ -102,6 +102,22 @@ export async function addStep(mutate: Mutate, p: Procedure, title: string): Prom
   }
 }
 
+/** Cambia il nome di un documento della pratica (richiesto o caricato). */
+export async function renameProcedureDoc(
+  mutate: Mutate,
+  p: Procedure,
+  docId: string,
+  name: string,
+): Promise<void> {
+  await mutate(
+    { table: 'procedure_docs', action: 'update', payload: { name }, match: { id: docId } },
+    patchProcedure(p.id, (x) => ({
+      ...x,
+      procedure_docs: x.procedure_docs.map((d) => (d.id === docId ? { ...d, name } : d)),
+    })),
+  );
+}
+
 export async function addRequiredDocument(mutate: Mutate, p: Procedure, name: string): Promise<void> {
   const doc = { id: newId(), procedure_id: p.id, name, attachment_id: null, step_id: null };
   await mutate(

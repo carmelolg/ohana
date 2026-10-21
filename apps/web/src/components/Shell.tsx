@@ -7,6 +7,7 @@ import { NewSheet } from './NewSheet';
 import { RightColumn } from './RightColumn';
 import { SearchSheet } from './SearchSheet';
 import { SpaceSheet } from './SpaceSheet';
+import { ActivityIndicator } from './shell/ActivityIndicator';
 import { ConnectionBar } from './shell/ConnectionBar';
 import { Sidebar } from './shell/Sidebar';
 import { TabBar } from './shell/TabBar';
@@ -51,6 +52,7 @@ export function Shell() {
           onSearch={() => setOverlay('search')}
           onCreate={() => setOverlay('new')}
         />
+        <ActivityIndicator />
         <ConnectionBar />
         <div className="app-body">
           <Sidebar />

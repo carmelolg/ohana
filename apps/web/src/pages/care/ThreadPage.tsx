@@ -11,6 +11,7 @@ import { careColor } from '../../lib/color';
 import { useCareEntries, useCareEvents, useCareVisitSteps, useMeasurements, useSpace } from '../../lib/data';
 import type { CareEntry, CareThread, Medication } from '../../lib/types';
 import { AddEntrySheet } from './AddEntrySheet';
+import { useEntryRemoval } from './useEntryRemoval';
 import { useReportAttach } from './useReportAttach';
 import { useRecipientData } from './useRecipientData';
 
@@ -149,6 +150,7 @@ export function CareThreadPage() {
   const steps = useThreadSteps(tid);
   const thread = data.threads.find((t) => t.id === tid);
   const report = useReportAttach(thread, data.canWrite);
+  const removal = useEntryRemoval(data.canWrite);
 
   // il registro degli accessi sa chi ha consultato il filone
   useEffect(() => {
@@ -217,7 +219,7 @@ export function CareThreadPage() {
         <Timeline
           entries={shown}
           upcoming={scheduled}
-          actions={report.actions}
+          actions={report.actions && { ...report.actions, removeEntry: removal.removeEntry }}
           hue={thread.color_hue}
           authorName={(id) => memberName(id).split(' ')[0]}
           year={new Date().getFullYear()}

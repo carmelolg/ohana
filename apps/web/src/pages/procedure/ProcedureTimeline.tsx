@@ -1,16 +1,9 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { TimelineList } from '../../components/timeline/TimelineList';
-import {
-  useAttachmentsByIds,
-  useContacts,
-  useEventAttachments,
-  useLinkedEvents,
-  useSpace,
-} from '../../lib/data';
+import { useContacts, useLinkedEvents, useSpace } from '../../lib/data';
 import { procedureRows } from '../../lib/timeline';
-import { openAttachment } from '../../lib/files';
-import type { Procedure, ProcedureStep } from '../../lib/types';
+import type { ProcedureStep } from '../../lib/types';
 
 interface Props {
   procedureId: string;
@@ -19,44 +12,19 @@ interface Props {
   /** Data degli impegni collegati ai passaggi, per id impegno. */
   eventDates: Map<string, string>;
   hue: number;
-  /** Documenti della pratica: quelli legati a una fase compaiono come chip sulla sua riga. */
-  docs: Procedure['procedure_docs'];
 }
 
 /** Cronologia della pratica: passaggi chiusi con la loro data e passaggi ancora da fare, nell'ordine dell'iter. */
-export function ProcedureTimeline({ procedureId, spaceId, steps, eventDates, hue, docs }: Props) {
+export function ProcedureTimeline({ procedureId, spaceId, steps, eventDates, hue }: Props) {
   const { canWrite } = useSpace();
   const { data: linked = [] } = useLinkedEvents('procedure', procedureId);
   const { data: contacts = [] } = useContacts();
-  const { data: atts = [] } = useAttachmentsByIds(
-    docs.filter((d) => d.step_id && d.attachment_id).map((d) => d.attachment_id as string),
-  );
-  const eventIds = useMemo(
-    () => [...steps.map((s) => s.event_id), ...linked.map((e) => e.id)].filter((id): id is string => !!id),
-    [steps, linked],
-  );
-  const { data: eventAtts = [] } = useEventAttachments(eventIds);
   const rows = useMemo(
     () =>
       procedureRows(steps, eventDates, linked, {
         contactName: (id) => contacts.find((c) => c.id === id)?.name,
-        eventChipsOf: (eventId) =>
-          eventAtts
-            .filter((a) => a.event_id === eventId)
-            .map((a) => ({ id: a.id, label: `📎 ${a.name}`, onOpen: () => openAttachment(a.path) })),
-        chipsOf: (stepId) =>
-          docs
-            .filter((d) => d.step_id === stepId)
-            .map((d) => {
-              const path = atts.find((a) => a.id === d.attachment_id)?.path;
-              return {
-                id: d.id,
-                label: `📎 ${d.name}`,
-                onOpen: () => (path ? openAttachment(path) : Promise.resolve()),
-              };
-            }),
       }),
-    [steps, eventDates, linked, contacts, docs, atts, eventAtts],
+    [steps, eventDates, linked, contacts],
   );
   return (
     <section aria-label="Cronologia della pratica">

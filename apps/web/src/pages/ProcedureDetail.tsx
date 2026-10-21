@@ -161,7 +161,6 @@ function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDe
           steps={steps}
           eventDates={eventDates}
           hue={space?.color_hue ?? 42}
-          docs={p.procedure_docs}
         />
       )}
 

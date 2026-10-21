@@ -238,12 +238,12 @@ export function useCareCard() {
 
 /** Il tassello creato chiudendo una visita (se già registrato). */
 export const useCareEntryForEvent = (eventId: string | undefined) =>
-  useAuthedQuery<Pick<CareEntry, 'id' | 'thread_id' | 'recipient_id'> | null>(
+  useAuthedQuery<Pick<CareEntry, 'id' | 'thread_id' | 'recipient_id' | 'follow_ups'> | null>(
     ['care', 'event-entry', eventId],
     () =>
       supabase
         .from('care_entries')
-        .select('id, thread_id, recipient_id')
+        .select('id, thread_id, recipient_id, follow_ups')
         .eq('event_id', eventId!)
         .eq('type', 'visita')
         .maybeSingle(),

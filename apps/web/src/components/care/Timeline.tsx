@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { openCareFile } from '../../lib/api/careFiles';
 import { openAttachment } from '../../lib/files';
 import type { CareReminderEvent } from '../../lib/data';
-import { careRows, type TimelineAction } from '../../lib/timeline';
+import { careRows, type CareActions } from '../../lib/timeline';
 import type { CareEntry } from '../../lib/types';
 import { TimelineList } from '../timeline/TimelineList';
 
@@ -19,10 +19,7 @@ interface Props {
   /** Mostra solo le prime righe (colonna del desktop). */
   limit?: number;
   /** Azioni sulle righe (allegare un referto): solo per chi può scrivere. */
-  actions?: {
-    entry: (entry: CareEntry) => TimelineAction;
-    event: (event: CareReminderEvent) => TimelineAction;
-  };
+  actions?: CareActions;
 }
 
 /** Linea del tempo verticale di un filone (4b): tasselli e impegni in programma insieme. */

@@ -7,6 +7,7 @@ import {
   createProcedure,
   moveStep,
   patchProcedure,
+  renameProcedureDoc,
   toggleStep,
 } from './procedureCommands';
 import { findProcedureTemplate } from '@ohana/shared';
@@ -167,5 +168,23 @@ describe('assignDoc', () => {
     const { mutate, steps } = fakeMutate();
     await assignDoc(mutate, procedure([]), { ...file, docId: null }, { kind: 'event', id: 'e2' });
     expect(steps()).toEqual(['update:attachments']);
+  });
+});
+
+describe('renameProcedureDoc', () => {
+  it('cambia il nome del documento della pratica, nel database e in cache', async () => {
+    const p = {
+      ...procedure([]),
+      procedure_docs: [{ id: 'd1', procedure_id: 'p1', name: 'ISEE', attachment_id: null, step_id: null }],
+    };
+    const { mutate, payloadOf, calls } = fakeMutate();
+    await renameProcedureDoc(mutate, p, 'd1', 'ISEE 2026');
+    expect(payloadOf('procedure_docs')).toMatchObject({
+      action: 'update',
+      payload: { name: 'ISEE 2026' },
+      match: { id: 'd1' },
+    });
+    const [cached] = calls[0].optimistic![0].patch([p]) as Procedure[];
+    expect(cached.procedure_docs[0].name).toBe('ISEE 2026');
   });
 });

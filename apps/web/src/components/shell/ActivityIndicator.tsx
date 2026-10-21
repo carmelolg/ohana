@@ -23,7 +23,7 @@ function useDelayedFlag(on: boolean): boolean {
 }
 
 /**
- * Rotellina nella barra in alto: si accende mentre l'app legge dal server, scrive, carica un file o parla con il Worker.
+ * Rotellina centrata sotto la barra in alto: si accende mentre l'app legge dal server, scrive, carica un file o parla con il Worker.
  * È l'unico segnale generale di attività; i pulsanti che aspettano una risposta mostrano anche il proprio stato.
  */
 export function ActivityIndicator() {
@@ -35,8 +35,8 @@ export function ActivityIndicator() {
     return null;
   }
   return (
-    <span className="activity-spinner" role="status" aria-label="Operazione in corso">
-      <Loader2 size={18} strokeWidth={2} aria-hidden />
+    <span className="activity-indicator" role="status" aria-label="Operazione in corso">
+      <Loader2 size={22} strokeWidth={2.5} aria-hidden />
     </span>
   );
 }

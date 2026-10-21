@@ -18,7 +18,11 @@ export function CareThreadSelect({
 }) {
   const people = useSpaceRecipients(spaceId);
   const { data: threads = [] } = useCareThreads();
-  const options = threads.filter((t) => t.status === 'attivo' && people.some((p) => p.id === t.recipient_id));
+  const nameOf = (recipientId: string) => careName(people.find((p) => p.id === recipientId)!);
+  const options = threads
+    .filter((t) => t.status === 'attivo' && people.some((p) => p.id === t.recipient_id))
+    .map((t) => ({ id: t.id, label: `${nameOf(t.recipient_id)} · ${t.title}` }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'it'));
   // cambiando spazio, un filone di un altro spazio non vale più (a dati caricati: prima non si può dire)
   useEffect(() => {
     if (value && threads.length > 0 && !options.some((t) => t.id === value)) {
@@ -28,7 +32,6 @@ export function CareThreadSelect({
   if (options.length === 0) {
     return null;
   }
-  const nameOf = (recipientId: string) => careName(people.find((p) => p.id === recipientId)!);
   return (
     <label className="kv">
       <span>Cura</span>
@@ -39,9 +42,9 @@ export function CareThreadSelect({
         onChange={(e) => onChange(e.target.value)}
       >
         <option value="">Nessuna</option>
-        {options.map((t) => (
-          <option key={t.id} value={t.id}>
-            {nameOf(t.recipient_id)} · {t.title}
+        {options.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.label}
           </option>
         ))}
       </select>
