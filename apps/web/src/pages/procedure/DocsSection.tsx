@@ -83,12 +83,12 @@ function UploadedRow({ row, steps, events, writable, onAssign }: RowProps) {
         onAction={() => (row.path ? openAttachment(row.path) : Promise.resolve())}
       >
         <Check size={16} strokeWidth={3} />
-        <span>{row.name}</span>
+        <span className="doc-name">{row.name}</span>
       </ActionButton>
       {writable ? (
         <TargetSelect row={row} steps={steps} events={events} onAssign={onAssign} />
       ) : (
-        <span className="muted">{targetLabel(row.target, steps, events)}</span>
+        <span className="muted doc-where">{targetLabel(row.target, steps, events)}</span>
       )}
     </div>
   );
@@ -108,7 +108,7 @@ function MissingRow({
     <div className="doc-row">
       <span className="doc-open">
         <Paperclip size={16} />
-        <span>{doc.name}</span>
+        <span className="doc-name">{doc.name}</span>
       </span>
       {writable && (
         <button className="pill" aria-label={`Carica ${doc.name}`} onClick={() => onPick(doc)}>
@@ -206,29 +206,27 @@ export function DocsSection({ procedure: p, steps, events, writable, onAdd }: Pr
 
   return (
     <section className="docs-section" aria-label="Documenti">
-      <div className="hstack" style={{ justifyContent: 'space-between' }}>
-        <span className="label">Documenti</span>
-        {writable && (
-          <div className="hstack">
-            <button className="pill" onClick={() => pick(null)}>
-              + Allega file
-            </button>
-            <button className="pill" onClick={onAdd}>
-              + Documento richiesto
-            </button>
-          </div>
-        )}
-      </div>
+      <span className="label">Documenti</span>
+      {writable && (
+        <div className="docs-actions">
+          <button className="pill" onClick={() => pick(null)}>
+            + Allega file
+          </button>
+          <button className="pill" onClick={onAdd}>
+            + Documento richiesto
+          </button>
+        </div>
+      )}
       {p.procedure_docs.length === 0 && rows.length === 0 && (
         <p className="muted">
           <FileText size={14} /> Nessun documento. Allega un file e legalo a una fase o a un impegno.
         </p>
       )}
-      {missing.length > 0 && <span className="muted">Da caricare · {missing.length}</span>}
+      {missing.length > 0 && <span className="muted docs-group">Da caricare · {missing.length}</span>}
       {missing.map((d) => (
         <MissingRow key={d.id} doc={d} writable={writable} onPick={pick} />
       ))}
-      {rows.length > 0 && <span className="muted">Caricati · {rows.length}</span>}
+      {rows.length > 0 && <span className="muted docs-group">Caricati · {rows.length}</span>}
       {rows.map((r) => (
         <UploadedRow
           key={r.attachmentId}

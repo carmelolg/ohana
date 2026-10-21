@@ -19,21 +19,18 @@ export const subtitleOf = (spaceName: string | undefined, ownerName: string | nu
 export function ProcedureHeader({ procedure: p, spaceName, ownerName, done, total }: Props) {
   return (
     <>
-      <div style={{ paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <span
-          className="muted"
-          style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}
-        >
+      <div className="proc-head">
+        <span className="muted proc-sub">
           <span className="dot" />
           {subtitleOf(spaceName, ownerName)}
         </span>
-        <h2 style={{ fontSize: 30, fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.1 }}>{p.title}</h2>
+        <h2 className="proc-title">{p.title}</h2>
         {p.status !== 'in_corso' && (
           <span className="badge">{p.status === 'completata' ? 'COMPLETATA' : 'ARCHIVIATA'}</span>
         )}
       </div>
-      <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+      <div className="proc-progress">
+        <div className="proc-progress-text">
           <b>
             {done} di {total} passaggi
           </b>
