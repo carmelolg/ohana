@@ -164,13 +164,15 @@ function ProcedureView({ procedure: p, onDeleted }: { procedure: Procedure; onDe
         />
       )}
 
-      <DocsSection
-        procedure={p}
-        steps={steps}
-        events={docEvents}
-        writable={writable}
-        onAdd={() => void askRequiredDocument(dialog, mutate, p)}
-      />
+      {tab === 'documenti' && (
+        <DocsSection
+          procedure={p}
+          steps={steps}
+          events={docEvents}
+          writable={writable}
+          onAdd={() => void askRequiredDocument(dialog, mutate, p)}
+        />
+      )}
 
       {openStep && (
         <StepSheet

@@ -9,10 +9,10 @@ interface Props {
 
 /** Schede della pratica: l'iter, la cronologia e i documenti non si impilano più in un'unica pagina lunga. */
 export function ProcedureTabs({ tab, onTab, missingDocs }: Props) {
-  const items: { key: ProcedureTab; label: string }[] = [
+  const items: { key: ProcedureTab; label: string; count?: number }[] = [
     { key: 'passaggi', label: 'Passaggi' },
     { key: 'cronologia', label: 'Cronologia' },
-    { key: 'documenti', label: missingDocs > 0 ? `Documenti · ${missingDocs} da caricare` : 'Documenti' },
+    { key: 'documenti', label: 'Documenti', count: missingDocs },
   ];
   return (
     <div className="proc-tabs" role="tablist" aria-label="Sezioni della pratica">
@@ -21,10 +21,16 @@ export function ProcedureTabs({ tab, onTab, missingDocs }: Props) {
           key={i.key}
           role="tab"
           aria-selected={tab === i.key}
+          aria-label={i.count ? `${i.label} · ${i.count} da caricare` : undefined}
           className="proc-tab"
           onClick={() => onTab(i.key)}
         >
           {i.label}
+          {!!i.count && (
+            <span className="proc-tab-count" aria-hidden="true">
+              {i.count}
+            </span>
+          )}
         </button>
       ))}
     </div>

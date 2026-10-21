@@ -255,6 +255,17 @@ p {
   margin: 0 auto;
   padding: 0 24px calc(110px + var(--safe-b));
 }
+/* telefoni stretti: 16 px di margine laterale lasciano spazio a nomi, selettori e pulsanti */
+@media (max-width: 400px) {
+  .main {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .chips {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
 .space-title {
   display: flex;
   align-items: center;
@@ -543,6 +554,7 @@ h2.page-title {
 .row .title {
   font-size: 17px;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 .row .meta {
   font-size: 13px;
@@ -699,6 +711,10 @@ select.input {
   align-items: center;
   gap: 10px;
 }
+/* un campo in riga con un pulsante deve potersi restringere, o spinge il pulsante fuori dallo schermo */
+.hstack > .input {
+  min-width: 0;
+}
 .banner {
   padding: 14px 16px;
   border-radius: 14px;
@@ -779,7 +795,10 @@ select.input {
   flex-direction: column;
   gap: 6px;
   max-height: 88vh;
+  /* dvh: con la barra degli indirizzi del telefono visibile il fondo del foglio non finisce sotto */
+  max-height: 88dvh;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .sheet .grab {
   width: 40px;
@@ -2888,20 +2907,116 @@ a.chip[aria-pressed='true'] {
 }
 .proc-tabs {
   overflow-x: auto;
+  scrollbar-width: none;
+}
+.proc-tabs::-webkit-scrollbar {
+  display: none;
 }
 .proc-tab {
-  flex: 1;
+  flex: 1 1 auto;
   white-space: nowrap;
   min-height: 44px;
   padding: 0 10px;
   border-radius: 20px;
   font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+/* numero dei documenti mancanti: un pallino, non una frase che su un telefono esce dalla scheda */
+.proc-tab .proc-tab-count {
+  margin-left: 0;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  opacity: 1;
 }
 .proc-tab[aria-selected='true'],
 .proc-tab[aria-pressed='true'] {
   background: var(--text);
   color: var(--surface);
   font-weight: 600;
+}
+/* testata della pratica */
+.proc-head {
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.proc-sub {
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.proc-title {
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.proc-progress {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.proc-progress-text {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-size: 14px;
+}
+/* passaggi della pratica */
+.step-list {
+  margin-top: 18px;
+  padding: 4px 16px;
+}
+.step-row {
+  display: flex;
+  gap: 6px;
+  padding: 4px 0;
+  align-items: flex-start;
+}
+.step-row + .step-row {
+  border-top: 1px solid var(--line);
+}
+.step-open {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 0;
+  min-height: 44px;
+}
+.proc-step-title {
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.proc-step-title.done {
+  color: var(--text-2);
+  text-decoration: line-through;
+}
+.step-when {
+  font-size: 13px;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.step-when.upcoming {
+  color: var(--accent-ink);
 }
 .step-next {
   font-size: 12px;
@@ -2916,13 +3031,30 @@ a.chip[aria-pressed='true'] {
   flex-direction: column;
   gap: 8px;
 }
+/* azioni sotto il titolo e a capo se serve: affiancate al titolo su un telefono si schiacciavano */
+.docs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.docs-actions .pill {
+  flex: 1 1 auto;
+  justify-content: center;
+  white-space: nowrap;
+}
+.docs-group {
+  margin-top: 8px;
+  font-size: 13px;
+}
+/* il nome sta sopra e va a capo; il selettore della fase scende sotto quando lo spazio non basta */
 .doc-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 4px 10px;
   min-height: 44px;
-  padding: 0 12px;
+  padding: 6px 12px;
   border-radius: 12px;
   background: var(--surface);
 }
@@ -2932,8 +3064,22 @@ a.chip[aria-pressed='true'] {
   gap: 8px;
   min-height: 44px;
   text-align: left;
-  flex: 1;
+  flex: 1 1 180px;
   min-width: 0;
+}
+.doc-open > svg {
+  flex: none;
+}
+/* nomi di file lunghi e senza spazi (IMG_2026…pdf): a capo ovunque invece di uscire dallo schermo */
+.doc-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.doc-row > .pill {
+  flex: none;
+}
+.doc-where {
+  font-size: 13px;
 }
 .step-move {
   display: flex;
@@ -2950,8 +3096,12 @@ a.chip[aria-pressed='true'] {
   opacity: 0.3;
 }
 .doc-step {
-  width: 45%;
+  flex: 1 1 160px;
+  width: auto;
+  min-width: 0;
   min-height: 44px;
+  font-size: 14px;
+  text-overflow: ellipsis;
 }
 .phase-summary {
   margin-top: 14px;
