@@ -102,6 +102,11 @@ export async function addStep(mutate: Mutate, p: Procedure, title: string): Prom
   }
 }
 
+/** Cambia il nome di un allegato nato su un impegno (non ha una riga `procedure_docs`). */
+export async function renameAttachment(mutate: Mutate, attachmentId: string, name: string): Promise<void> {
+  await mutate({ table: 'attachments', action: 'update', payload: { name }, match: { id: attachmentId } });
+}
+
 /** Cambia il nome di un documento della pratica (richiesto o caricato). */
 export async function renameProcedureDoc(
   mutate: Mutate,
