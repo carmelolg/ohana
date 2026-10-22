@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { TimelineList } from '../../components/timeline/TimelineList';
-import { useContacts, useLinkedEvents, useSpace } from '../../lib/data';
+import { useContacts, useEventAttachments, useLinkedEvents, useSpace } from '../../lib/data';
+import { openAttachment } from '../../lib/files';
 import { procedureRows } from '../../lib/timeline';
 import type { ProcedureStep } from '../../lib/types';
 
@@ -19,12 +20,23 @@ export function ProcedureTimeline({ procedureId, spaceId, steps, eventDates, hue
   const { canWrite } = useSpace();
   const { data: linked = [] } = useLinkedEvents('procedure', procedureId);
   const { data: contacts = [] } = useContacts();
+  const eventIds = useMemo(
+    () => [
+      ...new Set([...linked.map((e) => e.id), ...steps.flatMap((s) => (s.event_id ? [s.event_id] : []))]),
+    ],
+    [linked, steps],
+  );
+  const { data: files = [] } = useEventAttachments(eventIds);
   const rows = useMemo(
     () =>
       procedureRows(steps, eventDates, linked, {
         contactName: (id) => contacts.find((c) => c.id === id)?.name,
+        eventFiles: (eventId) =>
+          files
+            .filter((f) => f.event_id === eventId)
+            .map((f) => ({ id: f.id, label: `📎 ${f.name}`, onOpen: () => openAttachment(f.path) })),
       }),
-    [steps, eventDates, linked, contacts],
+    [steps, eventDates, linked, contacts, files],
   );
   return (
     <section aria-label="Cronologia della pratica">

@@ -161,7 +161,7 @@ function logSummary(entry: MaintenanceLog, contactName: string | undefined): str
 }
 
 /** Impegno collegato a mano: in programma finché è aperto, poi tra i fatti come «Impegno svolto». */
-function linkedRow(e: LinkedEvent): TimelineRow {
+function linkedRow(e: LinkedEvent, chips: TimelineChip[] = []): TimelineRow {
   const at = Date.parse(e.starts_at);
   const planned = e.status === 'open';
   return {
@@ -174,7 +174,7 @@ function linkedRow(e: LinkedEvent): TimelineRow {
     type: planned ? plannedLabel(at) : 'Impegno svolto',
     title: e.title,
     href: `/evento/${e.id}`,
-    chips: [],
+    chips,
   };
 }
 
@@ -220,9 +220,11 @@ export function maintenanceRows(
   return sortTimeline([...planned, ...done, ...linked.map((e) => linkedRow(e))]);
 }
 
-/** Cosa sa la riga di un passaggio oltre al titolo: la ditta. Gli allegati non stanno in cronologia: si vedono in Documenti e sull'impegno. */
+/** Cosa sa la riga di un passaggio oltre al titolo: la ditta. I file dei passaggi stanno in Documenti; quelli degli impegni si vedono anche sotto l'impegno. */
 export interface StepDetails {
   contactName?: (id: string) => string | undefined;
+  /** File allegati a un impegno: compaiono sotto la riga dell'impegno (collegato o di un passaggio). */
+  eventFiles?: (eventId: string) => TimelineChip[];
 }
 
 /** «Nota · Clima Sud · 2.850 €» — le parti presenti di un passaggio a fasi. */
@@ -247,7 +249,9 @@ export function procedureRows(
 ): TimelineRow[] {
   // l'impegno di un passaggio è già nella riga del passaggio: non si ripete
   const ofSteps = new Set(steps.map((s) => s.event_id).filter(Boolean));
-  const extra = linked.filter((e) => !ofSteps.has(e.id)).map(linkedRow);
+  const extra = linked
+    .filter((e) => !ofSteps.has(e.id))
+    .map((e) => linkedRow(e, details.eventFiles?.(e.id) ?? []));
   return sortTimeline([
     ...extra,
     ...steps.map((s) => {
@@ -264,7 +268,7 @@ export function procedureRows(
         title: s.title,
         text: stepText(s, details.contactName),
         href: !s.done_at && s.event_id ? `/evento/${s.event_id}` : undefined,
-        chips: [],
+        chips: (s.event_id && details.eventFiles?.(s.event_id)) || [],
       };
     }),
   ]);

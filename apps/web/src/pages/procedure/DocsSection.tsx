@@ -5,6 +5,7 @@ import { openAttachment, uploadAttachment } from '../../lib/files';
 import { useToast } from '../../lib/toast';
 import type { Procedure, ProcedureDoc, ProcedureStep } from '../../lib/types';
 import { assignDoc, renameAttachment, renameProcedureDoc, type DocTarget } from './procedureCommands';
+import { useDocRemoval } from './useDocRemoval';
 import { ActionButton } from '../../components/ActionButton';
 import { RenameControl } from '../../components/RenameControl';
 
@@ -39,10 +40,16 @@ interface RowProps {
   writable: boolean;
   onAssign: (row: FileRow, target: DocTarget) => void;
   onRename: (row: FileRow, name: string) => void;
+  onRemove: (row: FileRow) => void;
 }
 
 /** Selettore unico: «Generale», le fasi e gli impegni della pratica. */
-function TargetSelect({ row, steps, events, onAssign }: Omit<RowProps, 'writable' | 'onRename'>) {
+function TargetSelect({
+  row,
+  steps,
+  events,
+  onAssign,
+}: Omit<RowProps, 'writable' | 'onRename' | 'onRemove'>) {
   return (
     <select
       className="input doc-step"
@@ -75,7 +82,7 @@ function targetLabel(t: DocTarget, steps: ProcedureStep[], events: Props['events
 }
 
 /** File già caricato: si apre con un tocco e (se si può scrivere) si lega a una fase o a un impegno. */
-function UploadedRow({ row, steps, events, writable, onAssign, onRename }: RowProps) {
+function UploadedRow({ row, steps, events, writable, onAssign, onRename, onRemove }: RowProps) {
   return (
     <div className="doc-row">
       <ActionButton
@@ -95,6 +102,11 @@ function UploadedRow({ row, steps, events, writable, onAssign, onRename }: RowPr
       {writable && (
         <RenameControl label={row.name} current={row.name} onRename={(name) => onRename(row, name)} />
       )}
+      {writable && (
+        <button className="pill" aria-label={`Elimina ${row.name}`} onClick={() => onRemove(row)}>
+          Elimina
+        </button>
+      )}
     </div>
   );
 }
@@ -105,11 +117,13 @@ function MissingRow({
   writable,
   onPick,
   onRename,
+  onRemove,
 }: {
   doc: ProcedureDoc;
   writable: boolean;
   onPick: (doc: ProcedureDoc) => void;
   onRename: (docId: string, name: string) => void;
+  onRemove: (doc: ProcedureDoc) => void;
 }) {
   return (
     <div className="doc-row">
@@ -124,6 +138,11 @@ function MissingRow({
       )}
       {writable && (
         <RenameControl label={doc.name} current={doc.name} onRename={(name) => onRename(doc.id, name)} />
+      )}
+      {writable && (
+        <button className="pill" aria-label={`Elimina ${doc.name}`} onClick={() => onRemove(doc)}>
+          Elimina
+        </button>
       )}
     </div>
   );
@@ -218,6 +237,8 @@ export function DocsSection({ procedure: p, steps, events, writable, onAdd }: Pr
   const renameRow = (row: FileRow, name: string) =>
     row.docId ? renameDocRow(row.docId, name) : void renameAttachment(mutate, row.attachmentId, name);
 
+  const { removeDoc, removeRow } = useDocRemoval(p);
+
   return (
     <section className="docs-section" aria-label="Documenti">
       <span className="label">Documenti</span>
@@ -238,7 +259,14 @@ export function DocsSection({ procedure: p, steps, events, writable, onAdd }: Pr
       )}
       {missing.length > 0 && <span className="muted docs-group">Da caricare · {missing.length}</span>}
       {missing.map((d) => (
-        <MissingRow key={d.id} doc={d} writable={writable} onPick={pick} onRename={renameDocRow} />
+        <MissingRow
+          key={d.id}
+          doc={d}
+          writable={writable}
+          onPick={pick}
+          onRename={renameDocRow}
+          onRemove={(doc) => void removeDoc(doc)}
+        />
       ))}
       {rows.length > 0 && <span className="muted docs-group">Caricati · {rows.length}</span>}
       {rows.map((r) => (
@@ -249,6 +277,7 @@ export function DocsSection({ procedure: p, steps, events, writable, onAdd }: Pr
           events={events}
           writable={writable}
           onRename={renameRow}
+          onRemove={(row) => void removeRow(row)}
           onAssign={(row, to) =>
             void assignDoc(
               mutate,

@@ -269,6 +269,19 @@ describe('impegni collegati', () => {
     expect(rows.map((r) => r.id)).toEqual(['s', 'l2']);
   });
 
+  it('pratica: i file dell’impegno compaiono sotto la riga, collegato o di un passaggio', () => {
+    const chip = { id: 'f', label: '📎 Preventivo', onOpen: async () => undefined };
+    const eventFiles = (id: string) => (id === 'l1' || id === 'l2' ? [chip] : []);
+    const rows = procedureRows(
+      [step({ id: 's', event_id: 'l1' })],
+      new Map([['l1', linkedOpen.starts_at]]),
+      [linkedOpen, linkedDone],
+      { eventFiles },
+    );
+    expect(rows.find((r) => r.id === 's')?.chips).toEqual([chip]);
+    expect(rows.find((r) => r.id === 'l2')?.chips).toEqual([chip]);
+  });
+
   it('pratica: un impegno collegato in programma sta sopra i passaggi da fare', () => {
     const rows = procedureRows([step({ id: 's', position: 0 })], new Map(), [linkedOpen]);
     expect(rows.map((r) => r.id)).toEqual(['l1', 's']);

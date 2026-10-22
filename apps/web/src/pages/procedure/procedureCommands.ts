@@ -1,5 +1,6 @@
 import type { ProcedureTemplate } from '@ohana/shared';
 import type { Mutate, OptimisticUpdate } from '../../lib/data';
+import { removeAttachment } from '../../lib/files';
 import { newId } from '../../lib/outbox';
 import type { Procedure, ProcedureStep } from '../../lib/types';
 
@@ -105,6 +106,26 @@ export async function addStep(mutate: Mutate, p: Procedure, title: string): Prom
 /** Cambia il nome di un allegato nato su un impegno (non ha una riga `procedure_docs`). */
 export async function renameAttachment(mutate: Mutate, attachmentId: string, name: string): Promise<void> {
   await mutate({ table: 'attachments', action: 'update', payload: { name }, match: { id: attachmentId } });
+}
+
+/** Toglie la riga del documento dalla pratica (subito, in cache) e la elimina. */
+export async function deleteProcedureDoc(mutate: Mutate, p: Procedure, docId: string): Promise<void> {
+  await mutate(
+    { table: 'procedure_docs', action: 'delete', match: { id: docId } },
+    patchProcedure(p.id, (x) => ({ ...x, procedure_docs: x.procedure_docs.filter((d) => d.id !== docId) })),
+  );
+}
+
+/** Elimina un file della pratica: la riga del documento, se c'è, poi il file e il suo allegato. Richiede la rete per il file. */
+export async function deleteProcedureFile(
+  mutate: Mutate,
+  p: Procedure,
+  file: { attachmentId: string; docId: string | null; path: string | undefined },
+): Promise<void> {
+  if (file.docId) {
+    await deleteProcedureDoc(mutate, p, file.docId);
+  }
+  await removeAttachment(file.attachmentId, file.path);
 }
 
 /** Cambia il nome di un documento della pratica (richiesto o caricato). */
