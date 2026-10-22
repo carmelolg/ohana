@@ -4,7 +4,7 @@ import { useAttachmentsByIds, useEventAttachments, useMutate } from '../../lib/d
 import { openAttachment, uploadAttachment } from '../../lib/files';
 import { useToast } from '../../lib/toast';
 import type { Procedure, ProcedureDoc, ProcedureStep } from '../../lib/types';
-import { assignDoc, renameProcedureDoc, type DocTarget } from './procedureCommands';
+import { assignDoc, renameAttachment, renameProcedureDoc, type DocTarget } from './procedureCommands';
 import { ActionButton } from '../../components/ActionButton';
 import { RenameControl } from '../../components/RenameControl';
 
@@ -38,7 +38,7 @@ interface RowProps {
   events: Props['events'];
   writable: boolean;
   onAssign: (row: FileRow, target: DocTarget) => void;
-  onRename: (docId: string, name: string) => void;
+  onRename: (row: FileRow, name: string) => void;
 }
 
 /** Selettore unico: «Generale», le fasi e gli impegni della pratica. */
@@ -92,9 +92,8 @@ function UploadedRow({ row, steps, events, writable, onAssign, onRename }: RowPr
       ) : (
         <span className="muted doc-where">{targetLabel(row.target, steps, events)}</span>
       )}
-      {/* gli allegati nati su un impegno non hanno una riga documento: il nome resta quello del file */}
-      {writable && row.docId && (
-        <RenameControl label={row.name} current={row.name} onRename={(name) => onRename(row.docId!, name)} />
+      {writable && (
+        <RenameControl label={row.name} current={row.name} onRename={(name) => onRename(row, name)} />
       )}
     </div>
   );
@@ -214,7 +213,10 @@ export function DocsSection({ procedure: p, steps, events, writable, onAdd }: Pr
   const { input, pick, upload } = useDocUpload(p);
   const rows = useFileRows(p, events);
   const missing = p.procedure_docs.filter((d) => !d.attachment_id);
-  const rename = (docId: string, name: string) => void renameProcedureDoc(mutate, p, docId, name);
+  const renameDocRow = (docId: string, name: string) => void renameProcedureDoc(mutate, p, docId, name);
+  // un allegato d'impegno non ha una riga `procedure_docs`: si rinomina il file stesso
+  const renameRow = (row: FileRow, name: string) =>
+    row.docId ? renameDocRow(row.docId, name) : void renameAttachment(mutate, row.attachmentId, name);
 
   return (
     <section className="docs-section" aria-label="Documenti">
@@ -236,7 +238,7 @@ export function DocsSection({ procedure: p, steps, events, writable, onAdd }: Pr
       )}
       {missing.length > 0 && <span className="muted docs-group">Da caricare · {missing.length}</span>}
       {missing.map((d) => (
-        <MissingRow key={d.id} doc={d} writable={writable} onPick={pick} onRename={rename} />
+        <MissingRow key={d.id} doc={d} writable={writable} onPick={pick} onRename={renameDocRow} />
       ))}
       {rows.length > 0 && <span className="muted docs-group">Caricati · {rows.length}</span>}
       {rows.map((r) => (
@@ -246,7 +248,7 @@ export function DocsSection({ procedure: p, steps, events, writable, onAdd }: Pr
           steps={steps}
           events={events}
           writable={writable}
-          onRename={rename}
+          onRename={renameRow}
           onAssign={(row, to) =>
             void assignDoc(
               mutate,
